@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to capture photos and videos for expense receipts.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to select photos and videos for expense receipts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access to record videos for expense receipts.</string>
 </dict>
 </plist>

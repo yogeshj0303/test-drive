@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:varenium/screens/employee/location_tracking_screen.dart';
 import 'package:varenium/screens/user/user_home_screen.dart';
 import 'screens/user/user_login_screen.dart';
 import 'screens/employee/employee_login_screen.dart';
@@ -45,7 +47,7 @@ class VareniumApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: const UserHomeScreen(),
+      home: LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
     );
   }
 }
@@ -93,13 +95,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     final orientation = MediaQuery.of(context).orientation;
     final isLandscape = orientation == Orientation.landscape;
 
-    return Scaffold(
-      body: Container(
-        color: Colors.white,
-        child: SafeArea(
-          child: isLandscape 
-              ? _buildLandscapeLayout(context, primaryBlue, secondaryBlue)
-              : _buildPortraitLayout(context, primaryBlue, secondaryBlue),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: Container(
+          color: Colors.white,
+          child: SafeArea(
+            child: isLandscape 
+                ? _buildLandscapeLayout(context, primaryBlue, secondaryBlue)
+                : _buildPortraitLayout(context, primaryBlue, secondaryBlue),
+          ),
         ),
       ),
     );

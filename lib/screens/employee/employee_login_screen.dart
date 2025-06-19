@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'employee_home_screen.dart';
 
 class EmployeeLoginScreen extends StatefulWidget {
   const EmployeeLoginScreen({super.key});
@@ -53,9 +54,52 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      // TODO: Implement actual employee login logic
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
+      
+      try {
+        // TODO: Implement actual employee login logic
+        await Future.delayed(const Duration(seconds: 2));
+        
+        // Simulate login validation
+        final employeeId = _employeeIdController.text.trim();
+        final password = _passwordController.text.trim();
+        
+        // Basic validation for demo purposes
+        if (employeeId.isEmpty || password.isEmpty) {
+          throw Exception('Please enter valid credentials');
+        }
+        
+        // Simulate successful login
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login successful!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+          
+          // Navigate to employee home screen after successful login
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const EmployeeHomeScreen(),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -416,6 +460,12 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                       child: TextButton(
                         onPressed: () {
                           // TODO: Implement forgot password
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Forgot password functionality coming soon'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: primaryBlue,
@@ -464,10 +514,10 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                               ),
                       ),
                     ),
-                    // const SizedBox(height: 28),
-                    // Center(
-                    //   child: _buildUserPortalSection(accentColor: primaryBlue),
-                    // ),
+                    const SizedBox(height: 28),
+                    Center(
+                      child: _buildUserPortalSection(accentColor: primaryBlue),
+                    ),
                   ],
                 ),
               ),
@@ -556,46 +606,46 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     );
   }
 
-  // Widget _buildUserPortalSection({required Color accentColor}) {
-  //   const Color darkGray = Color(0xFF1D1B1C);
-  //   return FittedBox(
-  //     fit: BoxFit.scaleDown,
-  //     child: Row(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         Text(
-  //           'Are you a customer?',
-  //           style: TextStyle(
-  //             color: darkGray.withOpacity(0.7),
-  //             fontSize: 15,
-  //             letterSpacing: 0.3,
-  //           ),
-  //         ),
-  //         const SizedBox(width: 4),
-  //         TextButton(
-  //           onPressed: () {
-  //             Navigator.pop(context);
-  //           },
-  //           style: TextButton.styleFrom(
-  //             foregroundColor: accentColor,
-  //             padding: const EdgeInsets.symmetric(horizontal: 4),
-  //             minimumSize: Size.zero,
-  //             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  //           ),
-  //           child: const Text(
-  //             'Go to User Portal',
-  //             style: TextStyle(
-  //               fontWeight: FontWeight.bold,
-  //               fontSize: 15,
-  //               letterSpacing: 0.3,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-// 
+  Widget _buildUserPortalSection({required Color accentColor}) {
+    const Color darkGray = Color(0xFF1D1B1C);
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Are you a customer?',
+            style: TextStyle(
+              color: darkGray.withOpacity(0.7),
+              fontSize: 15,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 4),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: accentColor,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Go to User Portal',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeatureList() {
     return Column(
       children: [

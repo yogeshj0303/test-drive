@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import 'personal_info_screen.dart';
+import 'change_password_screen.dart';
+import 'about_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -47,72 +50,116 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     
     return Scaffold(
       body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar.large(
-            expandedHeight: size.height * 0.25,
-            pinned: true,
-            stretch: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primaryContainer,
-                          theme.colorScheme.secondaryContainer,
-                        ],
-                      ),
+          SliverToBoxAdapter(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: size.height * 0.35,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primaryContainer,
+                        theme.colorScheme.secondaryContainer,
+                      ],
                     ),
                   ),
-                  Positioned(
-                    right: -50,
-                    top: -50,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned(
+                        right: -size.width * 0.1,
+                        top: -size.width * 0.1,
+                        child: Container(
+                          width: size.width * 0.8,
+                          height: size.width * 0.8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-              title: const Text(
-                'Profile',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
                 ),
-              ),
-              centerTitle: true,
+                Positioned(
+                  left: AppTheme.spacingM,
+                  right: AppTheme.spacingM,
+                  top: size.height * 0.1,
+                  child: _buildProfileHeader(context),
+                ),
+              ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => _showEditProfileDialog(context),
-              ),
-            ],
           ),
           SliverToBoxAdapter(
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppTheme.spacingM),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: size.height * 0.15,
+                left: AppTheme.spacingM,
+                right: AppTheme.spacingM,
+                bottom: AppTheme.spacingL,
+              ),
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildProfileHeader(context),
-                      const SizedBox(height: AppTheme.spacingXL),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingS),
+                            Text(
+                              'Activity',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       _buildStatsSection(context),
                       const SizedBox(height: AppTheme.spacingXL),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingS),
+                            Text(
+                              'Settings',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       _buildSettingsSection(context),
                       const SizedBox(height: AppTheme.spacingXL),
                       _buildLogoutButton(context),
@@ -136,123 +183,160 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: theme.shadowColor.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+            spreadRadius: -1,
+          ),
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+            spreadRadius: -1,
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        child: Column(
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
+      child: Material(
+        color: Colors.transparent,
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              size: 20,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.secondary,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 60,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _showEditProfileDialog(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 20,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      size: 20,
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            Text(
-              'John Doe',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingXS),
-            Text(
-              'john.doe@example.com',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 0.2,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingL,
-                vertical: AppTheme.spacingS,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: theme.colorScheme.primaryContainer,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 18,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: AppTheme.spacingS),
-                  Text(
-                    'Mumbai, Maharashtra',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  const SizedBox(height: AppTheme.spacingL),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppTheme.spacingL),
+              Text(
+                'John Doe',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingXS),
+              Text(
+                'john.doe@example.com',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingM,
+                  vertical: AppTheme.spacingS,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: theme.colorScheme.primaryContainer,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: AppTheme.spacingXS),
+                    Text(
+                      'Mumbai, Maharashtra',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -260,14 +344,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
 
   Widget _buildStatsSection(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
     
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 3,
-      mainAxisSpacing: AppTheme.spacingM,
-      crossAxisSpacing: AppTheme.spacingM,
-      childAspectRatio: 1.2,
+      mainAxisSpacing: AppTheme.spacingS,
+      crossAxisSpacing: AppTheme.spacingS,
+      childAspectRatio: 0.85,
+      padding: EdgeInsets.zero,
       children: [
         _buildStatCard(
           context,
@@ -306,7 +392,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.05),
@@ -319,34 +405,37 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           width: 1,
         ),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+      child: GestureDetector(
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
+          padding: const EdgeInsets.all(8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 18),
               ),
-              const SizedBox(height: AppTheme.spacingM),
+              const SizedBox(height: 4),
               Text(
                 value,
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppTheme.spacingXS),
+              const SizedBox(height: 2),
               Text(
                 label,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   letterSpacing: 0.2,
                 ),
@@ -370,40 +459,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           {
             'icon': Icons.person_outline,
             'title': 'Personal Information',
-            'onTap': () {},
+            'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PersonalInfoScreen(),
+              ),
+            ),
           },
           {
             'icon': Icons.lock_outline,
-            'title': 'Security',
-            'onTap': () {},
-          },
-        ],
-      },
-      {
-        'title': 'Preferences',
-        'items': [
-          {
-            'icon': Icons.notifications_outlined,
-            'title': 'Notifications',
-            'onTap': () {},
-          },
-          {
-            'icon': Icons.language_outlined,
-            'title': 'Language',
-            'subtitle': 'English (US)',
-            'onTap': () {},
-          },
-          {
-            'icon': Icons.dark_mode_outlined,
-            'title': 'Dark Mode',
-            'trailing': Switch(
-              value: _isDarkMode,
-              onChanged: (value) {
-                setState(() => _isDarkMode = value);
-                // TODO: Implement theme switching
-              },
+            'title': 'Change Password',
+            'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
+              ),
             ),
-            'onTap': null,
           },
         ],
       },
@@ -418,7 +489,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           {
             'icon': Icons.info_outline,
             'title': 'About',
-            'onTap': () {},
+            'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AboutScreen(),
+              ),
+            ),
           },
         ],
       },
@@ -431,9 +507,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingM,
-                vertical: AppTheme.spacingS,
+              padding: const EdgeInsets.only(
+                left: AppTheme.spacingS,
+                bottom: AppTheme.spacingS,
               ),
               child: Text(
                 group['title'] as String,
@@ -446,6 +522,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
             ),
             Card(
               elevation: 0,
+              margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
@@ -460,15 +537,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                   return Column(
                     children: [
                       ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingL,
+                          vertical: AppTheme.spacingS,
+                        ),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
                             item['icon'] as IconData,
                             color: theme.colorScheme.primary,
+                            size: 20,
                           ),
                         ),
                         title: Text(
@@ -477,15 +559,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                             letterSpacing: 0.2,
                           ),
                         ),
-                        subtitle: item['subtitle'] != null
-                            ? Text(
-                                item['subtitle'] as String,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 0.2,
-                                ),
-                              )
-                            : null,
                         trailing: item['trailing'] ?? (item['onTap'] != null
                             ? Icon(
                                 Icons.chevron_right,
@@ -556,6 +629,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                     Icon(
                       Icons.logout,
                       color: theme.colorScheme.onError,
+                      size: 20,
                     ),
                     const SizedBox(width: AppTheme.spacingS),
                     Text(
@@ -586,23 +660,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(28),
+            top: Radius.circular(24),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: AppTheme.spacingM),
-              width: 40,
-              height: 4,
+              margin: const EdgeInsets.only(top: AppTheme.spacingS),
+              width: 32,
+              height: 3,
               decoration: BoxDecoration(
                 color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
+              padding: const EdgeInsets.all(AppTheme.spacingM),
               child: Column(
                 children: [
                   Text(
@@ -612,7 +686,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingM),
                   _buildEditOption(
                     context,
                     Icons.camera_alt_outlined,
@@ -667,8 +741,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     final theme = Theme.of(context);
     
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingM,
+        vertical: AppTheme.spacingXS,
+      ),
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: theme.colorScheme.primaryContainer.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
@@ -699,7 +777,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
           'Logout',
@@ -734,8 +812,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
               backgroundColor: theme.colorScheme.error,
               foregroundColor: theme.colorScheme.onError,
               padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingL,
-                vertical: AppTheme.spacingS,
+                horizontal: AppTheme.spacingM,
+                vertical: AppTheme.spacingXS,
               ),
             ),
             child: const Text('Logout'),

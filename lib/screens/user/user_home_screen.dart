@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:varenium/screens/user/cancel_test_drive_screen.dart';
 import 'request_test_drive_screen.dart';
 import 'test_drive_status_screen.dart';
 import 'review_form_screen.dart';
 import 'notification_screen.dart';
 import 'user_profile_screen.dart';
+import 'search_screen.dart';
+import 'showrooms_screen.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -15,48 +18,47 @@ class UserHomeScreen extends StatefulWidget {
 class _UserHomeScreenState extends State<UserHomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
-  int _selectedFilterIndex = 0;
 
-  final List<Map<String, dynamic>> featuredCars = [
+  final List<Map<String, dynamic>> showrooms = [
     {
-      'name': 'Tata Nexon EV',
-      'price': '₹14.99 L',
-      'power': '129 PS',
-      'range': '437 km',
-      'transmission': 'Auto',
-      'showroom': 'Tata Motors, Andheri East',
+      'name': 'Tata Motors',
+      'location': 'Andheri East, Mumbai',
+      'rating': '4.5',
+      'distance': '2.3 km',
+      'cars': ['Tata Nexon EV', 'Tata Punch', 'Tata Harrier'],
+      'image': 'assets/images/varenium.png',
     },
     {
-      'name': 'Mahindra XUV700',
-      'price': '₹13.45 L',
-      'power': '200 PS',
-      'range': '450 km',
-      'transmission': 'Auto',
-      'showroom': 'Mahindra Auto, Powai',
+      'name': 'Mahindra Auto',
+      'location': 'Powai, Mumbai',
+      'rating': '4.3',
+      'distance': '4.1 km',
+      'cars': ['Mahindra XUV700', 'Mahindra Thar', 'Mahindra Scorpio'],
+      'image': 'assets/images/varenium.png',
     },
     {
-      'name': 'Hyundai Creta',
-      'price': '₹10.99 L',
-      'power': '115 PS',
-      'range': '400 km',
-      'transmission': 'Auto',
-      'showroom': 'Hyundai Motors, Vikhroli',
+      'name': 'Hyundai Motors',
+      'location': 'Vikhroli, Mumbai',
+      'rating': '4.7',
+      'distance': '3.2 km',
+      'cars': ['Hyundai Creta', 'Hyundai Venue', 'Hyundai i20'],
+      'image': 'assets/images/varenium.png',
     },
     {
-      'name': 'Maruti Suzuki Baleno',
-      'price': '₹6.49 L',
-      'power': '90 PS',
-      'range': '380 km',
-      'transmission': 'Manual',
-      'showroom': 'Maruti Suzuki, Ghatkopar',
+      'name': 'Maruti Suzuki',
+      'location': 'Ghatkopar, Mumbai',
+      'rating': '4.2',
+      'distance': '5.8 km',
+      'cars': ['Maruti Suzuki Baleno', 'Maruti Swift', 'Maruti Brezza'],
+      'image': 'assets/images/varenium.png',
     },
     {
-      'name': 'Kia Seltos',
-      'price': '₹10.89 L',
-      'power': '115 PS',
-      'range': '410 km',
-      'transmission': 'Auto',
-      'showroom': 'Kia Motors, Bhandup',
+      'name': 'Kia Motors',
+      'location': 'Bhandup, Mumbai',
+      'rating': '4.6',
+      'distance': '6.5 km',
+      'cars': ['Kia Seltos', 'Kia Sonet', 'Kia Carens'],
+      'image': 'assets/images/varenium.png',
     },
   ];
 
@@ -90,6 +92,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
@@ -166,7 +169,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      // TODO: Handle search tap
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
@@ -181,10 +189,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Search cars, brands, or models...',
+                              'Search showrooms or locations...',
                               style: TextStyle(
                                 color: Colors.grey[600],
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w400,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -208,29 +216,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
               ),
             ),
-            // Quick Filters
-            Container(
-              height: 44,
-              margin: const EdgeInsets.only(top: 16),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  _buildFilterChip('All Cars', _selectedFilterIndex == 0, Icons.directions_car_rounded),
-                  _buildFilterChip('Electric', _selectedFilterIndex == 1, Icons.electric_car_rounded),
-                  _buildFilterChip('SUV', _selectedFilterIndex == 2, Icons.directions_car_filled_rounded),
-                  _buildFilterChip('Sedan', _selectedFilterIndex == 3, Icons.directions_car_outlined),
-                  _buildFilterChip('Hatchback', _selectedFilterIndex == 4, Icons.directions_car_rounded),
-                  _buildFilterChip('Luxury', _selectedFilterIndex == 5, Icons.star_rounded),
-                ],
-              ),
-            ),
-            // Featured Cars Section
+            // Showrooms Section
             _buildSectionHeader(
-              'Featured Cars',
-              'Explore our premium selection of vehicles',
+              'Showrooms',
+              'Find nearby showrooms',
               onViewAll: () {
-                // TODO: Implement view all functionality
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ShowroomsScreen(),
+                  ),
+                );
               },
             ),
             SizedBox(
@@ -238,10 +234,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: featuredCars.length,
+                itemCount: showrooms.length,
                 itemBuilder: (context, index) {
-                  final car = featuredCars[index];
-                  return _buildFeaturedCarCard(car);
+                  final showroom = showrooms[index];
+                  return _buildShowroomCard(showroom);
                 },
               ),
             ),
@@ -272,7 +268,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RequestTestDriveScreen(),
+                            builder: (context) => const RequestTestDriveScreen(
+                              showroomName: null,
+                              availableCars: null,
+                            ),
                           ),
                         );
                       },
@@ -282,7 +281,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       'icon': Icons.update_rounded,
                       'color': Colors.green,
                       'onTap': () {
-                        // TODO: Navigate to status screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TestDriveStatusScreen(),
+                          ),
+                        );
                       },
                     },
                     {
@@ -290,7 +294,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       'icon': Icons.cancel_outlined,
                       'color': Colors.red,
                       'onTap': () {
-                        _showCancellationDialog();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CancelTestDriveScreen(),
+                          ),
+                        );
                       },
                     },
                     {
@@ -298,7 +307,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       'icon': Icons.rate_review_rounded,
                       'color': Colors.purple,
                       'onTap': () {
-                        // TODO: Navigate to review screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ReviewFormScreen( ),
+                          ),
+                        );
                       },
                     },
                   ];
@@ -405,7 +419,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         letterSpacing: 0.2,
                         height: 1.4,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -512,88 +526,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, IconData icon) {
-    final theme = Theme.of(context);
-    final index = _getFilterIndex(label);
-    final isCurrentlySelected = index == _selectedFilterIndex;
-
-    return Container(
-      margin: const EdgeInsets.only(right: 10),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedFilterIndex = index;
-          });
-        },
-        borderRadius: BorderRadius.circular(22),
-        child: Material(
-          color: Colors.transparent,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isCurrentlySelected 
-                  ? theme.primaryColor.withOpacity(0.08)
-                  : Colors.grey[100],
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: isCurrentlySelected 
-                    ? theme.primaryColor.withOpacity(0.3)
-                    : Colors.grey[200]!,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isCurrentlySelected 
-                      ? theme.primaryColor 
-                      : Colors.grey[700],
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isCurrentlySelected 
-                        ? theme.primaryColor 
-                        : Colors.grey[700],
-                    fontSize: 13,
-                    fontWeight: isCurrentlySelected 
-                        ? FontWeight.w600 
-                        : FontWeight.w500,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  int _getFilterIndex(String label) {
-    switch (label) {
-      case 'All Cars':
-        return 0;
-      case 'Electric':
-        return 1;
-      case 'SUV':
-        return 2;
-      case 'Sedan':
-        return 3;
-      case 'Hatchback':
-        return 4;
-      case 'Luxury':
-        return 5;
-      default:
-        return 0;
-    }
-  }
-
   Widget _buildSpecItem(String label, String value, IconData icon) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -633,7 +565,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     );
   }
 
-  Widget _buildFeaturedCarCard(Map<String, dynamic> car) {
+  Widget _buildShowroomCard(Map<String, dynamic> showroom) {
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: Card(
@@ -676,14 +608,25 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           color: const Color(0xFF0095D9),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          car['price'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              showroom['rating'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -698,9 +641,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Car name
+                      // Showroom name
                       Text(
-                        car['name'],
+                        showroom['name'],
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -723,7 +666,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           const SizedBox(width: 2),
                           Expanded(
                             child: Text(
-                              car['showroom'],
+                              showroom['location'],
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF757575),
@@ -736,21 +679,31 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Specs row
+                      // Distance and available cars
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          SizedBox(
-                            width: 80,
-                            child: _buildSpecItem('Power', car['power'], Icons.speed),
+                          Icon(
+                            Icons.directions_car_rounded,
+                            size: 12,
+                            color: Colors.grey[600],
                           ),
-                          SizedBox(
-                            width: 80,
-                            child: _buildSpecItem('Range', car['range'], Icons.route),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${showroom['cars'].length} cars',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                              height: 1.2,
+                            ),
                           ),
-                          SizedBox(
-                            width: 80,
-                            child: _buildSpecItem('Trans', car['transmission'], Icons.settings),
+                          const Spacer(),
+                          Text(
+                            showroom['distance'],
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                              height: 1.2,
+                            ),
                           ),
                         ],
                       ),
@@ -764,7 +717,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RequestTestDriveScreen(),
+                                builder: (context) => RequestTestDriveScreen(
+                                  showroomName: showroom['name'],
+                                  availableCars: showroom['cars'],
+                                ),
                               ),
                             );
                           },
@@ -793,73 +749,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showCancellationDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          'Cancel Test Drive',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'You can cancel your test drive up to 1 hour before the scheduled time.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[800],
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Would you like to proceed with cancellation?',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'No, Keep It',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Implement cancellation logic
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Yes, Cancel'),
-          ),
-        ],
       ),
     );
   }

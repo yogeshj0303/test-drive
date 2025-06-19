@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class ReviewFormScreen extends StatefulWidget {
-  const ReviewFormScreen({super.key});
+class CancelTestDriveScreen extends StatefulWidget {
+  const CancelTestDriveScreen({super.key});
 
   @override
-  State<ReviewFormScreen> createState() => _ReviewFormScreenState();
+  State<CancelTestDriveScreen> createState() => _CancelTestDriveScreenState();
 }
 
-class _ReviewFormScreenState extends State<ReviewFormScreen> {
+class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
   // Mock data for test drive requests
   final List<Map<String, dynamic>> _testDriveRequests = [
     {
@@ -16,9 +16,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       'showroom': 'Tata Motors, Andheri East',
       'date': '2024-03-25',
       'time': '14:00',
-      'status': 'completed',
+      'status': 'approved',
       'duration': '30 mins',
-      'hasReview': false,
     },
     {
       'id': 'TD002',
@@ -26,9 +25,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       'showroom': 'Mahindra Auto, Powai',
       'date': '2024-03-28',
       'time': '11:30',
-      'status': 'completed',
+      'status': 'pending',
       'duration': '45 mins',
-      'hasReview': true,
     },
     {
       'id': 'TD003',
@@ -38,41 +36,32 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       'time': '15:30',
       'status': 'completed',
       'duration': '30 mins',
-      'hasReview': false,
     },
   ];
 
-  void _showReviewForm(Map<String, dynamic> request) {
+  void _showCancellationForm(Map<String, dynamic> request) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _ReviewFormContent(
+        builder: (context) => _CancellationFormScreen(
           carName: request['carName'],
           showroom: request['showroom'],
+          date: request['date'],
+          time: request['time'],
         ),
       ),
-    ).then((_) {
-      // Refresh the list after review submission
-      setState(() {
-        request['hasReview'] = true;
-      });
-    });
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Filter only completed test drives
-    final completedTestDrives = _testDriveRequests
-        .where((request) => request['status'] == 'completed')
-        .toList();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Review Test Drive',
+          'Cancel Test Drive',
           style: TextStyle(
             color: Color(0xFF1A1A1A),
             fontSize: 20,
@@ -84,7 +73,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: completedTestDrives.isEmpty
+      body: _testDriveRequests.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -96,7 +85,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No Test Drives to Review',
+                    'No Test Drives to Cancel',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -105,7 +94,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Complete a test drive to leave a review',
+                    'You don\'t have any upcoming test drives',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -116,9 +105,14 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: completedTestDrives.length,
+              itemCount: _testDriveRequests.length,
               itemBuilder: (context, index) {
-                final request = completedTestDrives[index];
+                final request = _testDriveRequests[index];
+                // Only show test drives that are not completed or cancelled
+                if (request['status'] == 'completed' ||
+                    request['status'] == 'cancelled') {
+                  return const SizedBox.shrink();
+                }
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   elevation: 0,
@@ -127,9 +121,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                     side: BorderSide(color: Colors.grey[200]!),
                   ),
                   child: InkWell(
-                    onTap: request['hasReview']
-                        ? null
-                        : () => _showReviewForm(request),
+                    onTap: () => _showCancellationForm(request),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -174,25 +166,6 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                                   ],
                                 ),
                               ),
-                              if (request['hasReview'])
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'Reviewed',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF4CAF50),
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -221,27 +194,6 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                               ),
                             ],
                           ),
-                          if (!request['hasReview']) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0095D9).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Tap to Leave a Review',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF0095D9),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -287,34 +239,35 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
   }
 }
 
-class _ReviewFormContent extends StatefulWidget {
+class _CancellationFormScreen extends StatefulWidget {
   final String carName;
   final String showroom;
+  final String date;
+  final String time;
 
-  const _ReviewFormContent({
+  const _CancellationFormScreen({
     required this.carName,
     required this.showroom,
+    required this.date,
+    required this.time,
   });
 
   @override
-  State<_ReviewFormContent> createState() => _ReviewFormContentState();
+  State<_CancellationFormScreen> createState() => _CancellationFormScreenState();
 }
 
-class _ReviewFormContentState extends State<_ReviewFormContent> {
+class _CancellationFormScreenState extends State<_CancellationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _commentController = TextEditingController();
-  double _overallRating = 0;
-  double _comfortRating = 0;
-  double _performanceRating = 0;
-  double _valueRating = 0;
-  bool _wouldRecommend = true;
+  String? _selectedReason;
 
-  final List<String> _ratingLabels = [
-    'Poor',
-    'Fair',
-    'Good',
-    'Very Good',
-    'Excellent'
+  final List<String> _cancellationReasons = [
+    'Schedule conflict',
+    'Change of plans',
+    'Found a different car',
+    'Price concerns',
+    'Location not convenient',
+    'Other',
   ];
 
   @override
@@ -323,102 +276,25 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
     super.dispose();
   }
 
-  String _getRatingLabel(double rating) {
-    if (rating <= 0) return 'Select rating';
-    return _ratingLabels[(rating - 1).round()];
-  }
-
-  void _submitReview() {
-    if (_formKey.currentState!.validate() && _overallRating > 0) {
-      // TODO: Implement API call to submit review
+  void _submitCancellation() {
+    if (_formKey.currentState!.validate() && _selectedReason != null) {
+      // TODO: Implement API call to cancel test drive
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Review submitted successfully'),
+          content: Text('Test drive cancelled successfully'),
           backgroundColor: Color(0xFF4CAF50),
         ),
       );
       Navigator.pop(context);
+      Navigator.pop(context); // Pop back to the list screen
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please provide an overall rating'),
+          content: Text('Please select a reason for cancellation'),
           backgroundColor: Colors.red,
         ),
       );
     }
-  }
-
-  Widget _buildRatingSection(
-    String title,
-    double rating,
-    ValueChanged<double> onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1A1A),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: SliderTheme(
-                data: SliderThemeData(
-                  activeTrackColor: const Color(0xFF0095D9),
-                  inactiveTrackColor: Colors.grey[200],
-                  thumbColor: const Color(0xFF0095D9),
-                  overlayColor: const Color(0xFF0095D9).withOpacity(0.1),
-                  valueIndicatorColor: const Color(0xFF0095D9),
-                  valueIndicatorTextStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                child: Slider(
-                  value: rating,
-                  min: 0,
-                  max: 5,
-                  divisions: 5,
-                  label: _getRatingLabel(rating),
-                  onChanged: onChanged,
-                ),
-              ),
-            ),
-            Container(
-              width: 80,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: rating > 0
-                    ? const Color(0xFF0095D9).withOpacity(0.1)
-                    : Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _getRatingLabel(rating),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: rating > 0
-                      ? const Color(0xFF0095D9)
-                      : Colors.grey[600],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   @override
@@ -429,7 +305,7 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Review Test Drive',
+          'Cancel Test Drive',
           style: TextStyle(
             color: Color(0xFF1A1A1A),
             fontSize: 20,
@@ -449,7 +325,7 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Car and Showroom Info
+                // Test Drive Info
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -500,81 +376,79 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            color: Color(0xFF0095D9),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${widget.date} at ${widget.time}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Overall Rating
-                _buildRatingSection(
-                  'Overall Experience',
-                  _overallRating,
-                  (value) => setState(() => _overallRating = value),
-                ),
-                const SizedBox(height: 24),
-                // Comfort Rating
-                _buildRatingSection(
-                  'Comfort & Interior',
-                  _comfortRating,
-                  (value) => setState(() => _comfortRating = value),
-                ),
-                const SizedBox(height: 24),
-                // Performance Rating
-                _buildRatingSection(
-                  'Performance & Handling',
-                  _performanceRating,
-                  (value) => setState(() => _performanceRating = value),
-                ),
-                const SizedBox(height: 24),
-                // Value Rating
-                _buildRatingSection(
-                  'Value for Money',
-                  _valueRating,
-                  (value) => setState(() => _valueRating = value),
-                ),
-                const SizedBox(height: 24),
-                // Would Recommend
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.thumb_up_outlined,
-                        color: Color(0xFF0095D9),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Would you recommend this car?',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ),
-                      Switch(
-                        value: _wouldRecommend,
-                        onChanged: (value) =>
-                            setState(() => _wouldRecommend = value),
-                        activeColor: const Color(0xFF0095D9),
-                      ),
-                    ],
+                const Text(
+                  'Reason for Cancellation',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
                   ),
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedReason,
+                  decoration: InputDecoration(
+                    labelText: 'Select a reason',
+                    prefixIcon: const Icon(Icons.info_outline),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF0095D9)),
+                    ),
+                  ),
+                  items: _cancellationReasons.map((String reason) {
+                    return DropdownMenuItem<String>(
+                      value: reason,
+                      child: Text(reason),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedReason = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a reason';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 24),
-                // Comments
                 TextFormField(
                   controller: _commentController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    labelText: 'Additional Comments',
-                    hintText: 'Share your experience with this car...',
+                    labelText: 'Additional Comments (Optional)',
+                    hintText: 'Please provide any additional details...',
                     alignLabelWithHint: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -596,13 +470,43 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
                   },
                 ),
                 const SizedBox(height: 32),
-                // Submit Button
+                // Warning Message
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red[700],
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Cancelling a test drive may affect your ability to schedule future test drives.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.red[700],
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Cancel Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _submitReview,
+                    onPressed: _submitCancellation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0095D9),
+                      backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -610,7 +514,7 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
                       ),
                     ),
                     child: const Text(
-                      'Submit Review',
+                      'Confirm Cancellation',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -47,7 +47,8 @@ class VareniumApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+      // home: LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+      home: const SplashScreen(),
     );
   }
 }

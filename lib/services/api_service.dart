@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 import '../models/showroom_model.dart';
@@ -115,6 +116,94 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Showrooms unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<List<Showroom>>> getNearbyShowrooms(String pincode) async {
+    try {
+      debugPrint('Fetching nearby showrooms for pincode: $pincode');
+      
+      // Validate pincode
+      if (pincode.isEmpty) {
+        debugPrint('Error: Pincode is empty');
+        return ApiResponse.error('Invalid pincode provided');
+      }
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/near-showrooms?pincode=$pincode');
+      debugPrint('Nearby showrooms API URL: $uri');
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          debugPrint('Nearby showrooms API timeout');
+          throw TimeoutException('Request timeout', const Duration(seconds: 30));
+        },
+      );
+
+      debugPrint('Nearby showrooms response status: ${response.statusCode}');
+      debugPrint('Nearby showrooms response headers: ${response.headers}');
+      debugPrint('Nearby showrooms response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Check if response body is empty
+        if (response.body.isEmpty) {
+          debugPrint('Nearby showrooms response body is empty');
+          return ApiResponse.success([], message: 'No nearby showrooms found');
+        }
+        
+        try {
+          final dynamic responseData = jsonDecode(response.body);
+          
+          // Handle different response formats
+          List<dynamic> showroomsList;
+          if (responseData is List) {
+            showroomsList = responseData;
+          } else if (responseData is Map && responseData.containsKey('data')) {
+            showroomsList = responseData['data'] as List<dynamic>;
+          } else {
+            debugPrint('Unexpected response format: $responseData');
+            return ApiResponse.error('Unexpected response format from server');
+          }
+          
+          final showrooms = showroomsList.map((json) {
+            try {
+              return Showroom.fromJson(json as Map<String, dynamic>);
+            } catch (e) {
+              debugPrint('Error parsing showroom JSON: $json, Error: $e');
+              rethrow;
+            }
+          }).toList();
+          
+          debugPrint('Successfully fetched ${showrooms.length} nearby showrooms');
+          return ApiResponse.success(showrooms, message: 'Nearby showrooms fetched successfully');
+        } catch (e) {
+          debugPrint('Error parsing nearby showrooms response: $e');
+          return ApiResponse.error('Error parsing response: ${e.toString()}');
+        }
+      } else if (response.statusCode == 404) {
+        debugPrint('No nearby showrooms found for pincode: $pincode');
+        return ApiResponse.success([], message: 'No nearby showrooms found');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        debugPrint('Nearby showrooms API error: $errorMessage');
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch nearby showrooms (Status: ${response.statusCode})');
+      }
+    } on SocketException catch (e) {
+      debugPrint('Nearby showrooms network error: ${e.toString()}');
+      return ApiResponse.error('Network error: Please check your internet connection');
+    } on FormatException catch (e) {
+      debugPrint('Nearby showrooms format error: ${e.toString()}');
+      return ApiResponse.error('Invalid response format from server');
+    } on TimeoutException catch (e) {
+      debugPrint('Nearby showrooms timeout error: ${e.toString()}');
+      return ApiResponse.error('Request timeout: Please try again');
+    } catch (e) {
+      debugPrint('Nearby showrooms unexpected error: ${e.toString()}');
+      debugPrint('Error type: ${e.runtimeType}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

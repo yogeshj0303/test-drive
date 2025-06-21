@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'cars_screen.dart';
 import 'search_screen.dart';
 import '../../services/api_service.dart';
@@ -15,14 +17,143 @@ class ShowroomsScreen extends StatefulWidget {
 class _ShowroomsScreenState extends State<ShowroomsScreen> {
   final ApiService _apiService = ApiService();
   List<Showroom> _showrooms = [];
+  List<Showroom> _filteredShowrooms = [];
   Map<int, int> _carCounts = {}; // Store car counts for each showroom
   bool _isLoading = true;
+  bool _isLocationLoading = false;
   String? _errorMessage;
+  String? _currentCity;
+  Position? _currentPosition;
+  String? _currentPincode;
+  String _filterType = 'all'; // 'all', 'nearby'
 
   @override
   void initState() {
     super.initState();
     _fetchShowrooms();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocationLoading = true;
+    });
+
+    try {
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _isLocationLoading = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLocationLoading = false;
+        });
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentPosition = position;
+        _isLocationLoading = false;
+      });
+
+      // Get city name and pincode from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        setState(() {
+          _currentCity = placemarks.first.locality ?? placemarks.first.subAdministrativeArea;
+          _currentPincode = placemarks.first.postalCode;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLocationLoading = false;
+      });
+    }
+  }
+
+  void _applyFilter(String filterType) async {
+    setState(() {
+      _filterType = filterType;
+      _errorMessage = null; // Clear previous errors
+    });
+    
+    if (filterType == 'all') {
+      setState(() {
+        _filteredShowrooms = List.from(_showrooms);
+      });
+    } else if (filterType == 'nearby') {
+      if (_currentPincode != null && _currentPincode!.isNotEmpty) {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = null;
+        });
+        
+        try {
+          final response = await _apiService.getNearbyShowrooms(_currentPincode!);
+          
+          if (response.success) {
+            setState(() {
+              _filteredShowrooms = response.data ?? [];
+              _isLoading = false;
+            });
+            
+            // Fetch car counts for nearby showrooms
+            if (_filteredShowrooms.isNotEmpty) {
+              _fetchCarCountsForShowrooms(_filteredShowrooms);
+            }
+          } else {
+            setState(() {
+              _errorMessage = response.message ?? 'Failed to fetch nearby showrooms';
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          setState(() {
+            _errorMessage = 'Failed to fetch nearby showrooms: ${e.toString()}';
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Location not available. Please enable location services and try again.';
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchCarCountsForShowrooms(List<Showroom> showrooms) async {
+    for (final showroom in showrooms) {
+      try {
+        final carResponse = await _apiService.getCarsByShowroom(showroom.id);
+        if (carResponse.success) {
+          setState(() {
+            _carCounts[showroom.id] = carResponse.data?.length ?? 0;
+          });
+        }
+      } catch (e) {
+        // If car count fetch fails, set to 0
+        setState(() {
+          _carCounts[showroom.id] = 0;
+        });
+      }
+    }
   }
 
   Future<void> _fetchShowrooms() async {
@@ -37,11 +168,12 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
       if (response.success) {
         setState(() {
           _showrooms = response.data ?? [];
+          _filteredShowrooms = List.from(_showrooms);
           _isLoading = false;
         });
         
         // Fetch car counts for each showroom
-        _fetchCarCounts();
+        _fetchCarCountsForShowrooms(_showrooms);
       } else {
         setState(() {
           _errorMessage = response.message;
@@ -53,24 +185,6 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
         _errorMessage = 'An unexpected error occurred';
         _isLoading = false;
       });
-    }
-  }
-
-  Future<void> _fetchCarCounts() async {
-    for (final showroom in _showrooms) {
-      try {
-        final carResponse = await _apiService.getCarsByShowroom(showroom.id);
-        if (carResponse.success) {
-          setState(() {
-            _carCounts[showroom.id] = carResponse.data?.length ?? 0;
-          });
-        }
-      } catch (e) {
-        // If car count fetch fails, set to 0
-        setState(() {
-          _carCounts[showroom.id] = 0;
-        });
-      }
     }
   }
 
@@ -179,6 +293,31 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
               ),
             ),
           ),
+          // Filter Section
+          if (!_isLoading && _showrooms.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildFilterButton(
+                      title: 'All',
+                      isSelected: _filterType == 'all',
+                      onTap: () => _applyFilter('all'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildFilterButton(
+                      title: 'Nearby',
+                      isSelected: _filterType == 'nearby',
+                      onTap: () => _applyFilter('nearby'),
+                      isLoading: _isLocationLoading,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Content
           Expanded(
             child: _buildContent(),
@@ -246,20 +385,22 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
       );
     }
 
-    if (_showrooms.isEmpty) {
+    if (_filteredShowrooms.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.store_outlined,
+              _filterType == 'nearby' ? Icons.location_off_rounded : Icons.store_outlined,
               size: 64,
               color: Colors.grey[400],
             ),
             const SizedBox(height: 16),
-            const Text(
-              'No showrooms available',
-              style: TextStyle(
+            Text(
+              _filterType == 'nearby' 
+                  ? 'No nearby showrooms found'
+                  : 'No showrooms available',
+              style: const TextStyle(
                 color: Color(0xFF666666),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -267,13 +408,29 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check back later for available showrooms',
+              _filterType == 'nearby'
+                  ? 'Try expanding your search area or check all showrooms'
+                  : 'Check back later for available showrooms',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
             ),
+            if (_filterType == 'nearby') ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => _applyFilter('all'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0095D9),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('View All Showrooms'),
+              ),
+            ],
           ],
         ),
       );
@@ -287,9 +444,9 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: _showrooms.length,
+      itemCount: _filteredShowrooms.length,
       itemBuilder: (context, index) {
-        final showroom = _showrooms[index];
+        final showroom = _filteredShowrooms[index];
         return _buildShowroomCard(showroom);
       },
     );
@@ -631,6 +788,69 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+    bool isLoading = false,
+  }) {
+    return Container(
+      height: 40,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected ? const Color(0xFF0095D9) : Colors.grey[100],
+          foregroundColor: isSelected ? Colors.white : Colors.grey[700],
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: isSelected ? const Color(0xFF0095D9) : Colors.grey[300]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isSelected ? Colors.white : const Color(0xFF0095D9),
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (title == 'Nearby') ...[
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 14,
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

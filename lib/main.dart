@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:varenium/screens/employee/location_tracking_screen.dart';
+import 'package:varenium/screens/user/cars_screen.dart';
 import 'package:varenium/screens/user/user_home_screen.dart';
 import 'screens/user/user_login_screen.dart';
 import 'screens/employee/employee_login_screen.dart';
 import 'screens/splash_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const VareniumApp());
 }
 
@@ -47,8 +49,8 @@ class VareniumApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      // home: LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
       home: const SplashScreen(),
+      // home: LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
     );
   }
 }

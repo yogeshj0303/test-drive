@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../models/user_model.dart';
+import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
 import 'package:varenium/screens/user/user_home_screen.dart';
 import 'user_signup_screen.dart';
 
@@ -18,6 +21,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
 
   @override
   void initState() {
@@ -55,14 +61,86 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const UserHomeScreen(),
-        ),
-      );
-      setState(() => _isLoading = false);
+      
+      try {
+        final response = await _apiService.login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        
+        if (response.success && response.data != null) {
+          // Save user data and login state to secure storage
+          await _storageService.saveUser(response.data!.user);
+          await _storageService.setLoggedIn(true);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            
+            // Navigate to user home screen
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserHomeScreen(),
+              ),
+              (route) => false,
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('An error occurred: ${e.toString()}')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -96,7 +174,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     
     return Container(
       constraints: BoxConstraints(
-        maxWidth: 1200,
+        maxWidth: 1000,
         maxHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
       ),
       child: Row(
@@ -108,14 +186,14 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
               width: double.infinity,
               height: double.infinity,
               padding: EdgeInsets.symmetric(
-                vertical: size.height * 0.05,
-                horizontal: 40,
+                vertical: size.height * 0.03,
+                horizontal: 30,
               ),
               decoration: BoxDecoration(
                 color: primaryBlue,
                 borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
+                  topRight: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
               child: FadeTransition(
@@ -125,10 +203,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: size.height * 0.15,
+                        height: size.height * 0.12,
                         child: _buildLogo(),
                       ),
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.03),
                       Text(
                         'Welcome to Varenium',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -145,9 +223,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           ],
                         ),
                       ),
-                      SizedBox(height: size.height * 0.02),
+                      SizedBox(height: size.height * 0.015),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: Text(
                           'Your trusted platform for secure transactions',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -165,7 +243,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.03),
                       _buildFeatureList(),
                     ],
                   ),
@@ -179,8 +257,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
             child: Container(
               height: double.infinity,
               padding: EdgeInsets.symmetric(
-                horizontal: 48,
-                vertical: size.height * 0.05,
+                horizontal: 36,
+                vertical: size.height * 0.03,
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -209,14 +287,14 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-              vertical: size.height * 0.04,
-              horizontal: 24,
+              vertical: size.height * 0.03,
+              horizontal: 20,
             ),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
             ),
             child: FadeTransition(
@@ -225,10 +303,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
-                    height: size.height * 0.12,
+                    height: size.height * 0.10,
                     child: _buildLogo(),
                   ),
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: size.height * 0.015),
                   Text(
                     'Welcome to Varenium',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -245,7 +323,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: size.height * 0.01),
+                  SizedBox(height: size.height * 0.008),
                   Text(
                     'Your trusted platform',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -269,8 +347,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: size.height * 0.03,
+                horizontal: 20,
+                vertical: size.height * 0.02,
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -290,15 +368,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     return Hero(
       tag: 'logo',
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).primaryColor.withOpacity(0.15),
-              blurRadius: 30,
-              spreadRadius: 5,
+              blurRadius: 25,
+              spreadRadius: 3,
             ),
           ],
         ),
@@ -314,16 +392,16 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color darkGray = Color(0xFF242223);
     
     return Container(
-      padding: const EdgeInsets.all(36),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.08),
-            blurRadius: 30,
-            spreadRadius: 5,
-            offset: const Offset(0, 5),
+            blurRadius: 25,
+            spreadRadius: 3,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -352,7 +430,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Sign in to continue',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -361,7 +439,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 28),
             ],
           ),
           // Scrollable Form Section
@@ -375,22 +453,33 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   children: [
                     _buildInputField(
                       controller: _emailController,
-                      label: 'Email',
-                      hint: 'Enter your email',
-                      prefixIcon: Icons.email_outlined,
+                      label: 'Email or Mobile',
+                      hint: 'Enter your email or mobile number',
+                      prefixIcon: Icons.person_outline,
                       keyboardType: TextInputType.emailAddress,
                       accentColor: primaryBlue,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'Please enter your email or mobile number';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                          return 'Please enter a valid email';
+                        // Check if it's an email
+                        if (value.contains('@')) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                        } else {
+                          // Check if it's a valid mobile number
+                          if (value.length < 10) {
+                            return 'Mobile number must be at least 10 digits';
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                            return 'Mobile number must contain only digits';
+                          }
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildInputField(
                       controller: _passwordController,
                       label: 'Password',
@@ -421,7 +510,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -441,10 +530,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 50,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
@@ -452,14 +541,14 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                height: 24,
-                                width: 24,
+                                height: 20,
+                                width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -475,7 +564,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                               ),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
                     Center(
                       child: _buildSignUpSection(accentColor: primaryBlue),
                     ),
@@ -525,32 +614,32 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: accentColor,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
             width: 2,
@@ -559,8 +648,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 14,
+          vertical: 14,
         ),
       ),
       validator: validator,
@@ -616,9 +705,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     return Column(
       children: [
         _buildFeatureItem(Icons.security, 'Secure Transactions'),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _buildFeatureItem(Icons.speed, 'Fast Processing'),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _buildFeatureItem(Icons.support_agent, '24/7 Support'),
       ],
     );

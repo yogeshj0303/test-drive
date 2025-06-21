@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/storage_service.dart';
+import '../../services/api_service.dart';
+import '../../models/user_model.dart';
+import '../../main.dart';
 import 'personal_info_screen.dart';
 import 'change_password_screen.dart';
 import 'about_screen.dart';
@@ -7,22 +11,56 @@ import 'about_screen.dart';
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
 
+  // Static cache to store user data across instances
+  static User? _cachedUser;
+  static int _cachedTestDriveCount = 0;
+  static DateTime? _lastCacheTime;
+  static const Duration _cacheValidDuration = Duration(minutes: 5);
+
+  // Method to clear cache (call this when user data is updated)
+  static void clearCache() {
+    _cachedUser = null;
+    _cachedTestDriveCount = 0;
+    _lastCacheTime = null;
+  }
+
+  // Getter methods to access cached data
+  static User? get cachedUser => _cachedUser;
+  static int get cachedTestDriveCount => _cachedTestDriveCount;
+  static DateTime? get lastCacheTime => _lastCacheTime;
+  static Duration get cacheValidDuration => _cacheValidDuration;
+
+  // Method to update cache
+  static void updateCache(User user, int testDriveCount) {
+    _cachedUser = user;
+    _cachedTestDriveCount = testDriveCount;
+    _lastCacheTime = DateTime.now();
+  }
+
   @override
   State<UserProfileScreen> createState() => _UserProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> with SingleTickerProviderStateMixin {
+class _UserProfileScreenState extends State<UserProfileScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   bool _isDarkMode = false;
+  final StorageService _storageService = StorageService();
+  final ApiService _apiService = ApiService();
+
+  User? _user;
+  bool _isLoading = true;
+  String? _errorMessage;
+  int _testDriveCount = 0;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
@@ -35,6 +73,67 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       curve: Curves.easeOutCubic,
     ));
     _animationController.forward();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    // Check if we have valid cached data
+    if (UserProfileScreen.cachedUser != null && UserProfileScreen.lastCacheTime != null) {
+      final timeSinceLastCache = DateTime.now().difference(UserProfileScreen.lastCacheTime!);
+      if (timeSinceLastCache < UserProfileScreen.cacheValidDuration) {
+        setState(() {
+          _user = UserProfileScreen.cachedUser;
+          _testDriveCount = UserProfileScreen.cachedTestDriveCount;
+          _isLoading = false;
+        });
+        return;
+      }
+    }
+
+    try {
+      final currentUser = await _storageService.getUser();
+      if (currentUser != null) {
+        // Load user profile and test drive count in parallel
+        final profileResponse = await _apiService.getUserProfile(currentUser.id);
+        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        
+        if (profileResponse.success && profileResponse.data != null) {
+          // Cache the data
+          UserProfileScreen.updateCache(
+            profileResponse.data!,
+            testDrivesResponse.success ? testDrivesResponse.data!.length : 0,
+          );
+          
+          setState(() {
+            _user = UserProfileScreen.cachedUser;
+            _testDriveCount = UserProfileScreen.cachedTestDriveCount;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = profileResponse.message;
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'No user data found';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load profile: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Method to refresh data and update cache
+  Future<void> _refreshProfile() async {
+    // Clear cache to force fresh data
+    UserProfileScreen.clearCache();
+    await _loadUserProfile();
   }
 
   @override
@@ -47,139 +146,223 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Stack(
-              clipBehavior: Clip.none,
+
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: AppTheme.spacingS),
+              Text(
+                'Loading profile...',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingM),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  height: size.height * 0.35,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.primaryContainer,
-                        theme.colorScheme.secondaryContainer,
-                      ],
-                    ),
-                  ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Positioned(
-                        right: -size.width * 0.1,
-                        top: -size.width * 0.1,
-                        child: Container(
-                          width: size.width * 0.8,
-                          height: size.width * 0.8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                    ],
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(height: AppTheme.spacingS),
+                Text(
+                  'Error Loading Profile',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Positioned(
-                  left: AppTheme.spacingM,
-                  right: AppTheme.spacingM,
-                  top: size.height * 0.1,
-                  child: _buildProfileHeader(context),
+                const SizedBox(height: AppTheme.spacingXS),
+                Text(
+                  _errorMessage!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppTheme.spacingM),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isLoading = true;
+                      _errorMessage = null;
+                    });
+                    _refreshProfile();
+                  },
+                  child: const Text('Retry'),
                 ),
               ],
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: size.height * 0.15,
-                left: AppTheme.spacingM,
-                right: AppTheme.spacingM,
-                bottom: AppTheme.spacingL,
+        ),
+      );
+    }
+
+    if (_user == null) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            'No user data available',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: _refreshProfile,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    height: size.height * 0.28,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primaryContainer,
+                          theme.colorScheme.secondaryContainer,
+                        ],
+                      ),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Positioned(
+                          right: -size.width * 0.1,
+                          top: -size.width * 0.1,
+                          child: Container(
+                            width: size.width * 0.8,
+                            height: size.width * 0.8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: AppTheme.spacingM,
+                    right: AppTheme.spacingM,
+                    top: size.height * 0.08,
+                    child: _buildProfileHeader(context),
+                  ),
+                ],
               ),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                borderRadius: BorderRadius.circular(2),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: size.height * 0.12,
+                  left: AppTheme.spacingM,
+                  right: AppTheme.spacingM,
+                  bottom: AppTheme.spacingM,
+                ),
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: AppTheme.spacingS),
-                            Text(
-                              'Activity',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.2,
-                                height: 1.2,
+                              const SizedBox(width: AppTheme.spacingXS),
+                              Text(
+                                'Activity',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                  height: 1.2,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      _buildStatsSection(context),
-                      const SizedBox(height: AppTheme.spacingXL),
-                      Container(
-                        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                borderRadius: BorderRadius.circular(2),
+                        _buildStatsSection(context),
+                        const SizedBox(height: AppTheme.spacingL),
+                        Container(
+                          margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: AppTheme.spacingS),
-                            Text(
-                              'Settings',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.2,
-                                height: 1.2,
+                              const SizedBox(width: AppTheme.spacingXS),
+                              Text(
+                                'Settings',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                  height: 1.2,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      _buildSettingsSection(context),
-                      const SizedBox(height: AppTheme.spacingXL),
-                      _buildLogoutButton(context),
-                    ],
+                        _buildSettingsSection(context),
+                        const SizedBox(height: AppTheme.spacingL),
+                        _buildLogoutButton(context),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
@@ -200,7 +383,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         color: Colors.transparent,
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingL),
+          padding: const EdgeInsets.all(AppTheme.spacingM),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -220,7 +403,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                              color: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.5),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -232,8 +416,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                         ),
                       ),
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
@@ -255,7 +439,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                         child: Center(
                           child: Icon(
                             Icons.person,
-                            size: 60,
+                            size: 50,
                             color: theme.colorScheme.onPrimary,
                           ),
                         ),
@@ -264,11 +448,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
-                          onTap: () => _showEditProfileDialog(context),
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const PersonalInfoScreen(),
+                              ),
+                            );
+                            // Refresh profile data when returning from personal info screen
+                            if (result == true) {
+                              _refreshProfile();
+                            }
+                          },
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                              color: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.5),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -281,13 +478,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingM),
                 ],
               ),
-              const SizedBox(height: AppTheme.spacingL),
+              const SizedBox(height: AppTheme.spacingM),
               Text(
-                'John Doe',
-                style: theme.textTheme.headlineSmall?.copyWith(
+                _user!.name,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -295,22 +492,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
               ),
               const SizedBox(height: AppTheme.spacingXS),
               Text(
-                'john.doe@example.com',
-                style: theme.textTheme.bodyLarge?.copyWith(
+                _user!.email,
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   letterSpacing: 0.2,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppTheme.spacingM),
+              const SizedBox(height: AppTheme.spacingS),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingM,
-                  vertical: AppTheme.spacingS,
+                  horizontal: AppTheme.spacingS,
+                  vertical: AppTheme.spacingXS,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: theme.colorScheme.primaryContainer,
                     width: 1,
@@ -321,13 +518,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                   children: [
                     Icon(
                       Icons.location_on_outlined,
-                      size: 16,
+                      size: 14,
                       color: theme.colorScheme.primary,
                     ),
                     const SizedBox(width: AppTheme.spacingXS),
                     Text(
-                      'Mumbai, Maharashtra',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      '${_user!.city}, ${_user!.state}',
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -344,21 +541,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
 
   Widget _buildStatsSection(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 3,
-      mainAxisSpacing: AppTheme.spacingS,
-      crossAxisSpacing: AppTheme.spacingS,
-      childAspectRatio: 0.85,
+      mainAxisSpacing: AppTheme.spacingXS,
+      crossAxisSpacing: AppTheme.spacingXS,
+      childAspectRatio: 0.9,
       padding: EdgeInsets.zero,
       children: [
         _buildStatCard(
           context,
           'Test Drives',
-          '3',
+          '$_testDriveCount',
           Icons.directions_car_outlined,
           theme.colorScheme.primary,
         ),
@@ -372,12 +568,27 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         _buildStatCard(
           context,
           'Member Since',
-          'Mar 2024',
+          _formatMemberSince(_user!.createdAt),
           Icons.calendar_today_outlined,
           AppTheme.successColor,
         ),
       ],
     );
+  }
+
+  String _formatMemberSince(DateTime createdAt) {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inDays < 30) {
+      return '${difference.inDays} days';
+    } else if (difference.inDays < 365) {
+      final months = (difference.inDays / 30).floor();
+      return '${months} month${months > 1 ? 's' : ''}';
+    } else {
+      final years = (difference.inDays / 365).floor();
+      return '${years} year${years > 1 ? 's' : ''}';
+    }
   }
 
   Widget _buildStatCard(
@@ -388,16 +599,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     Color color,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
@@ -408,23 +619,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       child: GestureDetector(
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 18),
+                child: Icon(icon, color: color, size: 16),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 value,
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -432,7 +643,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -459,22 +670,28 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           {
             'icon': Icons.person_outline,
             'title': 'Personal Information',
-            'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PersonalInfoScreen(),
-              ),
-            ),
+            'onTap': () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PersonalInfoScreen(),
+                ),
+              );
+              // Refresh profile data when returning from personal info screen
+              if (result == true) {
+                _refreshProfile();
+              }
+            },
           },
           {
             'icon': Icons.lock_outline,
             'title': 'Change Password',
             'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ChangePasswordScreen(),
-              ),
-            ),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChangePasswordScreen(),
+                  ),
+                ),
           },
         ],
       },
@@ -490,11 +707,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
             'icon': Icons.info_outline,
             'title': 'About',
             'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AboutScreen(),
-              ),
-            ),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AboutScreen(),
+                  ),
+                ),
           },
         ],
       },
@@ -508,77 +725,77 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           children: [
             Padding(
               padding: const EdgeInsets.only(
-                left: AppTheme.spacingS,
-                bottom: AppTheme.spacingS,
+                left: AppTheme.spacingXS,
+                bottom: AppTheme.spacingXS,
               ),
               child: Text(
                 group['title'] as String,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
               ),
             ),
-            Card(
-              elevation: 0,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                children: (group['items'] as List).map((item) {
-                  final isLast = item == (group['items'] as List).last;
-                  
-                  return Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppTheme.spacingL,
-                          vertical: AppTheme.spacingS,
-                        ),
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            item['icon'] as IconData,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                        ),
-                        title: Text(
-                          item['title'] as String,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        trailing: item['trailing'] ?? (item['onTap'] != null
+            ...(group['items'] as List).map((item) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingXS),
+                child: Card(
+                  color: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: ListTile(
+                    selectedColor: Colors.transparent,
+                    selectedTileColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    splashColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppTheme.spacingM,
+                      vertical: AppTheme.spacingXS,
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer
+                            .withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        color: theme.colorScheme.primary,
+                        size: 18,
+                      ),
+                    ),
+                    title: Text(
+                      item['title'] as String,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    trailing: item['trailing'] ??
+                        (item['onTap'] != null
                             ? Icon(
                                 Icons.chevron_right,
                                 color: theme.colorScheme.onSurfaceVariant,
+                                size: 20,
                               )
                             : null),
-                        onTap: item['onTap'] as VoidCallback?,
-                      ),
-                      if (!isLast) Divider(
-                        height: 1,
-                        indent: 72,
-                        endIndent: 16,
-                        color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
+                    onTap: item['onTap'] as VoidCallback?,
+                  ),
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: AppTheme.spacingM),
           ],
         );
       }).toList(),
@@ -587,7 +804,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
 
   Widget _buildLogoutButton(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         Text(
@@ -597,12 +814,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
             letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(height: AppTheme.spacingL),
+        const SizedBox(height: AppTheme.spacingM),
         Container(
           width: double.infinity,
-          height: 56,
+          height: 48,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               colors: [
                 theme.colorScheme.error,
@@ -620,7 +837,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               onTap: () => _showLogoutDialog(context),
               child: Center(
                 child: Row(
@@ -629,12 +846,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                     Icon(
                       Icons.logout,
                       color: theme.colorScheme.onError,
-                      size: 20,
+                      size: 18,
                     ),
-                    const SizedBox(width: AppTheme.spacingS),
+                    const SizedBox(width: AppTheme.spacingXS),
                     Text(
                       'Logout',
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onError,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -650,129 +867,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     );
   }
 
-  void _showEditProfileDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: AppTheme.spacingS),
-              width: 32,
-              height: 3,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              child: Column(
-                children: [
-                  Text(
-                    'Edit Profile',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  _buildEditOption(
-                    context,
-                    Icons.camera_alt_outlined,
-                    'Change Profile Picture',
-                    () {
-                      Navigator.pop(context);
-                      // TODO: Implement image picker
-                    },
-                  ),
-                  _buildEditOption(
-                    context,
-                    Icons.person_outline,
-                    'Edit Name',
-                    () {
-                      Navigator.pop(context);
-                      // TODO: Show name edit dialog
-                    },
-                  ),
-                  _buildEditOption(
-                    context,
-                    Icons.email_outlined,
-                    'Edit Email',
-                    () {
-                      Navigator.pop(context);
-                      // TODO: Show email edit dialog
-                    },
-                  ),
-                  _buildEditOption(
-                    context,
-                    Icons.phone_outlined,
-                    'Edit Phone',
-                    () {
-                      Navigator.pop(context);
-                      // TODO: Show phone edit dialog
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditOption(
-    BuildContext context,
-    IconData icon,
-    String title,
-    VoidCallback onTap,
-  ) {
-    final theme = Theme.of(context);
-    
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingM,
-        vertical: AppTheme.spacingXS,
-      ),
-      leading: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          icon,
-          color: theme.colorScheme.primary,
-        ),
-      ),
-      title: Text(
-        title,
-        style: theme.textTheme.titleMedium?.copyWith(
-          letterSpacing: 0.2,
-        ),
-      ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-      onTap: onTap,
-    );
-  }
-
   void _showLogoutDialog(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -804,9 +901,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
             ),
           ),
           FilledButton(
-            onPressed: () {
-              // TODO: Implement logout logic
+            onPressed: () async {
               Navigator.pop(context);
+              await _performLogout(context);
             },
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
@@ -822,4 +919,83 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       ),
     );
   }
-} 
+
+  Future<void> _performLogout(BuildContext context) async {
+    try {
+      // Clear profile cache
+      UserProfileScreen.clearCache();
+      
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Clear all stored data
+      await _storageService.clearAllData();
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                const Text('Logged out successfully'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Navigate to auth screen
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const AuthScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Logout failed: ${e.toString()}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+}

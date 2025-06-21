@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'request_test_drive_screen.dart';
+import 'cars_screen.dart';
 import 'search_screen.dart';
+import '../../services/api_service.dart';
+import '../../services/api_config.dart';
+import '../../models/showroom_model.dart';
 
 class ShowroomsScreen extends StatefulWidget {
   const ShowroomsScreen({super.key});
@@ -10,85 +13,65 @@ class ShowroomsScreen extends StatefulWidget {
 }
 
 class _ShowroomsScreenState extends State<ShowroomsScreen> {
-  // Sample showroom data
-  final List<Map<String, dynamic>> _allShowrooms = [
-    {
-      'name': 'Tata Motors',
-      'location': 'Andheri East, Mumbai',
-      'rating': '4.5',
-      'distance': '2.3 km',
-      'cars': ['Tata Nexon EV', 'Tata Punch', 'Tata Harrier'],
-      'phone': '+91 98765 43210',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Mahindra Auto',
-      'location': 'Powai, Mumbai',
-      'rating': '4.3',
-      'distance': '4.1 km',
-      'cars': ['Mahindra XUV700', 'Mahindra Thar', 'Mahindra Scorpio'],
-      'phone': '+91 98765 43211',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Hyundai Motors',
-      'location': 'Vikhroli, Mumbai',
-      'rating': '4.7',
-      'distance': '3.2 km',
-      'cars': ['Hyundai Creta', 'Hyundai Venue', 'Hyundai i20'],
-      'phone': '+91 98765 43212',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Maruti Suzuki',
-      'location': 'Ghatkopar, Mumbai',
-      'rating': '4.2',
-      'distance': '5.8 km',
-      'cars': ['Maruti Suzuki Baleno', 'Maruti Swift', 'Maruti Brezza'],
-      'phone': '+91 98765 43213',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Kia Motors',
-      'location': 'Bhandup, Mumbai',
-      'rating': '4.6',
-      'distance': '6.5 km',
-      'cars': ['Kia Seltos', 'Kia Sonet', 'Kia Carens'],
-      'phone': '+91 98765 43214',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Honda Cars',
-      'location': 'Kandivali, Mumbai',
-      'rating': '4.4',
-      'distance': '7.2 km',
-      'cars': ['Honda City', 'Honda Amaze', 'Honda WR-V'],
-      'phone': '+91 98765 43215',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Toyota Motors',
-      'location': 'Borivali, Mumbai',
-      'rating': '4.8',
-      'distance': '8.1 km',
-      'cars': ['Toyota Innova', 'Toyota Fortuner', 'Toyota Camry'],
-      'phone': '+91 98765 43216',
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'MG Motors',
-      'location': 'Thane, Mumbai',
-      'rating': '4.1',
-      'distance': '9.3 km',
-      'cars': ['MG Hector', 'MG ZS EV', 'MG Astor'],
-      'phone': '+91 98765 43217',
-      'image': 'assets/images/varenium.png',
-    },
-  ];
+  final ApiService _apiService = ApiService();
+  List<Showroom> _showrooms = [];
+  Map<int, int> _carCounts = {}; // Store car counts for each showroom
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _fetchShowrooms();
+  }
+
+  Future<void> _fetchShowrooms() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _apiService.getShowrooms();
+      
+      if (response.success) {
+        setState(() {
+          _showrooms = response.data ?? [];
+          _isLoading = false;
+        });
+        
+        // Fetch car counts for each showroom
+        _fetchCarCounts();
+      } else {
+        setState(() {
+          _errorMessage = response.message;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCarCounts() async {
+    for (final showroom in _showrooms) {
+      try {
+        final carResponse = await _apiService.getCarsByShowroom(showroom.id);
+        if (carResponse.success) {
+          setState(() {
+            _carCounts[showroom.id] = carResponse.data?.length ?? 0;
+          });
+        }
+      } catch (e) {
+        // If car count fetch fails, set to 0
+        setState(() {
+          _carCounts[showroom.id] = 0;
+        });
+      }
+    }
   }
 
   @override
@@ -115,6 +98,13 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (!_isLoading)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1A1A1A)),
+              onPressed: _fetchShowrooms,
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -189,209 +179,457 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
               ),
             ),
           ),
-          // Showrooms Grid
+          // Content
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _allShowrooms.length,
-              itemBuilder: (context, index) {
-                final showroom = _allShowrooms[index];
-                return _buildShowroomCard(showroom);
-              },
-            ),
+            child: _buildContent(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildShowroomCard(Map<String, dynamic> showroom) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Colors.grey[200]!,
-          width: 1,
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Loading showrooms...',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchShowrooms,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0095D9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_showrooms.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.store_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No showrooms available',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check back later for available showrooms',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: _showrooms.length,
+      itemBuilder: (context, index) {
+        final showroom = _showrooms[index];
+        return _buildShowroomCard(showroom);
+      },
+    );
+  }
+
+  Widget _buildShowroomCard(Showroom showroom) {
+    return Card(
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
       child: InkWell(
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => RequestTestDriveScreen(
-                showroomName: showroom['name'],
-                availableCars: List<String>.from(showroom['cars']),
+              builder: (context) => CarsScreen(
+                showroomName: showroom.name,
+                availableCars: [], // Will be populated when cars API is available
+                showroomLocation: showroom.locationDisplay,
+                showroomRating: showroom.ratting.toString(), // Use actual rating from API
+                showroomDistance: 'N/A', // Will be calculated based on user location
+                showroomId: showroom.id,
               ),
             ),
           );
         },
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image section
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                Colors.grey[50]!,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header section with image and rating
+              Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF0095D9).withOpacity(0.1),
-                    const Color(0xFF0095D9).withOpacity(0.05),
+                child: Stack(
+                  children: [
+                    // Showroom image
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                      child: showroom.showroomImage != null
+                          ? Image.network(
+                              '${ApiConfig.baseUrl}/${showroom.showroomImage!}',
+                              width: double.infinity,
+                              height: 120,
+                              fit: BoxFit.fill,
+                              alignment: Alignment.center,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.15),
+                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 45,
+                                      height: 45,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0095D9).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.store_rounded,
+                                        color: Color(0xFF0095D9),
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.15),
+                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              width: double.infinity,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF0095D9).withOpacity(0.15),
+                                    const Color(0xFF0095D9).withOpacity(0.08),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 45,
+                                  height: 45,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0095D9).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.store_rounded,
+                                    color: Color(0xFF0095D9),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                    // Rating badge
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFFFD700),
+                              size: 11,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              showroom.ratting.toString(), // Use actual rating from API
+                              style: TextStyle(
+                                color: Colors.grey[800],
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0095D9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Colors.white,
-                            size: 10,
+              // Content section
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Showroom name
+                      Flexible(
+                        child: Text(
+                          showroom.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A1A),
+                            height: 1.2,
                           ),
-                          const SizedBox(width: 2),
-                          Text(
-                            showroom['rating'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Location
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              size: 10,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              showroom.locationDisplay,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Content section
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      showroom['name'],
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A1A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 11,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            showroom['location'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[600],
+                      const SizedBox(height: 3),
+                      // Available cars
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            child: Icon(
+                              Icons.directions_car_rounded,
+                              size: 10,
+                              color: Colors.grey[700],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.directions_car_rounded,
-                          size: 11,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${showroom['cars'].length} cars',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          showroom['distance'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 26,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RequestTestDriveScreen(
-                                showroomName: showroom['name'],
-                                availableCars: List<String>.from(showroom['cars']),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Available cars',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0095D9),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
                           ),
-                        ),
-                        child: const Text(
-                          'Book Drive',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0095D9).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              _carCounts[showroom.id]?.toString() ?? 'N/A',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: const Color(0xFF0095D9),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Book Drive button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 26,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CarsScreen(
+                                  showroomName: showroom.name,
+                                  availableCars: [], // Will be populated when cars API is available
+                                  showroomLocation: showroom.locationDisplay,
+                                  showroomRating: showroom.ratting.toString(), // Use actual rating from API
+                                  showroomDistance: 'N/A', // Will be calculated based on user location
+                                  showroomId: showroom.id,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0095D9),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Book Drive',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

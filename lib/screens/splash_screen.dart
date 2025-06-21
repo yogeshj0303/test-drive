@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/storage_service.dart';
 import '../main.dart';
+import 'user/user_home_screen.dart';
+import 'employee/employee_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,6 +15,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  final StorageService _storageService = StorageService();
 
   @override
   void initState() {
@@ -37,12 +41,50 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate to auth screen after animation
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const AuthScreen()),
-      );
-    });
+    // Check auto-login status after animation
+    _checkAutoLogin();
+  }
+
+  Future<void> _checkAutoLogin() async {
+    try {
+      // Wait for animation to complete
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (mounted) {
+        // Check if user has a valid session
+        final hasValidSession = await _storageService.hasValidSession();
+        
+        debugPrint('Auto-login check: hasValidSession=$hasValidSession');
+        
+        if (hasValidSession) {
+          // User has valid session, get user data
+          final user = await _storageService.getUser();
+          if (user != null) {
+            debugPrint('Auto-login successful for user: ${user.name}');
+            
+            // Navigate to user home screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const UserHomeScreen()),
+            );
+            return;
+          }
+        }
+        
+        // User is not logged in, navigate to auth screen
+        debugPrint('No valid session found, navigating to auth screen');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AuthScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint('Auto-login check error: $e');
+      // On error, navigate to auth screen
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AuthScreen()),
+        );
+      }
+    }
   }
 
   @override
@@ -107,6 +149,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: primaryBlue.withOpacity(0.8),
                     letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Loading indicator
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
                   ),
                 ),
               ],

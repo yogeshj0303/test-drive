@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -17,6 +19,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
 
   @override
   void dispose() {
@@ -80,8 +86,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your current password';
                     }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
@@ -101,17 +107,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a new password';
                     }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    if (!value.contains(RegExp(r'[A-Z]'))) {
-                      return 'Password must contain at least one uppercase letter';
-                    }
-                    if (!value.contains(RegExp(r'[0-9]'))) {
-                      return 'Password must contain at least one number';
-                    }
-                    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-                      return 'Password must contain at least one special character';
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
@@ -144,20 +141,31 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   width: double.infinity,
                   height: 52,
                   child: FilledButton(
-                    onPressed: _changePassword,
+                    onPressed: _isLoading ? null : _changePassword,
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: Text(
-                      'Change Password',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Change Password',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -292,22 +300,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           const SizedBox(height: AppTheme.spacingXS),
           _buildRequirementItem(
             context,
-            'At least 8 characters long',
-            Icons.check_circle_outline,
-          ),
-          _buildRequirementItem(
-            context,
-            'Contains at least one uppercase letter',
-            Icons.check_circle_outline,
-          ),
-          _buildRequirementItem(
-            context,
-            'Contains at least one number',
-            Icons.check_circle_outline,
-          ),
-          _buildRequirementItem(
-            context,
-            'Contains at least one special character',
+            'At least 6 characters long',
             Icons.check_circle_outline,
           ),
         ],
@@ -350,26 +343,78 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  void _changePassword() {
+  void _changePassword() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement password change logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Password changed successfully',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onPrimary,
-              letterSpacing: 0.2,
-            ),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // Get current user from storage
+        final currentUser = await _storageService.getUser();
+        if (currentUser == null) {
+          _showErrorSnackBar('User session not found. Please login again.');
+          return;
+        }
+
+        // Call API to change password
+        final response = await _apiService.changePassword(
+          currentUser.id,
+          _currentPasswordController.text,
+          _newPasswordController.text,
+        );
+
+        if (response.success) {
+          _showSuccessSnackBar(response.message ?? 'Password changed successfully');
+          Navigator.pop(context);
+        } else {
+          _showErrorSnackBar(response.message ?? 'Failed to change password');
+        }
+      } catch (e) {
+        _showErrorSnackBar('An unexpected error occurred: ${e.toString()}');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
+            letterSpacing: 0.2,
           ),
         ),
-      );
-      Navigator.pop(context);
-    }
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+            letterSpacing: 0.2,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
   }
 } 

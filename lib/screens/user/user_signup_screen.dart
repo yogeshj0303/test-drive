@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../models/user_model.dart';
+import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
 
 class UserSignupScreen extends StatefulWidget {
   const UserSignupScreen({super.key});
@@ -13,12 +16,21 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _districtController = TextEditingController();
+  final _pincodeController = TextEditingController();
+  
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
 
   @override
   void initState() {
@@ -51,6 +63,11 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _mobileController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _districtController.dispose();
+    _pincodeController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -58,9 +75,92 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
   Future<void> _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      // TODO: Implement actual signup logic
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
+      
+      try {
+        final signupRequest = SignupRequest(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          mobile: _mobileController.text.trim(),
+          city: _cityController.text.trim(),
+          state: _stateController.text.trim(),
+          district: _districtController.text.trim(),
+          pincode: _pincodeController.text.trim(),
+        );
+
+        final response = await _apiService.signup(signupRequest);
+        
+        if (response.success && response.data != null) {
+          // Save user data and token to secure storage
+          await _storageService.saveUser(response.data!);
+          await _storageService.setLoggedIn(true);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            
+            // Navigate to user home screen
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/user-home',
+              (route) => false,
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('An error occurred: ${e.toString()}')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -250,6 +350,90 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         }
                         if (value != _passwordController.text) {
                           return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInputField(
+                      controller: _mobileController,
+                      label: 'Mobile',
+                      hint: 'Enter your mobile number',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      accentColor: primaryBlue,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your mobile number';
+                        }
+                        if (value.length < 10) {
+                          return 'Mobile number must be at least 10 digits';
+                        }
+                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                          return 'Mobile number must contain only digits';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInputField(
+                      controller: _cityController,
+                      label: 'City',
+                      hint: 'Enter your city',
+                      prefixIcon: Icons.location_on_outlined,
+                      accentColor: primaryBlue,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your city';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInputField(
+                      controller: _stateController,
+                      label: 'State',
+                      hint: 'Enter your state',
+                      prefixIcon: Icons.location_on_outlined,
+                      accentColor: primaryBlue,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your state';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInputField(
+                      controller: _districtController,
+                      label: 'District',
+                      hint: 'Enter your district',
+                      prefixIcon: Icons.location_on_outlined,
+                      accentColor: primaryBlue,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your district';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInputField(
+                      controller: _pincodeController,
+                      label: 'Pincode',
+                      hint: 'Enter your pincode',
+                      prefixIcon: Icons.location_on_outlined,
+                      keyboardType: TextInputType.number,
+                      accentColor: primaryBlue,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your pincode';
+                        }
+                        if (value.length != 6) {
+                          return 'Pincode must be 6 digits';
+                        }
+                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                          return 'Pincode must contain only digits';
                         }
                         return null;
                       },

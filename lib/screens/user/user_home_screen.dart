@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../services/storage_service.dart';
+import '../../services/api_service.dart';
+import '../../services/api_config.dart';
+import '../../models/showroom_model.dart';
+import '../../main.dart';
 import 'package:varenium/screens/user/cancel_test_drive_screen.dart';
+import 'cars_screen.dart';
 import 'request_test_drive_screen.dart';
 import 'test_drive_status_screen.dart';
 import 'review_form_screen.dart';
@@ -18,56 +24,20 @@ class UserHomeScreen extends StatefulWidget {
 class _UserHomeScreenState extends State<UserHomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
-
-  final List<Map<String, dynamic>> showrooms = [
-    {
-      'name': 'Tata Motors',
-      'location': 'Andheri East, Mumbai',
-      'rating': '4.5',
-      'distance': '2.3 km',
-      'cars': ['Tata Nexon EV', 'Tata Punch', 'Tata Harrier'],
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Mahindra Auto',
-      'location': 'Powai, Mumbai',
-      'rating': '4.3',
-      'distance': '4.1 km',
-      'cars': ['Mahindra XUV700', 'Mahindra Thar', 'Mahindra Scorpio'],
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Hyundai Motors',
-      'location': 'Vikhroli, Mumbai',
-      'rating': '4.7',
-      'distance': '3.2 km',
-      'cars': ['Hyundai Creta', 'Hyundai Venue', 'Hyundai i20'],
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Maruti Suzuki',
-      'location': 'Ghatkopar, Mumbai',
-      'rating': '4.2',
-      'distance': '5.8 km',
-      'cars': ['Maruti Suzuki Baleno', 'Maruti Swift', 'Maruti Brezza'],
-      'image': 'assets/images/varenium.png',
-    },
-    {
-      'name': 'Kia Motors',
-      'location': 'Bhandup, Mumbai',
-      'rating': '4.6',
-      'distance': '6.5 km',
-      'cars': ['Kia Seltos', 'Kia Sonet', 'Kia Carens'],
-      'image': 'assets/images/varenium.png',
-    },
-  ];
+  final StorageService _storageService = StorageService();
+  final ApiService _apiService = ApiService();
+  
+  List<Showroom> _showrooms = [];
+  Map<int, int> _carCounts = {}; // Store car counts for each showroom
+  bool _isLoadingShowrooms = true;
+  String? _showroomsErrorMessage;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _fetchShowrooms();
   }
-
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -81,6 +51,183 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     } else if (_scrollController.offset <= 0 && _isScrolled) {
       setState(() => _isScrolled = false);
     }
+  }
+
+  Future<void> _fetchShowrooms() async {
+    setState(() {
+      _isLoadingShowrooms = true;
+      _showroomsErrorMessage = null;
+    });
+
+    try {
+      final response = await _apiService.getShowrooms();
+      
+      if (response.success) {
+        setState(() {
+          _showrooms = response.data ?? [];
+          _isLoadingShowrooms = false;
+        });
+        
+        // Fetch car counts for each showroom
+        _fetchCarCounts();
+      } else {
+        setState(() {
+          _showroomsErrorMessage = response.message;
+          _isLoadingShowrooms = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _showroomsErrorMessage = 'An unexpected error occurred';
+        _isLoadingShowrooms = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCarCounts() async {
+    for (final showroom in _showrooms) {
+      try {
+        final carResponse = await _apiService.getCarsByShowroom(showroom.id);
+        if (carResponse.success) {
+          setState(() {
+            _carCounts[showroom.id] = carResponse.data?.length ?? 0;
+          });
+        }
+      } catch (e) {
+        // If car count fetch fails, set to 0
+        setState(() {
+          _carCounts[showroom.id] = 0;
+        });
+      }
+    }
+  }
+
+  Future<void> _performLogout(BuildContext context) async {
+    try {
+      // Clear profile cache
+      UserProfileScreen.clearCache();
+      
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Clear all stored data
+      await _storageService.clearAllData();
+      
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                const Text('Logged out successfully'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Navigate to auth screen
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const AuthScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Logout failed: ${e.toString()}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            letterSpacing: 0.2,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.blue,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performLogout(context);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -148,221 +295,214 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.grey[200]!,
-                    width: 1,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SearchScreen(),
-                        ),
-                      );
-                    },
+      body: RefreshIndicator(
+        onRefresh: _fetchShowrooms,
+        color: const Color(0xFF0095D9),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.search_rounded,
-                            color: Colors.grey[600],
-                            size: 22,
+                    border: Border.all(
+                      color: Colors.grey[200]!,
+                      width: 1,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SearchScreen(),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Search showrooms or locations...',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.search_rounded,
+                              color: Colors.grey[600],
+                              size: 22,
                             ),
-                          ),
-                          Container(
-                            height: 24,
-                            width: 1,
-                            color: Colors.grey[200],
-                          ),
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.mic_rounded,
-                            color: Colors.grey[600],
-                            size: 22,
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Search showrooms or locations...',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              height: 24,
+                              width: 1,
+                              color: Colors.grey[200],
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.mic_rounded,
+                              color: Colors.grey[600],
+                              size: 22,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Showrooms Section
-            _buildSectionHeader(
-              'Showrooms',
-              'Find nearby showrooms',
-              onViewAll: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ShowroomsScreen(),
-                  ),
-                );
-              },
-            ),
-            SizedBox(
-              height: 250,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: showrooms.length,
-                itemBuilder: (context, index) {
-                  final showroom = showrooms[index];
-                  return _buildShowroomCard(showroom);
-                },
-              ),
-            ),
-            // Quick Actions Section
-            _buildSectionHeader(
-              'Quick Actions',
-              'Manage your test drive requests and reviews',
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.1,
-                ),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  final actions = [
-                    {
-                      'title': 'Schedule Test Drive',
-                      'icon': Icons.directions_car_rounded,
-                      'color': Colors.orange,
-                      'onTap': () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RequestTestDriveScreen(
-                              showroomName: null,
-                              availableCars: null,
-                            ),
-                          ),
-                        );
-                      },
-                    },
-                    {
-                      'title': 'View Status',
-                      'icon': Icons.update_rounded,
-                      'color': Colors.green,
-                      'onTap': () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TestDriveStatusScreen(),
-                          ),
-                        );
-                      },
-                    },
-                    {
-                      'title': 'Cancel Test Drive',
-                      'icon': Icons.cancel_outlined,
-                      'color': Colors.red,
-                      'onTap': () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CancelTestDriveScreen(),
-                          ),
-                        );
-                      },
-                    },
-                    {
-                      'title': 'Write Review',
-                      'icon': Icons.rate_review_rounded,
-                      'color': Colors.purple,
-                      'onTap': () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ReviewFormScreen( ),
-                          ),
-                        );
-                      },
-                    },
-                  ];
-                  final action = actions[index];
-                  return SizedBox(
-                    height: 100,
-                    child: _buildActionCard(
-                      action['title'] as String,
-                      action['icon'] as IconData,
-                      action['color'] as Color,
-                      action['onTap'] as VoidCallback,
+              // Showrooms Section
+              _buildSectionHeader(
+                'Showrooms',
+                'Find nearby showrooms',
+                onViewAll: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ShowroomsScreen(),
                     ),
                   );
                 },
               ),
-            ),
-            // Promotional Banners Section
-            _buildSectionHeader(
-              'Special Offers',
-              'Exclusive deals and promotions for you',
-            ),
-            SizedBox(
-              height: 160,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildPromoBanner(
-                    'Summer Special',
-                    'Get up to ₹50,000 off on select models',
-                    Icons.local_offer_rounded,
-                    const Color(0xFFFF6B6B),
-                  ),
-                  _buildPromoBanner(
-                    'Electric Vehicle Bonus',
-                    'Additional ₹25,000 off on all EVs',
-                    Icons.electric_car_rounded,
-                    const Color(0xFF4CAF50),
-                  ),
-                  _buildPromoBanner(
-                    'Weekend Test Drive',
-                    'Book a test drive this weekend for special benefits',
-                    Icons.weekend_rounded,
-                    const Color(0xFF2196F3),
-                  ),
-                ],
+              SizedBox(
+                height: 250,
+                child: _buildShowroomsContent(),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              // Quick Actions Section
+              _buildSectionHeader(
+                'Quick Actions',
+                'Manage your test drive requests and reviews',
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.1,
+                  ),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    final actions = [
+                      {
+                        'title': 'Schedule Test Drive',
+                        'icon': Icons.directions_car_rounded,
+                        'color': Colors.orange,
+                        'onTap': () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ShowroomsScreen(),
+                            ),
+                          );
+                        },
+                      },
+                      {
+                        'title': 'View Status',
+                        'icon': Icons.update_rounded,
+                        'color': Colors.green,
+                        'onTap': () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TestDriveStatusScreen(),
+                            ),
+                          );
+                        },
+                      },
+                      {
+                        'title': 'Cancel Test Drive',
+                        'icon': Icons.cancel_outlined,
+                        'color': Colors.red,
+                        'onTap': () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CancelTestDriveScreen(),
+                            ),
+                          );
+                        },
+                      },
+                      {
+                        'title': 'Write Review',
+                        'icon': Icons.rate_review_rounded,
+                        'color': Colors.purple,
+                        'onTap': () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReviewFormScreen( ),
+                            ),
+                          );
+                        },
+                      },
+                    ];
+                    final action = actions[index];
+                    return SizedBox(
+                      height: 100,
+                      child: _buildActionCard(
+                        action['title'] as String,
+                        action['icon'] as IconData,
+                        action['color'] as Color,
+                        action['onTap'] as VoidCallback,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Promotional Banners Section
+              _buildSectionHeader(
+                'Special Offers',
+                'Exclusive deals and promotions for you',
+              ),
+              SizedBox(
+                height: 160,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildPromoBanner(
+                      'Summer Special',
+                      'Get up to ₹50,000 off on select models',
+                      Icons.local_offer_rounded,
+                      const Color(0xFFFF6B6B),
+                    ),
+                    _buildPromoBanner(
+                      'Electric Vehicle Bonus',
+                      'Additional ₹25,000 off on all EVs',
+                      Icons.electric_car_rounded,
+                      const Color(0xFF4CAF50),
+                    ),
+                    _buildPromoBanner(
+                      'Weekend Test Drive',
+                      'Book a test drive this weekend for special benefits',
+                      Icons.weekend_rounded,
+                      const Color(0xFF2196F3),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -565,7 +705,109 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     );
   }
 
-  Widget _buildShowroomCard(Map<String, dynamic> showroom) {
+  Widget _buildShowroomsContent() {
+    if (_isLoadingShowrooms) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Loading showrooms...',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_showroomsErrorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _showroomsErrorMessage!,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _fetchShowrooms,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0095D9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_showrooms.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.store_outlined,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No showrooms available',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check back later for available showrooms',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _showrooms.length,
+      itemBuilder: (context, index) {
+        final showroom = _showrooms[index];
+        return _buildShowroomCard(showroom);
+      },
+    );
+  }
+
+  Widget _buildShowroomCard(Showroom showroom) {
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: Card(
@@ -588,17 +830,81 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF0095D9).withOpacity(0.1),
-                      const Color(0xFF0095D9).withOpacity(0.05),
-                    ],
-                  ),
                 ),
                 child: Stack(
                   children: [
+                    // Showroom image
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                      child: showroom.showroomImage != null
+                          ? Image.network(
+                              '${ApiConfig.baseUrl}/${showroom.showroomImage!}',
+                              width: double.infinity,
+                              height: 120,
+                              fit: BoxFit.fill,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.1),
+                                        const Color(0xFF0095D9).withOpacity(0.05),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.1),
+                                        const Color(0xFF0095D9).withOpacity(0.05),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              width: double.infinity,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF0095D9).withOpacity(0.1),
+                                    const Color(0xFF0095D9).withOpacity(0.05),
+                                  ],
+                                ),
+                              ),
+                            ),
+                    ),
+                    // Rating badge
                     Positioned(
                       top: 8,
                       right: 8,
@@ -618,7 +924,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              showroom['rating'],
+                              showroom.ratting.toString(), // Use actual rating from API
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -643,7 +949,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     children: [
                       // Showroom name
                       Text(
-                        showroom['name'],
+                        showroom.name,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -666,7 +972,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           const SizedBox(width: 2),
                           Expanded(
                             child: Text(
-                              showroom['location'],
+                              showroom.locationDisplay,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF757575),
@@ -682,27 +988,42 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       // Distance and available cars
                       Row(
                         children: [
-                          Icon(
-                            Icons.directions_car_rounded,
-                            size: 12,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${showroom['cars'].length} cars',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
-                              height: 1.2,
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Icon(
+                              Icons.directions_car_rounded,
+                              size: 10,
+                              color: Colors.grey[700],
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            showroom['distance'],
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
-                              height: 1.2,
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Available cars',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0095D9).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              _carCounts[showroom.id]?.toString() ?? 'N/A',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: const Color(0xFF0095D9),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -717,9 +1038,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RequestTestDriveScreen(
-                                  showroomName: showroom['name'],
-                                  availableCars: showroom['cars'],
+                                builder: (context) => CarsScreen(
+                                  showroomName: showroom.name,
+                                  availableCars: [], // Will be populated when cars API is available
+                                  showroomLocation: showroom.locationDisplay,
+                                  showroomRating: showroom.ratting.toString(), // Use actual rating from API
+                                  showroomDistance: 'N/A', // Will be calculated based on user location
+                                  showroomId: showroom.id,
                                 ),
                               ),
                             );

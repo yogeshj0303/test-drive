@@ -3,6 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'request_test_drive_screen.dart';
 import '../../services/api_service.dart';
+import '../../services/api_config.dart';
 import '../../models/showroom_model.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SearchScreenState extends State<SearchScreen> {
   String _searchQuery = '';
   List<Showroom> _allShowrooms = [];
   List<Showroom> _searchResults = [];
+  Map<int, int> _carCounts = {}; // Store car counts for each showroom
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -51,6 +53,9 @@ class _SearchScreenState extends State<SearchScreen> {
           _allShowrooms = response.data ?? [];
           _isLoading = false;
         });
+        
+        // Fetch car counts for each showroom
+        _fetchCarCounts();
       } else {
         setState(() {
           _errorMessage = response.message;
@@ -62,6 +67,24 @@ class _SearchScreenState extends State<SearchScreen> {
         _errorMessage = 'An unexpected error occurred';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchCarCounts() async {
+    for (final showroom in _allShowrooms) {
+      try {
+        final carResponse = await _apiService.getCarsByShowroom(showroom.id);
+        if (carResponse.success) {
+          setState(() {
+            _carCounts[showroom.id] = carResponse.data?.length ?? 0;
+          });
+        }
+      } catch (e) {
+        // If car count fetch fails, set to 0
+        setState(() {
+          _carCounts[showroom.id] = 0;
+        });
+      }
     }
   }
 
@@ -552,40 +575,118 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header section with gradient background
+              // Header section with image and rating
               Container(
-                height: 80,
+                height: 120,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF0095D9).withOpacity(0.15),
-                      const Color(0xFF0095D9).withOpacity(0.08),
-                    ],
-                  ),
                 ),
                 child: Stack(
                   children: [
-                    // Showroom icon in center
-                    Center(
-                      child: Container(
-                        width: 55,
-                        height: 55,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0095D9).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.store_rounded,
-                          color: Color(0xFF0095D9),
-                          size: 28,
-                        ),
+                    // Showroom image
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
                       ),
+                      child: showroom.showroomImage != null
+                          ? Image.network(
+                              '${ApiConfig.baseUrl}/${showroom.showroomImage!}',
+                              width: double.infinity,
+                              height: 120,
+                              fit: BoxFit.fill,
+                              alignment: Alignment.center,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.15),
+                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 45,
+                                      height: 45,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0095D9).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.store_rounded,
+                                        color: Color(0xFF0095D9),
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF0095D9).withOpacity(0.15),
+                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              width: double.infinity,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF0095D9).withOpacity(0.15),
+                                    const Color(0xFF0095D9).withOpacity(0.08),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 45,
+                                  height: 45,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0095D9).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.store_rounded,
+                                    color: Color(0xFF0095D9),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
                     ),
                     // Rating badge
                     Positioned(
@@ -604,19 +705,19 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                           ],
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.star_rounded,
                               color: Color(0xFFFFD700),
                               size: 11,
                             ),
-                            SizedBox(width: 2),
+                            const SizedBox(width: 2),
                             Text(
-                              'N/A',
+                              showroom.ratting.toString(),
                               style: TextStyle(
-                                color: Color(0xFF666666),
+                                color: Colors.grey[800],
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -714,7 +815,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            'ID: ${showroom.id}',
+                            '${_carCounts[showroom.id]?.toString() ?? 'N/A'} cars',
                             style: TextStyle(
                               fontSize: 10,
                               color: const Color(0xFF0095D9),

@@ -102,6 +102,10 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
   bool _isLoading = true;
   String? _errorMessage;
 
+  // View and sort options
+  String _viewMode = 'list'; // 'list' or 'grid'
+  String _sortBy = 'name'; // 'name', 'price', 'newest'
+
   @override
   void initState() {
     super.initState();
@@ -452,7 +456,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          // Remove filter button
+                          // Remove 3 dots from search bar area
                         ],
                       ),
                     ),
@@ -490,17 +494,20 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1,
+                        GestureDetector(
+                          onTap: _showOptionsMenu,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                                width: 1,
+                              ),
                             ),
+                            child: Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.9), size: 18),
                           ),
-                          child: Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.9), size: 18),
                         ),
                       ],
                     ),
@@ -631,30 +638,9 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                         // Handle scroll notifications if needed
                                         return false;
                                       },
-                                      child: CustomScrollView(
-                                        controller: _scrollController,
-                                        physics: const AlwaysScrollableScrollPhysics(
-                                          parent: BouncingScrollPhysics(),
-                                        ),
-                                        slivers: [
-                                          SliverPadding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                            sliver: SliverList(
-                                              delegate: SliverChildBuilderDelegate(
-                                                (context, index) {
-                                                  final car = _filteredCars[index];
-                                                  return _buildCarCard(car, index);
-                                                },
-                                                childCount: _filteredCars.length,
-                                              ),
-                                            ),
-                                          ),
-                                          // Add extra padding at the bottom for better scrolling experience
-                                          const SliverToBoxAdapter(
-                                            child: SizedBox(height: 16),
-                                          ),
-                                        ],
-                                      ),
+                                      child: _viewMode == 'grid' 
+                                          ? _buildGridView()
+                                          : _buildListView(),
                                     ),
                     ),
                   ),
@@ -679,7 +665,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
           child: Opacity(
             opacity: value,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 16, top: 2, left: 2, right: 2),
+              padding: const EdgeInsets.only(bottom: 12, top: 2, left: 2, right: 2),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -1020,7 +1006,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                         ],
                       ),
                     ),
@@ -1122,7 +1108,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
   void _applyFilters() {
     List<Car> filtered = List.from(_cars);
 
-    // Apply search filter
+    // Apply search filter only
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((car) {
         final query = _searchQuery.toLowerCase();
@@ -1132,6 +1118,16 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                car.showroom.name.toLowerCase().contains(query) ||
                car.modelNumber.toLowerCase().contains(query);
       }).toList();
+    }
+
+    // Apply sorting
+    switch (_sortBy) {
+      case 'name':
+        filtered.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case 'newest':
+        filtered.sort((a, b) => b.yearOfManufacture.compareTo(a.yearOfManufacture));
+        break;
     }
 
     setState(() {
@@ -1145,5 +1141,627 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       _searchController.clear();
     });
     _applyFilters();
+  }
+
+  // Menu functionality methods
+  void _showOptionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildOptionsMenu(),
+    );
+  }
+
+  Widget _buildOptionsMenu() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Title
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Icon(Icons.more_horiz, color: Color(0xFF0095D9), size: 20),
+                SizedBox(width: 12),
+                Text(
+                  'More Options',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20), // Reduced spacing
+          
+          // Scrollable content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // View Mode Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'View Mode',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildMenuOption(
+                              icon: Icons.view_list,
+                              title: 'List View',
+                              subtitle: 'Detailed cards',
+                              isSelected: _viewMode == 'list',
+                              onTap: () {
+                                setState(() => _viewMode = 'list');
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildMenuOption(
+                              icon: Icons.grid_view,
+                              title: 'Grid View',
+                              subtitle: 'Compact layout',
+                              isSelected: _viewMode == 'grid',
+                              onTap: () {
+                                setState(() => _viewMode = 'grid');
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20), // Reduced spacing
+                  
+                  // Sort Options Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Sort By',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSortOption(
+                        icon: Icons.sort_by_alpha,
+                        title: 'Name (A-Z)',
+                        isSelected: _sortBy == 'name',
+                        onTap: () {
+                          setState(() => _sortBy = 'name');
+                          _applySorting();
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildSortOption(
+                        icon: Icons.new_releases,
+                        title: 'Newest First',
+                        isSelected: _sortBy == 'newest',
+                        onTap: () {
+                          setState(() => _sortBy = 'newest');
+                          _applySorting();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20), // Reduced spacing
+                  
+                  // Actions Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Actions',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildActionOption(
+                        icon: Icons.refresh,
+                        title: 'Refresh Cars',
+                        subtitle: 'Update car list',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _fetchCars();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildActionOption(
+                        icon: Icons.help_outline,
+                        title: 'Help & Support',
+                        subtitle: 'Get assistance',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showHelpDialog();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20), // Reduced bottom spacing
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0095D9).withOpacity(0.1) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0095D9) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF0095D9) : Colors.grey[600],
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? const Color(0xFF0095D9) : const Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortOption({
+    required IconData icon,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0095D9).withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0095D9) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF0095D9) : Colors.grey[600],
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? const Color(0xFF0095D9) : const Color(0xFF1A1A1A),
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFF0095D9),
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFF0095D9),
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applySorting() {
+    List<Car> sorted = List.from(_filteredCars);
+    
+    switch (_sortBy) {
+      case 'name':
+        sorted.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case 'newest':
+        sorted.sort((a, b) => b.yearOfManufacture.compareTo(a.yearOfManufacture));
+        break;
+    }
+    
+    setState(() {
+      _filteredCars = sorted;
+    });
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0095D9).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.help_outline, color: Color(0xFF0095D9)),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Help & Support',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'How to use the Cars screen:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 12),
+            Text('• Use the search bar to find specific cars'),
+            Text('• Tap the microphone for voice search'),
+            Text('• Use the menu (⋮) for view options and sorting'),
+            Text('• Tap "Book" to view car details'),
+            SizedBox(height: 12),
+            Text(
+              'Need more help?',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text('Contact support at support@varenium.com'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Got it',
+              style: TextStyle(
+                color: Color(0xFF0095D9),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListView() {
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final car = _filteredCars[index];
+                return _buildCarCard(car, index);
+              },
+              childCount: _filteredCars.length,
+            ),
+          ),
+        ),
+        // Add extra padding at the bottom for better scrolling experience
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridView() {
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final car = _filteredCars[index];
+                return _buildGridCard(car, index);
+              },
+              childCount: _filteredCars.length,
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridCard(Car car, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + (index * 100)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Car image
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: car.mainImage,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[100],
+                            child: const Center(
+                              child: Icon(
+                                Icons.directions_car_rounded,
+                                color: Color(0xFF0095D9),
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Car details
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Car name
+                          Text(
+                            car.name,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          // Remove price section
+                          const Spacer(),
+                          // Book button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 28,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CarDetailsScreen(
+                                      carName: car.name,
+                                      showroomName: widget.showroomName,
+                                      showroomLocation: widget.showroomLocation,
+                                      showroomId: widget.showroomId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0095D9),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'Book',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 } 

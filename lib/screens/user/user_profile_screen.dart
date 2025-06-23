@@ -9,7 +9,12 @@ import 'change_password_screen.dart';
 import 'about_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key});
+  final bool showBackButton;
+  
+  const UserProfileScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   // Static cache to store user data across instances
   static User? _cachedUser;
@@ -395,26 +400,29 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant
-                                  .withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.arrow_back_rounded,
-                              size: 20,
-                              color: theme.colorScheme.onSurfaceVariant,
+                      if (widget.showBackButton)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant
+                                    .withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.arrow_back_rounded,
+                                size: 20,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        )
+                      else
+                        const SizedBox(width: 40), // Placeholder to maintain spacing
                       Container(
                         width: 100,
                         height: 100,

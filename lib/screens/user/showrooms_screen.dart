@@ -208,10 +208,6 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
-          onPressed: () => Navigator.pop(context),
-        ),
         actions: [
           if (!_isLoading)
             IconButton(

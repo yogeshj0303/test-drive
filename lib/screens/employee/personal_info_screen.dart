@@ -11,7 +11,7 @@ class PersonalInfoScreen extends StatefulWidget {
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(text: 'Sarah Johnson');
-  final _emailController = TextEditingController(text: 'sarah.johnson@varenium.com');
+  final _emailController = TextEditingController(text: 'sarah.johnson@varenyam.com');
   final _phoneController = TextEditingController(text: '+91 98765 43210');
   final _addressController = TextEditingController(text: 'Mumbai, Maharashtra');
   final _employeeIdController = TextEditingController(text: 'EMP001');

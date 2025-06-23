@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
+import '../../utils/location_data.dart';
+import 'main_user_screen.dart';
 
 class UserSignupScreen extends StatefulWidget {
   const UserSignupScreen({super.key});
@@ -18,9 +20,12 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
   final _confirmPasswordController = TextEditingController();
   final _mobileController = TextEditingController();
   final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _districtController = TextEditingController();
   final _pincodeController = TextEditingController();
+  
+  // State and district dropdown variables
+  String? _selectedState;
+  String? _selectedDistrict;
+  List<String> _availableDistricts = [];
   
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -65,8 +70,6 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
     _confirmPasswordController.dispose();
     _mobileController.dispose();
     _cityController.dispose();
-    _stateController.dispose();
-    _districtController.dispose();
     _pincodeController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -83,8 +86,8 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
           password: _passwordController.text,
           mobile: _mobileController.text.trim(),
           city: _cityController.text.trim(),
-          state: _stateController.text.trim(),
-          district: _districtController.text.trim(),
+          state: _selectedState ?? '',
+          district: _selectedDistrict ?? '',
           pincode: _pincodeController.text.trim(),
         );
 
@@ -113,9 +116,11 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
             );
             
             // Navigate to user home screen
-            Navigator.pushNamedAndRemoveUntil(
+            Navigator.pushAndRemoveUntil(
               context,
-              '/user-home',
+              MaterialPageRoute(
+                builder: (context) => const MainUserScreen(),
+              ),
               (route) => false,
             );
           }
@@ -176,7 +181,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(12),
               child: Container(
                 constraints: BoxConstraints(
                   maxWidth: 500,
@@ -199,16 +204,16 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
 
   Widget _buildSignupForm(Color primaryBlue, Color darkGray) {
     return Container(
-      padding: const EdgeInsets.all(36),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: primaryBlue.withOpacity(0.08),
-            blurRadius: 30,
-            spreadRadius: 5,
-            offset: const Offset(0, 5),
+            color: primaryBlue.withOpacity(0.06),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -226,27 +231,27 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: darkGray,
-                  letterSpacing: 0.5,
-                  height: 1.2,
+                  letterSpacing: 0.3,
+                  height: 1.1,
                   shadows: [
                     Shadow(
                       color: darkGray.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
-                'Join Varenium today',
+                'Join Varenyam today',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: darkGray.withOpacity(0.8),
-                  letterSpacing: 0.3,
-                  height: 1.5,
+                  color: darkGray.withOpacity(0.7),
+                  letterSpacing: 0.2,
+                  height: 1.3,
                 ),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 20),
             ],
           ),
           // Scrollable Form Section
@@ -274,7 +279,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _emailController,
                       label: 'Email',
@@ -292,7 +297,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _passwordController,
                       label: 'Password',
@@ -323,7 +328,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _confirmPasswordController,
                       label: 'Confirm Password',
@@ -354,7 +359,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _mobileController,
                       label: 'Mobile',
@@ -375,7 +380,51 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+                    _buildDropdownField(
+                      label: 'State',
+                      hint: 'Select your state',
+                      prefixIcon: Icons.location_on_outlined,
+                      value: _selectedState,
+                      items: IndianLocation.states,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedState = newValue;
+                          _selectedDistrict = null; // Reset district when state changes
+                          _availableDistricts = newValue != null 
+                              ? IndianLocation.getDistricts(newValue)
+                              : [];
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select your state';
+                        }
+                        return null;
+                      },
+                      accentColor: primaryBlue,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDropdownField(
+                      label: 'District',
+                      hint: _selectedState == null ? 'Select state first' : 'Select your district',
+                      prefixIcon: Icons.location_on_outlined,
+                      value: _selectedDistrict,
+                      items: _availableDistricts,
+                      onChanged: _selectedState == null ? null : (String? newValue) {
+                        setState(() {
+                          _selectedDistrict = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select your district';
+                        }
+                        return null;
+                      },
+                      accentColor: primaryBlue,
+                    ),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _cityController,
                       label: 'City',
@@ -389,35 +438,7 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
-                    _buildInputField(
-                      controller: _stateController,
-                      label: 'State',
-                      hint: 'Enter your state',
-                      prefixIcon: Icons.location_on_outlined,
-                      accentColor: primaryBlue,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your state';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _buildInputField(
-                      controller: _districtController,
-                      label: 'District',
-                      hint: 'Enter your district',
-                      prefixIcon: Icons.location_on_outlined,
-                      accentColor: primaryBlue,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your district';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildInputField(
                       controller: _pincodeController,
                       label: 'Pincode',
@@ -438,10 +459,10 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                         return null;
                       },
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSignup,
                         style: ElevatedButton.styleFrom(
@@ -449,14 +470,14 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                height: 24,
-                                width: 24,
+                                height: 18,
+                                width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -465,14 +486,14 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
                             : const Text(
                                 'Sign Up',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 16),
                     Center(
                       child: _buildLoginSection(accentColor: primaryBlue),
                     ),
@@ -522,32 +543,32 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: accentColor,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
             width: 2,
@@ -556,8 +577,8 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 14,
+          vertical: 12,
         ),
       ),
       validator: validator,
@@ -601,6 +622,98 @@ class _UserSignupScreenState extends State<UserSignupScreen> with SingleTickerPr
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String hint,
+    required IconData prefixIcon,
+    required String? value,
+    required List<String> items,
+    required Function(String?)? onChanged,
+    required String? Function(String?)? validator,
+    required Color accentColor,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              letterSpacing: 0.3,
+            ),
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+      style: const TextStyle(
+        fontSize: 16,
+        letterSpacing: 0.3,
+        color: Colors.black87,
+      ),
+      icon: Icon(
+        Icons.keyboard_arrow_down,
+        color: accentColor,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        labelStyle: TextStyle(
+          color: Colors.grey[600],
+          letterSpacing: 0.3,
+        ),
+        hintStyle: TextStyle(
+          color: Colors.grey[400],
+          letterSpacing: 0.3,
+        ),
+        prefixIcon: Icon(
+          prefixIcon,
+          color: accentColor,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey[300]!,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey[300]!,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: accentColor,
+            width: 2,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.error,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+      ),
+      validator: validator,
     );
   }
 } 

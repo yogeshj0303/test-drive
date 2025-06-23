@@ -3,7 +3,7 @@ class MapsConfig {
   static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
   
   // Map ID for advanced features
-  static const String mapId = 'varenium_map_id';
+  static const String mapId = 'Varenyam_map_id';
   
   // Default location (Mumbai, India)
   static const double defaultLatitude = 19.0760;

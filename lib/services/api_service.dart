@@ -15,22 +15,21 @@ class ApiService {
 
   Future<ApiResponse<User>> signup(SignupRequest request) async {
     try {
-      debugPrint('Attempting signup for: ${request.email}');
+      debugPrint('Attempting signup for: \\${request.email}');
       
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.signupEndpoint));
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.signupEndpoint)).replace(queryParameters: request.toJson().map((k, v) => MapEntry(k, v.toString())));
       final response = await http.post(
         uri,
-        headers: ApiConfig.defaultHeaders,
-        body: jsonEncode(request.toJson()),
+        headers: {'Accept': 'application/json'},
       );
 
-      debugPrint('Signup response status: ${response.statusCode}');
-      debugPrint('Signup response data: ${response.body}');
+      debugPrint('Signup response status: \\${response.statusCode}');
+      debugPrint('Signup response data: \\${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         final user = User.fromJson(responseData);
-        debugPrint('Signup successful for user: ${user.name}');
+        debugPrint('Signup successful for user: \\${user.name}');
         return ApiResponse.success(user, message: ApiConfig.signupSuccessMessage);
       } else {
         final errorMessage = _extractErrorMessage(response.body);
@@ -43,8 +42,8 @@ class ApiService {
       debugPrint('Signup format error: Invalid response format');
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
-      debugPrint('Signup unexpected error: ${e.toString()}');
-      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+      debugPrint('Signup unexpected error: \\${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: \\${e.toString()}');
     }
   }
 
@@ -455,6 +454,120 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('User test drives unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> sendForgotPasswordOtp(String emailOrMobile) async {
+    try {
+      debugPrint('Sending forgot password OTP to: $emailOrMobile');
+      
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.forgotPasswordOtpEndpoint));
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+        body: jsonEncode({
+          'email_or_mobile': emailOrMobile,
+        }),
+      );
+
+      debugPrint('Send OTP response status: ${response.statusCode}');
+      debugPrint('Send OTP response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = responseData['message'] as String? ?? 'OTP sent successfully';
+        debugPrint('Successfully sent OTP to $emailOrMobile');
+        return ApiResponse.success(message, message: message);
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to send OTP');
+      }
+    } on SocketException {
+      debugPrint('Send OTP network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Send OTP format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Send OTP unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> verifyForgotPasswordOtp(String emailOrMobile, String otp) async {
+    try {
+      debugPrint('Verifying forgot password OTP for: $emailOrMobile');
+      
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.verifyForgotPasswordOtpEndpoint));
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+        body: jsonEncode({
+          'email_or_mobile': emailOrMobile,
+          'otp': otp,
+        }),
+      );
+
+      debugPrint('Verify OTP response status: ${response.statusCode}');
+      debugPrint('Verify OTP response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = responseData['message'] as String? ?? 'OTP verified successfully';
+        debugPrint('Successfully verified OTP for $emailOrMobile');
+        return ApiResponse.success(message, message: message);
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to verify OTP');
+      }
+    } on SocketException {
+      debugPrint('Verify OTP network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Verify OTP format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Verify OTP unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> resetPassword(String emailOrMobile, String otp, String newPassword) async {
+    try {
+      debugPrint('Resetting password for: $emailOrMobile');
+      
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.resetPasswordEndpoint));
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+        body: jsonEncode({
+          'email_or_mobile': emailOrMobile,
+          'otp': otp,
+          'new_password': newPassword,
+        }),
+      );
+
+      debugPrint('Reset password response status: ${response.statusCode}');
+      debugPrint('Reset password response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = responseData['message'] as String? ?? 'Password reset successfully';
+        debugPrint('Successfully reset password for $emailOrMobile');
+        return ApiResponse.success(message, message: message);
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to reset password');
+      }
+    } on SocketException {
+      debugPrint('Reset password network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Reset password format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Reset password unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

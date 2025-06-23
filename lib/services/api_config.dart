@@ -3,9 +3,12 @@ class ApiConfig {
   static const String baseUrl = 'https://varenyam.acttconnect.com';
   
   // API Endpoints
-  static const String signupEndpoint = '/api/front-user/signup';
+  static const String signupEndpoint = '/api/app-users/store';
   static const String loginEndpoint = '/api/front-user/login';
   static const String changePasswordEndpoint = '/api/front-user/change-password';
+  static const String forgotPasswordOtpEndpoint = '/api/front-user/forgot-password-otp';
+  static const String verifyForgotPasswordOtpEndpoint = '/api/front-user/verify-forgot-password-otp';
+  static const String resetPasswordEndpoint = '/api/front-user/reset-password';
   static const String showroomsEndpoint = '/api/front-showrooms';
   static const String carsByShowroomEndpoint = '/api/front-cars/by-showroom';
   static const String userProfileEndpoint = '/api/app-users'; // Base endpoint for user profile

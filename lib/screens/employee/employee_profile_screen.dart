@@ -284,7 +284,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'sarah.johnson@varenium.com',
+                'sarah.johnson@Varenyam.com',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],

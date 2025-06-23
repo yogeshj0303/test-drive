@@ -260,122 +260,121 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-          color: Colors.grey[800],
-        ),
-        title: Container(
-          height: 48,
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.grey[200]!,
-              width: 1,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Container(
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.grey[200]!,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Focus(
-            onFocusChange: (hasFocus) {
-              if (!hasFocus && _isListening) {
-                _speech.stop();
-                setState(() => _isListening = false);
-              }
-            },
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Search showrooms or locations...',
-                hintStyle: TextStyle(
-                  color: Colors.grey[500],
+            child: Focus(
+              onFocusChange: (hasFocus) {
+                if (!hasFocus && _isListening) {
+                  _speech.stop();
+                  setState(() => _isListening = false);
+                }
+              },
+              child: TextField(
+                controller: _searchController,
+                textAlignVertical: TextAlignVertical.center,
+                style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w400,
+                  color: Colors.grey[800],
+                  fontWeight: FontWeight.w500,
                 ),
-                prefixIcon: Container(
-                  padding: const EdgeInsets.all(12),
-                  child: Icon(
-                    Icons.search_rounded,
-                    color: Colors.grey[600],
-                    size: 22,
+                decoration: InputDecoration(
+                  hintText: 'Search showrooms or locations',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
                   ),
-                ),
-                suffixIcon: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: _isListening 
-                        ? theme.primaryColor.withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                  prefixIcon: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(
+                      Icons.search_rounded,
+                      color: Colors.grey[600],
+                      size: 22,
+                    ),
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      IconButton(
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(
-                            _isListening ? Icons.mic : Icons.mic_none_rounded,
-                            key: ValueKey<bool>(_isListening),
-                            color: _isListening ? theme.primaryColor : Colors.grey[600],
-                            size: 22,
+                  suffixIcon: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: _isListening 
+                          ? theme.primaryColor.withOpacity(0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              _isListening ? Icons.mic : Icons.mic_none_rounded,
+                              key: ValueKey<bool>(_isListening),
+                              color: _isListening ? theme.primaryColor : Colors.grey[600],
+                              size: 22,
+                            ),
                           ),
+                          onPressed: _startListening,
+                          tooltip: _isListening 
+                              ? 'Stop listening' 
+                              : 'Tap to start voice search\nTip: Speak clearly and use complete words',
                         ),
-                        onPressed: _startListening,
-                        tooltip: _isListening 
-                            ? 'Stop listening' 
-                            : 'Tap to start voice search\nTip: Speak clearly and use complete words',
-                      ),
-                      if (_isListening)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 1,
+                        if (_isListening)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
+                  border: InputBorder.none,
+                  // contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  isDense: false,
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                isDense: true,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                    _performSearch(value);
+                  });
+                },
+                onSubmitted: (value) {
+                  FocusScope.of(context).unfocus();
+                },
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                  _performSearch(value);
-                });
-              },
-              onSubmitted: (value) {
-                FocusScope.of(context).unfocus();
-              },
             ),
           ),
         ),
+        centerTitle: true,
+        titleSpacing: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(

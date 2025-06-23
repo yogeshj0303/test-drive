@@ -118,7 +118,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'Varenium',
+              'Varenyam',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,

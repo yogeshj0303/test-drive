@@ -258,7 +258,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Varenium',
+              'Varenyam',
               style: TextStyle(
                 color: theme.primaryColor,
                 fontSize: 20,
@@ -287,7 +287,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UserProfileScreen(),
+                  builder: (context) => const UserProfileScreen(showBackButton: true),
                 ),
               );
             },
@@ -380,7 +380,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 },
               ),
               SizedBox(
-                height: 250,
+                height: 200,
                 child: _buildShowroomsContent(),
               ),
               // Quick Actions Section
@@ -423,7 +423,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TestDriveStatusScreen(),
+                              builder: (context) => const TestDriveStatusScreen(showBackButton: true),
                             ),
                           );
                         },
@@ -466,38 +466,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       ),
                     );
                   },
-                ),
-              ),
-              // Promotional Banners Section
-              _buildSectionHeader(
-                'Special Offers',
-                'Exclusive deals and promotions for you',
-              ),
-              SizedBox(
-                height: 160,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    _buildPromoBanner(
-                      'Summer Special',
-                      'Get up to ₹50,000 off on select models',
-                      Icons.local_offer_rounded,
-                      const Color(0xFFFF6B6B),
-                    ),
-                    _buildPromoBanner(
-                      'Electric Vehicle Bonus',
-                      'Additional ₹25,000 off on all EVs',
-                      Icons.electric_car_rounded,
-                      const Color(0xFF4CAF50),
-                    ),
-                    _buildPromoBanner(
-                      'Weekend Test Drive',
-                      'Book a test drive this weekend for special benefits',
-                      Icons.weekend_rounded,
-                      const Color(0xFF2196F3),
-                    ),
-                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -817,14 +785,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: SizedBox(
-          width: 272,
-          height: 230,
+          width: 240,
+          height: 180,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Top image section
               Container(
-                height: 120,
+                height: 80,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
@@ -843,12 +811,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           ? Image.network(
                               '${ApiConfig.baseUrl}/${showroom.showroomImage!}',
                               width: double.infinity,
-                              height: 120,
+                              height: 80,
                               fit: BoxFit.fill,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   width: double.infinity,
-                                  height: 120,
+                                  height: 80,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
@@ -865,7 +833,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                                 if (loadingProgress == null) return child;
                                 return Container(
                                   width: double.infinity,
-                                  height: 120,
+                                  height: 80,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
@@ -891,7 +859,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             )
                           : Container(
                               width: double.infinity,
-                              height: 120,
+                              height: 80,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
@@ -942,25 +910,29 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               // Content section
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Showroom name
-                      Text(
-                        showroom.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF424242),
-                          letterSpacing: 0.2,
-                          height: 1.2,
+                      Container(
+                        width: double.infinity,
+                        child: Text(
+                          showroom.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF424242),
+                            letterSpacing: 0.2,
+                            height: 1.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.left,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       // Showroom location
                       Row(
                         children: [
@@ -984,7 +956,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       // Distance and available cars
                       Row(
                         children: [
@@ -1032,7 +1004,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       // Book button
                       SizedBox(
                         width: double.infinity,
-                        height: 36,
+                        height: 32,
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.push(
@@ -1060,7 +1032,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           child: const Text(
                             'Book Test Drive',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.2,
                             ),

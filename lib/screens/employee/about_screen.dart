@@ -111,7 +111,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Varenium',
+            'Varenyam',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -242,14 +242,14 @@ class AboutScreen extends StatelessWidget {
         children: [
           _buildInfoItem(
             'Company',
-            'Varenium Motors',
+            'Varenyam Motors',
             Icons.business_rounded,
             primaryBlue,
           ),
           _buildDivider(),
           _buildInfoItem(
             'Website',
-            'www.varenium.com',
+            'www.Varenyam.com',
             Icons.language_rounded,
             Colors.blue,
             isClickable: true,
@@ -257,7 +257,7 @@ class AboutScreen extends StatelessWidget {
           _buildDivider(),
           _buildInfoItem(
             'Email',
-            'info@varenium.com',
+            'info@Varenyam.com',
             Icons.email_rounded,
             Colors.green,
             isClickable: true,
@@ -292,7 +292,7 @@ class AboutScreen extends StatelessWidget {
         children: [
           _buildInfoItem(
             'Support Email',
-            'support@varenium.com',
+            'support@Varenyam.com',
             Icons.support_agent_rounded,
             Colors.red,
             isClickable: true,
@@ -300,7 +300,7 @@ class AboutScreen extends StatelessWidget {
           _buildDivider(),
           _buildInfoItem(
             'Help Center',
-            'help.varenium.com',
+            'help.Varenyam.com',
             Icons.help_rounded,
             Colors.blue,
             isClickable: true,

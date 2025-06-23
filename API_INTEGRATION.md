@@ -1,7 +1,7 @@
 # API Integration Documentation
 
 ## Overview
-This document describes the API integration implemented for the Varenium app, covering both user signup and login functionality.
+This document describes the API integration implemented for the Varenyam app, covering both user signup and login functionality.
 
 ## API Endpoints
 

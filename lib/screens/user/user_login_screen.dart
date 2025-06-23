@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
-import 'package:varenium/screens/user/user_home_screen.dart';
+import 'package:varenium/screens/user/main_user_screen.dart';
 import 'user_signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -94,7 +95,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => const UserHomeScreen(),
+                builder: (context) => const MainUserScreen(),
               ),
               (route) => false,
             );
@@ -208,7 +209,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                       ),
                       SizedBox(height: size.height * 0.03),
                       Text(
-                        'Welcome to Varenium',
+                        'Welcome to Varenyam',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -308,7 +309,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   ),
                   SizedBox(height: size.height * 0.015),
                   Text(
-                    'Welcome to Varenium',
+                    'Welcome to Varenyam',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -392,7 +393,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color darkGray = Color(0xFF242223);
     
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -430,7 +431,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 'Sign in to continue',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -439,7 +440,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
             ],
           ),
           // Scrollable Form Section
@@ -479,7 +480,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         return null;
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _buildInputField(
                       controller: _passwordController,
                       label: 'Password',
@@ -510,12 +511,17 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Implement forgot password
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPasswordScreen(),
+                            ),
+                          );
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: primaryBlue,
@@ -530,10 +536,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 45,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
@@ -543,12 +549,12 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                height: 20,
-                                width: 20,
+                                height: 18,
+                                width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -564,7 +570,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                               ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Center(
                       child: _buildSignUpSection(accentColor: primaryBlue),
                     ),
@@ -594,7 +600,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: const TextStyle(
-        fontSize: 16,
+        fontSize: 15,
         letterSpacing: 0.3,
       ),
       decoration: InputDecoration(
@@ -603,43 +609,46 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         labelStyle: TextStyle(
           color: Colors.grey[600],
           letterSpacing: 0.3,
+          fontSize: 14,
         ),
         hintStyle: TextStyle(
           color: Colors.grey[400],
           letterSpacing: 0.3,
+          fontSize: 14,
         ),
         prefixIcon: Icon(
           prefixIcon,
           color: accentColor,
+          size: 20,
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: accentColor,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
             width: 2,
@@ -648,9 +657,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
+          horizontal: 12,
+          vertical: 12,
         ),
+        isDense: true,
       ),
       validator: validator,
     );

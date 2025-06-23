@@ -69,7 +69,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppTheme.spacingL),
                   Text(
-                    'Varenium',
+                    'Varenyam',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
@@ -92,10 +92,10 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader(context, 'About Varenium'),
+                  _buildSectionHeader(context, 'About Varenyam'),
                   const SizedBox(height: AppTheme.spacingM),
                   Text(
-                    'Varenium is your trusted partner in the automotive world, providing a seamless platform for car enthusiasts and buyers to explore, test drive, and purchase their dream vehicles.',
+                    'Varenyam is your trusted partner in the automotive world, providing a seamless platform for car enthusiasts and buyers to explore, test drive, and purchase their dream vehicles.',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       letterSpacing: 0.2,
@@ -129,7 +129,7 @@ class AboutScreen extends StatelessWidget {
                   _buildContactItem(
                     context,
                     'Email',
-                    'support@varenium.com',
+                    'support@Varenyam.com',
                     Icons.email_outlined,
                     onTap: () {
                       // TODO: Implement email launch
@@ -138,7 +138,7 @@ class AboutScreen extends StatelessWidget {
                   _buildContactItem(
                     context,
                     'Website',
-                    'www.varenium.com',
+                    'www.Varenyam.com',
                     Icons.language_outlined,
                     onTap: () {
                       // TODO: Implement website launch
@@ -176,7 +176,7 @@ class AboutScreen extends StatelessWidget {
                     onTap: () {
                       showLicensePage(
                         context: context,
-                        applicationName: 'Varenium',
+                        applicationName: 'Varenyam',
                         applicationVersion: '1.0.0',
                         applicationIcon: Container(
                           width: 48,
@@ -196,7 +196,7 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: AppTheme.spacingXL),
                   Center(
                     child: Text(
-                      '© 2024 Varenium. All rights reserved.',
+                      '© 2024 Varenyam. All rights reserved.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         letterSpacing: 0.2,

@@ -986,7 +986,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                                   ),
                                                   SizedBox(width: 4),
                                                   Text(
-                                                    'Book',
+                                                    'Request to test drive',
                                                     style: TextStyle(
                                                       color: Color(0xFF0095D9),
                                                       fontSize: 13,
@@ -1548,7 +1548,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
               'Need more help?',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text('Contact support at support@varenium.com'),
+            Text('Contact support at support@Varenyam.com'),
           ],
         ),
         actions: [
@@ -1714,7 +1714,6 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
-                          // Remove price section
                           const Spacer(),
                           // Book button
                           SizedBox(
@@ -1744,7 +1743,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 elevation: 0,
                               ),
                               child: const Text(
-                                'Book',
+                                'Request to test drive',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,

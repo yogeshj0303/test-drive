@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../main.dart';
-import 'user/user_home_screen.dart';
+import 'user/main_user_screen.dart';
 import 'employee/employee_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             
             // Navigate to user home screen
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const UserHomeScreen()),
+              MaterialPageRoute(builder: (context) => const MainUserScreen()),
             );
             return;
           }
@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Varenium',
+                  'Varenyam',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: primaryBlue,

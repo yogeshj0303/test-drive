@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'cancel_test_drive_screen.dart';
 import 'review_form_screen.dart';
+import 'showrooms_screen.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
 
 class TestDriveStatusScreen extends StatefulWidget {
-  const TestDriveStatusScreen({super.key});
+  final bool showBackButton;
+  
+  const TestDriveStatusScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
   State<TestDriveStatusScreen> createState() => _TestDriveStatusScreenState();
@@ -19,11 +25,23 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
   List<TestDriveListResponse> _testDriveRequests = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     _loadTestDrives();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes active
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isLoading) {
+        _refreshData();
+      }
+    });
   }
 
   Future<void> _loadTestDrives() async {
@@ -59,6 +77,45 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
       setState(() {
         _errorMessage = 'An error occurred while loading test drives: ${e.toString()}';
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshData() async {
+    if (_isRefreshing) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      final user = await _storageService.getUser();
+      if (user == null) {
+        setState(() {
+          _isRefreshing = false;
+          _errorMessage = 'User not found. Please login again.';
+        });
+        return;
+      }
+
+      final response = await _apiService.getUserTestDrives(user.id);
+      
+      if (response.success) {
+        setState(() {
+          _testDriveRequests = response.data!;
+          _isRefreshing = false;
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.message;
+          _isRefreshing = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred while refreshing test drives: ${e.toString()}';
+        _isRefreshing = false;
       });
     }
   }
@@ -556,238 +613,250 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1A1A1A)),
-            onPressed: _loadTestDrives,
+            onPressed: _refreshData,
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF0095D9),
-              ),
-            )
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error Loading Test Drives',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[800],
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        color: const Color(0xFF0095D9),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF0095D9),
+                ),
+              )
+            : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.grey[400],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _loadTestDrives,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0095D9),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Retry',
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error Loading Test Drives',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: Colors.grey[800],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                )
-              : _testDriveRequests.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.directions_car_outlined,
-                            size: 64,
-                            color: Colors.grey[400],
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No Test Drive Requests',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _loadTestDrives,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0095D9),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Retry',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Schedule a test drive to see it here',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+                        ),
+                      ],
+                    ),
+                  )
+                : _testDriveRequests.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.directions_car_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0095D9),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Schedule Test Drive',
+                            const SizedBox(height: 16),
+                            Text(
+                              'No Test Drive Requests',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: Colors.grey[800],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _testDriveRequests.length,
-                      itemBuilder: (context, index) {
-                        final request = _testDriveRequests[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.grey[200]!),
-                          ),
-                          child: InkWell(
-                            onTap: () => _showTestDriveDetails(request),
-                            borderRadius: BorderRadius.circular(16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(request.status)
-                                              .withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Icon(
-                                          _getStatusIcon(request.status),
-                                          color: _getStatusColor(request.status),
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              request.car.name,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF1A1A1A),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              request.showroom.name,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(request.status)
-                                              .withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          _getStatusText(request.status),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Schedule a test drive to see it here',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () {
+                                // Navigate to showrooms screen to schedule a test drive
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ShowroomsScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0095D9),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Schedule Test Drive',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _testDriveRequests.length,
+                        itemBuilder: (context, index) {
+                          final request = _testDriveRequests[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            child: InkWell(
+                              onTap: () => _showTestDriveDetails(request),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(request.status)
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            _getStatusIcon(request.status),
                                             color: _getStatusColor(request.status),
+                                            size: 20,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildInfoItem(
-                                          'Date',
-                                          request.date,
-                                          Icons.calendar_today_outlined,
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                request.car.name,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF1A1A1A),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                request.showroom.name,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: _buildInfoItem(
-                                          'Time',
-                                          request.time,
-                                          Icons.access_time_rounded,
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(request.status)
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            _getStatusText(request.status),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: _getStatusColor(request.status),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildInfoItem(
+                                            'Date',
+                                            request.date,
+                                            Icons.calendar_today_outlined,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _buildInfoItem(
+                                            'Time',
+                                            request.time,
+                                            Icons.access_time_rounded,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
+      ),
     );
   }
 

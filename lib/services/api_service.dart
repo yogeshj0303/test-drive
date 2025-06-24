@@ -458,6 +458,144 @@ class ApiService {
     }
   }
 
+  Future<ApiResponse<List<TestDriveListResponse>>> getUserPendingTestDrives(int userId) async {
+    try {
+      debugPrint('Fetching pending test drives for user ID: $userId');
+      
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.userPendingTestDrivesEndpoint)}/$userId/pending');
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('User pending test drives response status: ${response.statusCode}');
+      debugPrint('User pending test drives response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'] as List<dynamic>;
+          final testDrives = data.map((json) => TestDriveListResponse.fromJson(json)).toList();
+          final message = responseData['message'] as String? ?? 'Pending test drives fetched successfully';
+          
+          debugPrint('Successfully fetched ${testDrives.length} pending test drives for user $userId');
+          return ApiResponse.success(testDrives, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch pending test drives';
+          return ApiResponse.error(errorMessage);
+        }
+      } else if (response.statusCode == 404) {
+        debugPrint('No pending test drives found for user $userId (404)');
+        return ApiResponse.success([], message: 'No pending test drives found');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch pending test drives');
+      }
+    } on SocketException {
+      debugPrint('User pending test drives network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('User pending test drives format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('User pending test drives unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<List<TestDriveListResponse>>> getUserCanceledTestDrives(int userId) async {
+    try {
+      debugPrint('Fetching canceled test drives for user ID: $userId');
+      
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.userCanceledTestDrivesEndpoint)}/$userId/canceled');
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('User canceled test drives response status: ${response.statusCode}');
+      debugPrint('User canceled test drives response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'] as List<dynamic>;
+          final testDrives = data.map((json) => TestDriveListResponse.fromJson(json)).toList();
+          final message = responseData['message'] as String? ?? 'Canceled test drives fetched successfully';
+          
+          debugPrint('Successfully fetched ${testDrives.length} canceled test drives for user $userId');
+          return ApiResponse.success(testDrives, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch canceled test drives';
+          return ApiResponse.error(errorMessage);
+        }
+      } else if (response.statusCode == 404) {
+        debugPrint('No canceled test drives found for user $userId (404)');
+        return ApiResponse.success([], message: 'No canceled test drives found');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch canceled test drives');
+      }
+    } on SocketException {
+      debugPrint('User canceled test drives network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('User canceled test drives format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('User canceled test drives unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<List<TestDriveListResponse>>> getUserCompletedTestDrives(int userId) async {
+    try {
+      debugPrint('Fetching completed test drives for user ID: $userId');
+      
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.userCompletedTestDrivesEndpoint)}/$userId/completed');
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('User completed test drives response status: ${response.statusCode}');
+      debugPrint('User completed test drives response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'] as List<dynamic>;
+          final testDrives = data.map((json) => TestDriveListResponse.fromJson(json)).toList();
+          final message = responseData['message'] as String? ?? 'Completed test drives fetched successfully';
+          
+          debugPrint('Successfully fetched ${testDrives.length} completed test drives for user $userId');
+          return ApiResponse.success(testDrives, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch completed test drives';
+          return ApiResponse.error(errorMessage);
+        }
+      } else if (response.statusCode == 404) {
+        debugPrint('No completed test drives found for user $userId (404)');
+        return ApiResponse.success([], message: 'No completed test drives found');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch completed test drives');
+      }
+    } on SocketException {
+      debugPrint('User completed test drives network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('User completed test drives format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('User completed test drives unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
   Future<ApiResponse<String>> sendForgotPasswordOtp(String emailOrMobile) async {
     try {
       debugPrint('Sending forgot password OTP to: $emailOrMobile');
@@ -568,6 +706,40 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Reset password unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> cancelTestDrive(int testDriveId, String cancelDescription) async {
+    try {
+      debugPrint('Canceling test drive ID: $testDriveId');
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/app-users/textdrives/status-update/$testDriveId?status=canceled&cancel_description=${Uri.encodeComponent(cancelDescription)}');
+      final response = await http.patch(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Cancel test drive response status: ${response.statusCode}');
+      debugPrint('Cancel test drive response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = responseData['message'] as String? ?? 'Test drive canceled successfully';
+        debugPrint('Successfully canceled test drive ID: $testDriveId');
+        return ApiResponse.success(message, message: message);
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to cancel test drive');
+      }
+    } on SocketException {
+      debugPrint('Cancel test drive network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Cancel test drive format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Cancel test drive unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

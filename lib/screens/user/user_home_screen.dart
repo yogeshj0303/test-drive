@@ -13,6 +13,8 @@ import 'notification_screen.dart';
 import 'user_profile_screen.dart';
 import 'search_screen.dart';
 import 'showrooms_screen.dart';
+import 'pending_test_drives_screen.dart';
+import 'completed_test_drives_screen.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -403,27 +405,27 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   itemBuilder: (context, index) {
                     final actions = [
                       {
-                        'title': 'Schedule Test Drive',
-                        'icon': Icons.directions_car_rounded,
+                        'title': 'Pending Test Drive',
+                        'icon': Icons.pending_actions_outlined,
                         'color': Colors.orange,
                         'onTap': () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ShowroomsScreen(),
+                              builder: (context) => const PendingTestDrivesScreen(),
                             ),
                           );
                         },
                       },
                       {
-                        'title': 'View Status',
-                        'icon': Icons.update_rounded,
+                        'title': 'Completed Test Drive',
+                        'icon': Icons.check_circle_outline,
                         'color': Colors.green,
                         'onTap': () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TestDriveStatusScreen(showBackButton: true),
+                              builder: (context) => const CompletedTestDrivesScreen(),
                             ),
                           );
                         },

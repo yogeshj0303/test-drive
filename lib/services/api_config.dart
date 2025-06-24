@@ -15,6 +15,9 @@ class ApiConfig {
   static const String updateUserProfileEndpoint = '/api/app-users/update'; // Endpoint for updating user profile
   static const String testDriveStoreEndpoint = '/api/app-users/textdrives-store'; // Endpoint for creating test drive request
   static const String userTestDrivesEndpoint = '/api/app-users/textdrives'; // Endpoint for fetching user test drives
+  static const String userPendingTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user pending test drives
+  static const String userCanceledTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user canceled test drives
+  static const String userCompletedTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user completed test drives
   
   // API Headers
   static const Map<String, String> defaultHeaders = {

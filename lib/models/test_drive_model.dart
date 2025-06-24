@@ -71,6 +71,8 @@ class TestDriveCar {
 
   factory TestDriveCar.fromJson(Map<String, dynamic> json) {
     try {
+      final showroomJson = json['showroom'] as Map<String, dynamic>?;
+      
       return TestDriveCar(
         id: json['id'] as int? ?? 0,
         name: json['name'] as String? ?? '',
@@ -104,7 +106,23 @@ class TestDriveCar {
                 ?.map((imageJson) => CarImage.fromJson(imageJson as Map<String, dynamic>))
                 .toList() ??
             [],
-        showroom: Showroom.fromJson(json['showroom'] as Map<String, dynamic>),
+        showroom: showroomJson != null 
+            ? Showroom.fromJson(showroomJson)
+            : Showroom(
+                id: 0,
+                authId: 0,
+                name: 'Unknown Showroom',
+                address: '',
+                city: '',
+                state: '',
+                district: '',
+                pincode: '',
+                showroomImage: '',
+                ratting: 0,
+                passwordWord: null,
+                createdAt: '',
+                updatedAt: '',
+              ),
         ratting: json['ratting'] as int?,
       );
     } catch (e) {
@@ -283,6 +301,10 @@ class TestDriveListResponse {
   final String note;
   final String status;
   final String? showroomId;
+  final String? rejectDescription;
+  final String? approvedEmployeeId;
+  final String? cancelDescription;
+  final String? cancelDateTime;
   final TestDriveCar car;
   final Showroom showroom;
   final User frontUser;
@@ -303,6 +325,10 @@ class TestDriveListResponse {
     required this.note,
     required this.status,
     this.showroomId,
+    this.rejectDescription,
+    this.approvedEmployeeId,
+    this.cancelDescription,
+    this.cancelDateTime,
     required this.car,
     required this.showroom,
     required this.frontUser,
@@ -310,6 +336,22 @@ class TestDriveListResponse {
 
   factory TestDriveListResponse.fromJson(Map<String, dynamic> json) {
     try {
+      final carJson = json['car'] as Map<String, dynamic>?;
+      final frontUserJson = json['front_user'] as Map<String, dynamic>?;
+      
+      if (carJson == null) {
+        throw Exception('Car data is missing in the response');
+      }
+      
+      if (frontUserJson == null) {
+        throw Exception('Front user data is missing in the response');
+      }
+      
+      final showroomJson = carJson['showroom'] as Map<String, dynamic>?;
+      if (showroomJson == null) {
+        throw Exception('Showroom data is missing in the car object');
+      }
+      
       return TestDriveListResponse(
         id: json['id'] as int,
         createdAt: json['created_at'] as String,
@@ -326,9 +368,13 @@ class TestDriveListResponse {
         note: json['note'] as String,
         status: json['status'] as String,
         showroomId: json['showroom_id']?.toString(),
-        car: TestDriveCar.fromJson(json['car'] as Map<String, dynamic>),
-        showroom: Showroom.fromJson(json['car']['showroom'] as Map<String, dynamic>),
-        frontUser: User.fromJson(json['front_user'] as Map<String, dynamic>),
+        rejectDescription: json['reject_description'] as String?,
+        approvedEmployeeId: json['approved_employee_id']?.toString(),
+        cancelDescription: json['cancel_description'] as String?,
+        cancelDateTime: json['cancel_date_time'] as String?,
+        car: TestDriveCar.fromJson(carJson),
+        showroom: Showroom.fromJson(showroomJson),
+        frontUser: User.fromJson(frontUserJson),
       );
     } catch (e) {
       print('Error parsing TestDriveListResponse: $e');

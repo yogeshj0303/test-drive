@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../models/test_drive_model.dart';
 
 class ReviewFormScreen extends StatefulWidget {
-  const ReviewFormScreen({super.key});
+  final TestDriveListResponse? testDrive;
+
+  const ReviewFormScreen({super.key, this.testDrive});
 
   @override
   State<ReviewFormScreen> createState() => _ReviewFormScreenState();
@@ -61,6 +64,14 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // If a test drive is provided, show the review form directly
+    if (widget.testDrive != null) {
+      return _ReviewFormContent(
+        carName: widget.testDrive!.car.name,
+        showroom: widget.testDrive!.showroom.name,
+      );
+    }
+
     // Filter only completed test drives
     final completedTestDrives = _testDriveRequests
         .where((request) => request['status'] == 'completed')

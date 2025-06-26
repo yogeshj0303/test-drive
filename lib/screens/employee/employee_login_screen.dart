@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../services/employee_api_service.dart';
+import '../../services/employee_storage_service.dart';
+import '../../models/employee_model.dart';
 import 'employee_home_screen.dart';
 
 class EmployeeLoginScreen extends StatefulWidget {
@@ -56,34 +60,49 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
       setState(() => _isLoading = true);
       
       try {
-        // TODO: Implement actual employee login logic
-        await Future.delayed(const Duration(seconds: 2));
-        
-        // Simulate login validation
         final employeeId = _employeeIdController.text.trim();
         final password = _passwordController.text.trim();
         
-        // Basic validation for demo purposes
-        if (employeeId.isEmpty || password.isEmpty) {
-          throw Exception('Please enter valid credentials');
+        // Try login with employee ID first, then with email
+        EmployeeApiResponse<EmployeeLoginResponse> response;
+        
+        // Check if employeeId looks like an email
+        if (employeeId.contains('@')) {
+          response = await EmployeeApiService().login(employeeId, password);
+        } else {
+          response = await EmployeeApiService().loginWithEmployeeId(employeeId, password);
         }
         
-        // Simulate successful login
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login successful!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
-            ),
-          );
+        if (response.success && response.data != null) {
+          // Save employee data to local storage
+          await EmployeeStorageService.saveEmployeeData(response.data!);
           
-          // Navigate to employee home screen after successful login
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const EmployeeHomeScreen(),
-            ),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response.message),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+            
+            // Navigate to employee home screen after successful login
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const EmployeeHomeScreen(),
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response.message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -411,14 +430,14 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                   children: [
                     _buildInputField(
                       controller: _employeeIdController,
-                      label: 'Employee ID',
-                      hint: 'Enter your employee ID',
+                      label: 'Employee ID / Email',
+                      hint: 'Enter your employee ID or email',
                       prefixIcon: Icons.badge_outlined,
                       keyboardType: TextInputType.text,
                       accentColor: primaryBlue,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your employee ID';
+                          return 'Please enter your employee ID or email';
                         }
                         return null;
                       },
@@ -515,9 +534,6 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                       ),
                     ),
                     const SizedBox(height: 28),
-                    Center(
-                      child: _buildUserPortalSection(accentColor: primaryBlue),
-                    ),
                   ],
                 ),
               ),
@@ -603,46 +619,6 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
         ),
       ),
       validator: validator,
-    );
-  }
-
-  Widget _buildUserPortalSection({required Color accentColor}) {
-    const Color darkGray = Color(0xFF1D1B1C);
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Are you a customer?',
-            style: TextStyle(
-              color: darkGray.withOpacity(0.7),
-              fontSize: 15,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(width: 4),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: accentColor,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              'Go to User Portal',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

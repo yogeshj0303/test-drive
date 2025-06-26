@@ -6,6 +6,7 @@ import '../models/user_model.dart';
 import '../models/showroom_model.dart';
 import '../models/car_model.dart';
 import '../models/test_drive_model.dart';
+import '../models/review_model.dart' as review;
 import 'api_config.dart';
 
 class ApiService {
@@ -740,6 +741,54 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Cancel test drive unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<review.ReviewResponse>> submitReview(review.ReviewRequest request) async {
+    try {
+      debugPrint('Submitting review for test drive ID: ${request.testDriveId}');
+      debugPrint('Review data: ${request.toQueryParameters()}');
+      
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.reviewEndpoint))
+          .replace(queryParameters: request.toQueryParameters());
+      
+      debugPrint('Submit review URL: $uri');
+      
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Submit review response status: ${response.statusCode}');
+      debugPrint('Submit review response data: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final reviewData = responseData['data'] as Map<String, dynamic>;
+          final reviewResponse = review.ReviewResponse.fromJson(reviewData);
+          final message = responseData['message'] as String? ?? 'Review submitted successfully';
+          
+          debugPrint('Successfully submitted review with ID: ${reviewResponse.id}');
+          return ApiResponse.success(reviewResponse, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to submit review';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to submit review');
+      }
+    } on SocketException {
+      debugPrint('Submit review network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Submit review format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Submit review unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/test_drive_model.dart';
+import '../../models/review_model.dart' as review;
+import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
 
 class ReviewFormScreen extends StatefulWidget {
   final TestDriveListResponse? testDrive;
@@ -52,6 +55,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
         builder: (context) => _ReviewFormContent(
           carName: request['carName'],
           showroom: request['showroom'],
+          testDrive: null, // For mock data, we don't have a test drive object
         ),
       ),
     ).then((_) {
@@ -69,6 +73,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       return _ReviewFormContent(
         carName: widget.testDrive!.car.name,
         showroom: widget.testDrive!.showroom.name,
+        testDrive: widget.testDrive,
       );
     }
 
@@ -301,10 +306,12 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
 class _ReviewFormContent extends StatefulWidget {
   final String carName;
   final String showroom;
+  final TestDriveListResponse? testDrive;
 
   const _ReviewFormContent({
     required this.carName,
     required this.showroom,
+    this.testDrive,
   });
 
   @override
@@ -339,16 +346,95 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
     return _ratingLabels[(rating - 1).round()];
   }
 
-  void _submitReview() {
+  void _submitReview() async {
     if (_formKey.currentState!.validate() && _overallRating > 0) {
-      // TODO: Implement API call to submit review
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Review submitted successfully'),
-          backgroundColor: Color(0xFF4CAF50),
-        ),
-      );
-      Navigator.pop(context);
+      try {
+        // Show loading indicator
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+              ),
+            );
+          },
+        );
+
+        // Get user data from storage
+        final storageService = StorageService();
+        final user = await storageService.getUser();
+        
+        if (user == null) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User data not found. Please login again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        // Get test drive ID from the passed test drive or use a default
+        int testDriveId = 3; // Default fallback
+        if (widget.testDrive != null) {
+          testDriveId = widget.testDrive!.id;
+        }
+
+        // Convert ratings to string values
+        String _ratingToString(double rating) {
+          if (rating <= 1) return 'Poor';
+          if (rating <= 2) return 'Fair';
+          if (rating <= 3) return 'Good';
+          if (rating <= 4) return 'Very Good';
+          return 'Excellent';
+        }
+
+        // Create review request
+        final reviewRequest = review.ReviewRequest(
+          userId: user.id,
+          testDriveId: testDriveId,
+          overallExperience: _ratingToString(_overallRating),
+          comfortInterior: _ratingToString(_comfortRating),
+          performanceHandling: _ratingToString(_performanceRating),
+          valueMoney: _ratingToString(_valueRating),
+          recommend: _wouldRecommend,
+          comment: _commentController.text.trim(),
+        );
+
+        // Submit review via API
+        final apiService = ApiService();
+        final response = await apiService.submitReview(reviewRequest);
+
+        Navigator.pop(context); // Close loading dialog
+
+        if (response.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message ?? 'Review submitted successfully'),
+              backgroundColor: const Color(0xFF4CAF50),
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message ?? 'Failed to submit review'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

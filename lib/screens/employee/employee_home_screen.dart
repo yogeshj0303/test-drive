@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/employee_storage_service.dart';
+import '../../models/employee_model.dart';
 import 'assigned_test_drives_screen.dart';
 import 'update_status_screen.dart';
 import 'add_expense_screen.dart';
@@ -19,6 +21,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  Employee? _currentEmployee;
 
   @override
   void initState() {
@@ -50,6 +53,18 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
 
     _fadeController.forward();
     _slideController.forward();
+    
+    // Load employee data
+    _loadEmployeeData();
+  }
+
+  Future<void> _loadEmployeeData() async {
+    final employee = await EmployeeStorageService.getEmployeeData();
+    if (mounted) {
+      setState(() {
+        _currentEmployee = employee;
+      });
+    }
   }
 
   @override
@@ -153,7 +168,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
         Container(
           height: 36,
           width: 36,
-          margin: const EdgeInsets.only(right: 12),
+          margin: const EdgeInsets.only(right: 6),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
@@ -161,6 +176,26 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           child: IconButton(
             icon: const Icon(Icons.account_circle_outlined, size: 18),
             onPressed: () => _showProfile(),
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          height: 36,
+          width: 36,
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.logout_outlined, size: 18),
+            onPressed: () => _showLogoutDialog(),
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(
               foregroundColor: Colors.white,
@@ -223,7 +258,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back!',
+                  'Welcome back, ${_currentEmployee?.name ?? 'Employee'}!',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -240,6 +275,17 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+                if (_currentEmployee != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Showroom ID: ${_currentEmployee!.showroomId} | Status: ${_currentEmployee!.status}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -641,5 +687,84 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
         builder: (context) => const EmployeeProfileScreen(),
       ),
     );
+  }
+
+  Future<void> _showLogoutDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _logout();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _logout() async {
+    try {
+      // Clear employee data from storage
+      await EmployeeStorageService.clearEmployeeData();
+      
+      if (mounted) {
+        // Navigate back to login screen
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/employee-login',
+          (route) => false,
+        );
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logged out successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 } 

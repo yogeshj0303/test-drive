@@ -16,6 +16,7 @@ class StorageService {
   // Storage keys
   static const String _userKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _reviewedTestDrivesKey = 'reviewed_test_drives';
 
   // User data operations
   Future<void> saveUser(User user) async {
@@ -95,6 +96,52 @@ class StorageService {
       return isLoggedIn && hasUserData;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Reviewed test drives operations
+  Future<void> markTestDriveAsReviewed(int testDriveId) async {
+    try {
+      final reviewedTestDrives = await getReviewedTestDrives();
+      reviewedTestDrives.add(testDriveId);
+      final reviewedTestDrivesList = reviewedTestDrives.toList();
+      final reviewedTestDrivesJson = jsonEncode(reviewedTestDrivesList);
+      await _storage.write(key: _reviewedTestDrivesKey, value: reviewedTestDrivesJson);
+    } catch (e) {
+      print('Error marking test drive as reviewed: $e');
+      // Don't throw exception, just log the error to prevent app crashes
+    }
+  }
+
+  Future<Set<int>> getReviewedTestDrives() async {
+    try {
+      final reviewedTestDrivesJson = await _storage.read(key: _reviewedTestDrivesKey);
+      if (reviewedTestDrivesJson != null && reviewedTestDrivesJson.isNotEmpty) {
+        final List<dynamic> reviewedTestDrivesList = jsonDecode(reviewedTestDrivesJson);
+        return reviewedTestDrivesList.map((id) => id as int).toSet();
+      }
+      return <int>{};
+    } catch (e) {
+      print('Error reading reviewed test drives: $e');
+      // Return empty set instead of throwing exception to prevent app crashes
+      return <int>{};
+    }
+  }
+
+  Future<bool> isTestDriveReviewed(int testDriveId) async {
+    try {
+      final reviewedTestDrives = await getReviewedTestDrives();
+      return reviewedTestDrives.contains(testDriveId);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> clearReviewedTestDrives() async {
+    try {
+      await _storage.delete(key: _reviewedTestDrivesKey);
+    } catch (e) {
+      throw StorageException('Failed to clear reviewed test drives: ${e.toString()}');
     }
   }
 }

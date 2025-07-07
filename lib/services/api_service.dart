@@ -400,9 +400,13 @@ class ApiService {
           final errorMessage = responseData['message'] as String? ?? 'Failed to submit test drive request';
           return ApiResponse.error(errorMessage);
         }
+      } else if (response.statusCode == 500) {
+        // Handle the specific backend error
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(_getUserFriendlyErrorMessage(errorMessage));
       } else {
         final errorMessage = _extractErrorMessage(response.body);
-        return ApiResponse.error(errorMessage ?? 'Failed to submit test drive request');
+        return ApiResponse.error(_getUserFriendlyErrorMessage(errorMessage));
       }
     } on SocketException {
       debugPrint('Test drive request network error: No internet connection');
@@ -800,6 +804,26 @@ class ApiService {
     } catch (e) {
       return null;
     }
+  }
+
+  // Utility method to detect backend issues
+  bool _isBackendIssue(String? errorMessage) {
+    if (errorMessage == null) return false;
+    
+    final lowerMessage = errorMessage.toLowerCase();
+    return lowerMessage.contains('activity') ||
+           lowerMessage.contains('class not found') ||
+           lowerMessage.contains('controller not found') ||
+           lowerMessage.contains('500') ||
+           lowerMessage.contains('internal server error');
+  }
+
+  // Get user-friendly error message
+  String _getUserFriendlyErrorMessage(String? errorMessage) {
+    if (_isBackendIssue(errorMessage)) {
+      return 'Server maintenance in progress. Please try again later or contact support if the issue persists.';
+    }
+    return errorMessage ?? 'An unexpected error occurred. Please try again.';
   }
 
   // Retry mechanism for failed requests

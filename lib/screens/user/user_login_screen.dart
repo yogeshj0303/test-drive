@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
-import 'package:varenium/screens/user/main_user_screen.dart';
+import 'main_user_screen.dart';
 import 'user_signup_screen.dart';
 import 'forgot_password_screen.dart';
 

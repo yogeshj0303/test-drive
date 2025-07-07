@@ -1,4 +1,4 @@
-package com.example.varenium
+package com.varenyam.atc
 
 import io.flutter.embedding.android.FlutterActivity
 

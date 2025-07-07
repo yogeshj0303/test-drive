@@ -4,7 +4,7 @@ import '../../services/api_service.dart';
 import '../../services/api_config.dart';
 import '../../models/showroom_model.dart';
 import '../../main.dart';
-import 'package:varenium/screens/user/cancel_test_drive_screen.dart';
+import 'cancel_test_drive_screen.dart';
 import 'cars_screen.dart';
 import 'request_test_drive_screen.dart';
 import 'test_drive_status_screen.dart';
@@ -453,7 +453,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             MaterialPageRoute(
                               builder: (context) => const ReviewFormScreen( ),
                             ),
-                          );
+                          ).then((_) {
+                            // Refresh profile data when returning from review form
+                            UserProfileScreen.forceRefreshProfileData();
+                          });
                         },
                       },
                     ];

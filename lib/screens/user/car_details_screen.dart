@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'request_test_drive_screen.dart';
-import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import '../../services/api_service.dart';
 import '../../models/car_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -30,10 +27,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
   late TabController _tabController;
   late PageController _pageController;
   bool _isFavorite = false;
-  DateTimeRange? tripDates;
-  String pickupLocation = "Getting current location...";
   int _currentImageIndex = 0;
-  bool _isLoadingLocation = false;
 
   // API service and data
   final ApiService _apiService = ApiService();
@@ -47,7 +41,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
     _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController(initialPage: 1000);
     _fetchCar();
-    _getCurrentLocation();
   }
 
   Future<void> _fetchCar() async {
@@ -84,75 +77,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-    
-    try {
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          pickupLocation = "Location services disabled";
-          _isLoadingLocation = false;
-        });
-        return;
-      }
 
-      // Check location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            pickupLocation = "Location permission denied";
-            _isLoadingLocation = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          pickupLocation = "Location permission denied permanently";
-          _isLoadingLocation = false;
-        });
-        return;
-      }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Convert coordinates to address
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        setState(() {
-          pickupLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown City'}, ${place.administrativeArea ?? place.country ?? 'Unknown Area'}';
-          _isLoadingLocation = false;
-        });
-      } else {
-        setState(() {
-          pickupLocation = "Current Location";
-          _isLoadingLocation = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        pickupLocation = "Current Location";
-        _isLoadingLocation = false;
-        _errorMessage = 'Failed to get current location';
-        _isLoading = false;
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -228,7 +153,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
 
     final data = _car!;
     final price = double.tryParse(data.price) ?? 1500;
-    final dateFormat = DateFormat('dd-MM-yyyy');
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -567,43 +491,24 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                 _buildFeatureItem(Icons.event_seat, '${data.seatingCapacity} Seater'),
                                 _buildFeatureItem(Icons.palette, data.color.split(',').first.trim()),
                               ],
-                            ),
+                                                        ),
                           ],
                         ),
                       ),
                     ),
                   ),
+                  
+
+                  
+                  // Showroom Information Section
                   const SizedBox(height: 16),
-                  // Trip Dates
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                    child: _buildInfoCard(
-                      title: 'Trip Dates',
-                      value: tripDates == null
-                          ? 'Select Dates (Required)'
-                          : '${dateFormat.format(tripDates!.start)} - ${dateFormat.format(tripDates!.end)}',
-                      icon: Icons.calendar_today,
-                      isRequired: tripDates == null,
-                      onTap: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
-                        );
-                        if (picked != null) {
-                          setState(() => tripDates = picked);
-                        }
-                      },
-                    ),
-                  ),
-                  // Pickup & Return
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.04),
@@ -612,74 +517,45 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                           ),
                         ],
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0095D9).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.location_on,
-                              color: const Color(0xFF0095D9),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Pickup & Return',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0095D9).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(height: 1),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        pickupLocation,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF1A1A1A),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_isLoadingLocation)
-                                      const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
-                                        ),
-                                      ),
-                                  ],
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFF0095D9),
+                                  size: 20,
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Showroom Information',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            onPressed: _isLoadingLocation ? null : _getCurrentLocation,
-                            icon: Icon(
-                              Icons.refresh,
-                              color: _isLoadingLocation ? Colors.grey[400] : const Color(0xFF0095D9),
-                              size: 18,
-                            ),
-                            tooltip: 'Refresh Location',
-                          ),
+                          const SizedBox(height: 16),
+                          _buildSpecificationRow('Showroom', widget.showroomName),
+                          _buildSpecificationRow('Location', widget.showroomLocation),
+                          _buildSpecificationRow('Available', 'Yes'),
                         ],
                       ),
                     ),
                   ),
+                  
+
+ 
                   const SizedBox(height: 16),
                   // Enhanced Book Now Button
                   Padding(
@@ -702,48 +578,32 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                         height: 48,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: tripDates == null 
-                                ? Colors.grey[300] 
-                                : const Color(0xFF0095D9),
-                            foregroundColor: tripDates == null 
-                                ? Colors.grey[600] 
-                                : Colors.white,
+                            backgroundColor: const Color(0xFF0095D9),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             elevation: 0,
                           ),
-                          onPressed: tripDates == null ? null : () {
-                            // Check if dates are selected
-                            if (tripDates == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please select trip dates before proceeding'),
-                                  backgroundColor: Colors.orange,
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                              return;
-                            }
-                            
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => RequestTestDriveScreen(
                                   showroomName: widget.showroomName,
                                   availableCars: [widget.carName],
-                                  selectedStartDate: tripDates!.start,
-                                  selectedEndDate: tripDates!.end,
-                                  pickupLocation: pickupLocation,
+                                  selectedStartDate: DateTime.now(),
+                                  selectedEndDate: DateTime.now().add(const Duration(days: 1)),
+                                  pickupLocation: "Showroom Location",
                                   carId: _car?.id ?? 3,
                                   showroomId: _car?.showroom.id ?? widget.showroomId,
                                 ),
                               ),
                             );
                           },
-                          child: Text(
-                            tripDates == null ? 'Select Dates First' : 'Request Test Drive',
+                          child: const Text(
+                            'Request Test Drive',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -863,6 +723,64 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecificationRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: const Color(0xFF0095D9),
+            size: 16,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
           ),
         ],
       ),

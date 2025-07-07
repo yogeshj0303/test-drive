@@ -2,168 +2,116 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'update_status_screen.dart';
+import 'gate_pass_screen.dart';
+import '../../services/employee_api_service.dart';
+import '../../services/employee_storage_service.dart';
+import '../../models/test_drive_model.dart';
 
 class AssignedTestDrivesScreen extends StatefulWidget {
   const AssignedTestDrivesScreen({super.key});
 
   @override
-  State<AssignedTestDrivesScreen> createState() => _AssignedTestDrivesScreenState();
+  State<AssignedTestDrivesScreen> createState() => AssignedTestDrivesScreenState();
 }
 
-class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
+class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
   final stt.SpeechToText _speech = stt.SpeechToText();
+  final EmployeeApiService _apiService = EmployeeApiService();
+  
   bool _isListening = false;
   String _searchQuery = '';
   String _selectedFilter = 'All';
-
-  // Mock data - in real app this would come from API
-  final List<Map<String, dynamic>> _testDrives = [
-    {
-      'id': 'TD001',
-      'customerName': 'Rahul Sharma',
-      'customerPhone': '+91 98765 43210',
-      'vehicleModel': 'Tata Nexon EV',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-15',
-      'scheduledTime': '10:00 AM',
-      'status': 'Scheduled',
-      'location': 'Tata Motors Showroom, Andheri East',
-      'notes': 'Customer interested in electric vehicles, looking for home charging options',
-    },
-    {
-      'id': 'TD002',
-      'customerName': 'Priya Patel',
-      'customerPhone': '+91 98765 43211',
-      'vehicleModel': 'Mahindra XUV700',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-15',
-      'scheduledTime': '2:00 PM',
-      'status': 'In Progress',
-      'location': 'Mahindra Auto, Powai',
-      'notes': 'Family looking for 7-seater SUV, interested in ADAS features',
-    },
-    {
-      'id': 'TD003',
-      'customerName': 'Amit Kumar',
-      'customerPhone': '+91 98765 43212',
-      'vehicleModel': 'Hyundai Creta',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-16',
-      'scheduledTime': '11:30 AM',
-      'status': 'Completed',
-      'location': 'Hyundai Motors, Vikhroli',
-      'notes': 'Young professional, interested in connected car features',
-    },
-    {
-      'id': 'TD004',
-      'customerName': 'Neha Singh',
-      'customerPhone': '+91 98765 43213',
-      'vehicleModel': 'Maruti Suzuki Brezza',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-16',
-      'scheduledTime': '3:00 PM',
-      'status': 'Scheduled',
-      'location': 'Maruti Suzuki, Ghatkopar',
-      'notes': 'First-time car buyer, budget-conscious, looking for fuel efficiency',
-    },
-    {
-      'id': 'TD005',
-      'customerName': 'Vikram Mehta',
-      'customerPhone': '+91 98765 43214',
-      'vehicleModel': 'Kia Seltos',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-17',
-      'scheduledTime': '10:30 AM',
-      'status': 'Scheduled',
-      'location': 'Kia Motors, Bhandup',
-      'notes': 'Tech-savvy customer, interested in premium features and design',
-    },
-    {
-      'id': 'TD006',
-      'customerName': 'Anjali Desai',
-      'customerPhone': '+91 98765 43215',
-      'vehicleModel': 'Honda City',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-17',
-      'scheduledTime': '1:00 PM',
-      'status': 'In Progress',
-      'location': 'Honda Cars, Kandivali',
-      'notes': 'Sedan enthusiast, looking for comfort and reliability',
-    },
-    {
-      'id': 'TD007',
-      'customerName': 'Rajesh Verma',
-      'customerPhone': '+91 98765 43216',
-      'vehicleModel': 'Tata Punch',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-18',
-      'scheduledTime': '9:00 AM',
-      'status': 'Completed',
-      'location': 'Tata Motors Showroom, Thane',
-      'notes': 'Compact SUV buyer, impressed with safety ratings',
-    },
-    {
-      'id': 'TD008',
-      'customerName': 'Sneha Reddy',
-      'customerPhone': '+91 98765 43217',
-      'vehicleModel': 'Mahindra Thar',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-18',
-      'scheduledTime': '4:00 PM',
-      'status': 'Cancelled',
-      'location': 'Mahindra Auto, Navi Mumbai',
-      'notes': 'Adventure enthusiast, cancelled due to long waiting period',
-    },
-    {
-      'id': 'TD009',
-      'customerName': 'Arjun Malhotra',
-      'customerPhone': '+91 98765 43218',
-      'vehicleModel': 'Hyundai Venue',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-19',
-      'scheduledTime': '12:00 PM',
-      'status': 'Scheduled',
-      'location': 'Hyundai Motors, Borivali',
-      'notes': 'Urban commuter, looking for compact SUV with good mileage',
-    },
-    {
-      'id': 'TD010',
-      'customerName': 'Pooja Gupta',
-      'customerPhone': '+91 98765 43219',
-      'vehicleModel': 'Maruti Suzuki Swift',
-      'vehicleYear': '2024',
-      'scheduledDate': '2024-01-19',
-      'scheduledTime': '2:30 PM',
-      'status': 'Scheduled',
-      'location': 'Maruti Suzuki, Mulund',
-      'notes': 'Hatchback buyer, interested in automatic transmission',
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredTestDrives {
-    return _testDrives.where((testDrive) {
-      final matchesSearch = testDrive['customerName'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          testDrive['vehicleModel'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          testDrive['id'].toLowerCase().contains(_searchQuery.toLowerCase());
-      
-      final matchesFilter = _selectedFilter == 'All' || testDrive['status'] == _selectedFilter;
-      
-      return matchesSearch && matchesFilter;
-    }).toList();
-  }
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+  bool _isInitialized = false;
+  String? _errorMessage;
+  
+  List<AssignedTestDrive> _testDrives = [];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initSpeech();
+    _loadAssignedTestDrives();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _speech.stop();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh data when app becomes visible
+    if (state == AppLifecycleState.resumed) {
+      _loadAssignedTestDrives();
+    }
+  }
+
+  Future<void> _loadAssignedTestDrives() async {
+    if (!_isRefreshing) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      // Get employee data to get the driver ID
+      final employee = await EmployeeStorageService.getEmployeeData();
+      if (employee == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Employee data not found. Please login again.';
+        });
+        return;
+      }
+
+      final response = await _apiService.getAssignedTestDrives(employee.id);
+      
+      if (response.success && response.data != null) {
+        setState(() {
+          _testDrives = response.data!.data;
+          _isLoading = false;
+          _errorMessage = null;
+          _isInitialized = true;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = response.message ?? 'Failed to load assigned test drives';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An error occurred: ${e.toString()}';
+      });
+    }
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+    await _loadAssignedTestDrives();
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
+  // Method to be called when screen becomes visible from bottom navigation
+  void onScreenVisible() {
+    // Only refresh if already initialized and not currently loading
+    if (_isInitialized && !_isLoading && _errorMessage == null) {
+      _loadAssignedTestDrives();
+    }
   }
 
   Future<void> _initSpeech() async {
@@ -188,16 +136,26 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
         onError: (error) {
           // Handle specific error cases more gracefully
           String errorMessage = 'Speech recognition error';
-          if (error.errorMsg.contains('no match')) {
-            errorMessage = 'Try speaking more clearly or use longer words';
+          String helpfulTip = '';
+          
+          if (error.errorMsg.contains('no match') || error.errorMsg.contains('error_no_match')) {
+            errorMessage = 'No speech detected or unclear pronunciation';
+            helpfulTip = '💡 Tip: Try saying complete words like "John" instead of "J", or "BMW" instead of "B"';
           } else if (error.errorMsg.contains('network')) {
             errorMessage = 'Network error. Please check your connection';
+            helpfulTip = '💡 Tip: Ensure you have a stable internet connection';
           } else if (error.errorMsg.contains('audio')) {
             errorMessage = 'Audio error. Please try again';
+            helpfulTip = '💡 Tip: Check your microphone and try speaking louder';
+          } else if (error.errorMsg.contains('permission')) {
+            errorMessage = 'Microphone permission denied';
+            helpfulTip = '💡 Tip: Enable microphone access in app settings';
           } else {
             errorMessage = 'Speech recognition error: ${error.errorMsg}';
+            helpfulTip = '💡 Tip: Try speaking clearly in a quiet environment';
           }
-          _showErrorSnackBar(errorMessage);
+          
+          _showErrorSnackBar('$errorMessage\n$helpfulTip');
           setState(() => _isListening = false);
         },
       );
@@ -210,71 +168,73 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.red[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'Dismiss',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+  List<AssignedTestDrive> get _filteredTestDrives {
+    return _testDrives.where((testDrive) {
+      final matchesSearch = testDrive.frontUser.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          testDrive.car.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          testDrive.id.toString().contains(_searchQuery.toLowerCase());
+      
+      final matchesFilter = _selectedFilter == 'All' || 
+          _getStatusDisplayName(testDrive.status) == _selectedFilter;
+      
+      return matchesSearch && matchesFilter;
+    }).toList();
   }
 
-  Future<void> _startListening() async {
-    try {
-      // Check microphone permission again before starting
-      final status = await Permission.microphone.status;
-      if (status.isDenied) {
-        _showErrorSnackBar('Microphone permission is required for voice search');
-        return;
-      }
+  String _getStatusDisplayName(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'Scheduled';
+      case 'in_progress':
+      case 'in progress':
+        return 'Scheduled'; // Treat in_progress as scheduled since we removed the option
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+      case 'canceled':
+        return 'Cancelled';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status;
+    }
+  }
 
-      if (!_isListening) {
-        final available = await _speech.initialize();
-        if (available) {
-          setState(() => _isListening = true);
-          await _speech.listen(
-            onResult: (result) {
-              setState(() {
-                _searchQuery = result.recognizedWords;
-                _searchController.text = _searchQuery;
-              });
-            },
-            listenFor: const Duration(seconds: 60),
-            pauseFor: const Duration(seconds: 5),
-            partialResults: true,
-            localeId: 'en_US',
-            cancelOnError: false,
-            listenMode: stt.ListenMode.dictation,
-          );
-        } else {
-          _showErrorSnackBar('Speech recognition is not available');
-        }
-      } else {
-        setState(() => _isListening = false);
-        _speech.stop();
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to start speech recognition: ${e.toString()}');
-      setState(() => _isListening = false);
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return const Color(0xFF3B82F6);
+      case 'in_progress':
+      case 'in progress':
+        return const Color(0xFF3B82F6); // Use same color as approved/scheduled
+      case 'completed':
+        return const Color(0xFF10B981);
+      case 'cancelled':
+      case 'canceled':
+        return const Color(0xFFEF4444);
+      case 'rejected':
+        return const Color(0xFFDC2626);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return Icons.schedule;
+      case 'in_progress':
+      case 'in progress':
+        return Icons.schedule; // Use same icon as approved/scheduled
+      case 'completed':
+        return Icons.check_circle;
+      case 'cancelled':
+      case 'canceled':
+        return Icons.cancel;
+      case 'rejected':
+        return Icons.block;
+      default:
+        return Icons.help;
     }
   }
 
@@ -303,218 +263,328 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Section with Stats
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.none,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3080A5).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: Column(
+            children: [
+              // Header Section with Stats
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                    child: const Icon(
-                      Icons.directions_car,
-                      color: Color(0xFF3080A5),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_filteredTestDrives.length} Test Drives',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        Text(
-                          'Manage your assigned test drives',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Search and Filter Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Search Bar
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.none,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search test drives...',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                        suffixIcon: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: _isListening 
-                                ? const Color(0xFF3080A5).withOpacity(0.1)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              IconButton(
-                                icon: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Icon(
-                                    _isListening ? Icons.mic : Icons.mic_none_rounded,
-                                    key: ValueKey<bool>(_isListening),
-                                    color: _isListening ? const Color(0xFF3080A5) : Colors.grey[400],
-                                    size: 22,
-                                  ),
-                                ),
-                                onPressed: _startListening,
-                                tooltip: _isListening 
-                                    ? 'Stop listening' 
-                                    : 'Tap to start voice search\nTip: Speak clearly and use complete words',
-                              ),
-                              if (_isListening)
-                                Positioned(
-                                  right: 8,
-                                  top: 8,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ],
+                ),
+                clipBehavior: Clip.none,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3080A5).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Filter Chips
-                  SingleChildScrollView(
-                    clipBehavior: Clip.none,
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('All', Icons.list_alt),
-                        _buildFilterChip('Scheduled', Icons.schedule),
-                        _buildFilterChip('In Progress', Icons.directions_car),
-                        _buildFilterChip('Completed', Icons.check_circle),
-                        _buildFilterChip('Cancelled', Icons.cancel),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Test Drives List
-            Expanded(
-              child: _filteredTestDrives.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Stack(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
+                          const Icon(
+                            Icons.directions_car,
+                            color: Color(0xFF3080A5),
+                            size: 20,
+                          ),
+                          if (_isRefreshing)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF3080A5),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(1.5),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3080A5)),
+                                  ),
+                                ),
+                              ),
                             ),
-                            clipBehavior: Clip.none,
-                            child: Icon(
-                              Icons.directions_car_outlined,
-                              size: 40,
-                              color: Colors.grey[400],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isLoading 
+                                ? 'Loading...' 
+                                : '${_filteredTestDrives.length} Test Drives',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
                             ),
                           ),
-                          const SizedBox(height: 12),
                           Text(
-                            'No test drives found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Try adjusting your search or filters',
+                            _isLoading 
+                                ? 'Fetching your assigned test drives' 
+                                : _isRefreshing
+                                    ? 'Refreshing data...'
+                                    : 'Manage your assigned test drives',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[500],
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredTestDrives.length,
-                      itemBuilder: (context, index) {
-                        final testDrive = _filteredTestDrives[index];
-                        return _buildTestDriveCard(testDrive);
-                      },
                     ),
-            ),
-          ],
+                  ],
+                ),
+              ),
+              
+              // Error Message
+              if (_errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.refresh, color: Colors.red[700], size: 20),
+                        onPressed: _loadAssignedTestDrives,
+                        tooltip: 'Retry',
+                      ),
+                    ],
+                  ),
+                ),
+              
+              // Search and Filter Section
+              if (!_isLoading)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Search Bar
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.none,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search test drives...',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                            suffixIcon: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: _isListening 
+                                    ? const Color(0xFF3080A5).withOpacity(0.1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 200),
+                                      child: Icon(
+                                        _isListening ? Icons.mic : Icons.mic_none_rounded,
+                                        key: ValueKey<bool>(_isListening),
+                                        color: _isListening ? const Color(0xFF3080A5) : Colors.grey[400],
+                                        size: 22,
+                                      ),
+                                    ),
+                                    onPressed: _startListening,
+                                    tooltip: _isListening 
+                                        ? 'Stop listening' 
+                                        : 'Tap to start voice search\n💡 Tip: Say "John Smith" instead of "J"\n💡 Tip: Say "BMW X5" instead of "B"',
+                                  ),
+                                  if (_isListening)
+                                    Positioned(
+                                      right: 8,
+                                      top: 8,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Filter Chips
+                      SingleChildScrollView(
+                        clipBehavior: Clip.none,
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildFilterChip('All', Icons.list_alt),
+                            _buildFilterChip('Scheduled', Icons.schedule),
+                            _buildFilterChip('Completed', Icons.check_circle),
+                            _buildFilterChip('Cancelled', Icons.cancel),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              
+              // Test Drives List
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3080A5)),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading assigned test drives...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filteredTestDrives.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  clipBehavior: Clip.none,
+                                  child: Icon(
+                                    Icons.directions_car_outlined,
+                                    size: 40,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _errorMessage != null 
+                                      ? 'Failed to load test drives'
+                                      : 'No test drives found',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _errorMessage != null
+                                      ? 'Please check your connection and try again'
+                                      : 'Try adjusting your search or filters',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                if (_errorMessage != null) ...[
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    onPressed: _loadAssignedTestDrives,
+                                    icon: const Icon(Icons.refresh, size: 16),
+                                    label: const Text('Retry'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF3080A5),
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _filteredTestDrives.length,
+                            itemBuilder: (context, index) {
+                              final testDrive = _filteredTestDrives[index];
+                              return _buildTestDriveCard(testDrive);
+                            },
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -563,38 +633,14 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
     );
   }
 
-  Widget _buildTestDriveCard(Map<String, dynamic> testDrive) {
-    Color statusColor;
-    IconData statusIcon;
-    String statusText;
+  Widget _buildTestDriveCard(AssignedTestDrive testDrive) {
+    Color statusColor = _getStatusColor(testDrive.status);
+    IconData statusIcon = _getStatusIcon(testDrive.status);
+    String statusText = _getStatusDisplayName(testDrive.status);
     
-    switch (testDrive['status']) {
-      case 'Scheduled':
-        statusColor = const Color(0xFF3B82F6);
-        statusIcon = Icons.schedule;
-        statusText = 'Scheduled';
-        break;
-      case 'In Progress':
-        statusColor = const Color(0xFFF59E0B);
-        statusIcon = Icons.directions_car;
-        statusText = 'In Progress';
-        break;
-      case 'Completed':
-        statusColor = const Color(0xFF10B981);
-        statusIcon = Icons.check_circle;
-        statusText = 'Completed';
-        break;
-      case 'Cancelled':
-        statusColor = const Color(0xFFEF4444);
-        statusIcon = Icons.cancel;
-        statusText = 'Cancelled';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.help;
-        statusText = testDrive['status'];
-    }
-
+    bool isCompleted = _getStatusDisplayName(testDrive.status) == 'Completed';
+    bool isCancelled = _getStatusDisplayName(testDrive.status) == 'Cancelled';
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -625,7 +671,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    testDrive['id'],
+                    testDrive.id.toString(),
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -688,7 +734,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              testDrive['customerName'],
+                              testDrive.frontUser.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 12,
@@ -698,7 +744,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                               maxLines: 1,
                             ),
                             Text(
-                              testDrive['customerPhone'],
+                              testDrive.frontUser.mobile,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey[600],
@@ -735,7 +781,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                testDrive['vehicleModel'],
+                                testDrive.car.name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
@@ -748,7 +794,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          testDrive['location'],
+                          testDrive.car.showroom.name,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[600],
@@ -775,7 +821,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${testDrive['scheduledDate']} at ${testDrive['scheduledTime']}',
+                  '${testDrive.date} at ${testDrive.time}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[700],
@@ -785,7 +831,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
               ],
             ),
             
-            if (testDrive['notes'] != null && testDrive['notes'].isNotEmpty) ...[
+            if (testDrive.note.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -805,7 +851,7 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        testDrive['notes'],
+                        testDrive.note,
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF92400E),
@@ -820,40 +866,88 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
             const SizedBox(height: 12),
             
             // Action Buttons
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _viewDetails(testDrive),
-                    icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('View Details', style: TextStyle(fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF3080A5),
-                      side: const BorderSide(color: Color(0xFF3080A5)),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _viewDetails(testDrive),
+                        icon: const Icon(Icons.visibility, size: 16),
+                        label: const Text('View Details', style: TextStyle(fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF3080A5),
+                          side: const BorderSide(color: Color(0xFF3080A5)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (!isCompleted && !isCancelled)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _updateStatus(testDrive),
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('Update Status', style: TextStyle(fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3080A5),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (isCompleted || isCancelled)
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isCompleted ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFEF4444).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            isCompleted ? 'Completed' : 'Cancelled',
+                            style: TextStyle(
+                              color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (!isCompleted) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _viewGatePass(testDrive),
+                      icon: const Icon(Icons.qr_code, size: 16),
+                      label: const Text('View Gate Pass', style: TextStyle(fontSize: 12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _updateStatus(testDrive),
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Update Status', style: TextStyle(fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3080A5),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ),
-                ),
+                ],
               ],
             ),
           ],
@@ -862,65 +956,162 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
     );
   }
 
-  void _viewDetails(Map<String, dynamic> testDrive) {
-    showDialog(
+  void _viewDetails(AssignedTestDrive testDrive) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-        title: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle bar
             Container(
-              padding: const EdgeInsets.all(6),
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFF3080A5).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.directions_car,
-                color: Color(0xFF3080A5),
-                size: 16,
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Test Drive Details',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+            
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3080A5).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.directions_car,
+                      color: Color(0xFF3080A5),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Test Drive Details',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        Text(
+                          'ID: ${testDrive.id}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.grey[600],
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Customer Section
+                    _buildDetailSection(
+                      'Customer Information',
+                      Icons.person,
+                      [
+                        _buildDetailRow('Name', testDrive.frontUser.name),
+                        _buildDetailRow('Phone', testDrive.frontUser.mobile),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Vehicle Section
+                    _buildDetailSection(
+                      'Vehicle Information',
+                      Icons.directions_car,
+                      [
+                        _buildDetailRow('Model', testDrive.car.name),
+                        _buildDetailRow('Showroom', testDrive.car.showroom.name),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Test Drive Section
+                    _buildDetailSection(
+                      'Test Drive Details',
+                      Icons.schedule,
+                      [
+                        _buildDetailRow('Date', testDrive.date),
+                        _buildDetailRow('Time', testDrive.time),
+                        _buildDetailRow('Status', _getStatusDisplayName(testDrive.status)),
+                      ],
+                    ),
+                    
+                    if (testDrive.note.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      
+                      // Notes Section
+                      _buildDetailSection(
+                        'Notes',
+                        Icons.note,
+                        [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                            ),
+                            child: Text(
+                              testDrive.note,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    
+                    // Bottom padding for safe area
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('ID', testDrive['id']),
-              _buildDetailRow('Customer', testDrive['customerName']),
-              _buildDetailRow('Phone', testDrive['customerPhone']),
-              _buildDetailRow('Vehicle', '${testDrive['vehicleModel']}'),
-              _buildDetailRow('Date & Time', '${testDrive['scheduledDate']} at ${testDrive['scheduledTime']}'),
-              _buildDetailRow('Status', testDrive['status']),
-              _buildDetailRow('Location', testDrive['location']),
-              if (testDrive['notes'] != null && testDrive['notes'].isNotEmpty)
-                _buildDetailRow('Notes', testDrive['notes']),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: Color(0xFF3080A5)),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -952,12 +1143,171 @@ class _AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> {
     );
   }
 
-  void _updateStatus(Map<String, dynamic> testDrive) {
-    // Navigate to update status screen
+  Widget _buildDetailSection(String title, IconData icon, List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFF3080A5),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  void _updateStatus(AssignedTestDrive testDrive) {
+    // Navigate to update status screen with test drive data
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const UpdateStatusScreen(),
+        builder: (context) => UpdateStatusScreen(selectedTestDrive: testDrive),
+      ),
+    ).then((_) {
+      // Refresh data when returning from update status screen
+      _loadAssignedTestDrives();
+    });
+  }
+
+  void _viewGatePass(AssignedTestDrive testDrive) {
+    // Navigate to gate pass screen with test drive data
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EmployeeGatePassScreen(testDrive: testDrive),
+      ),
+    );
+  }
+
+  Future<void> _startListening() async {
+    try {
+      // Check microphone permission again before starting
+      final status = await Permission.microphone.status;
+      if (status.isDenied) {
+        _showErrorSnackBar('Microphone permission is required for voice search');
+        return;
+      }
+
+      if (!_isListening) {
+        final available = await _speech.initialize();
+        if (available) {
+          setState(() => _isListening = true);
+          
+          // Show helpful tip when starting
+          _showInfoSnackBar('🎤 Speak now! Try saying complete words like "John Smith" or "BMW X5"');
+          
+          await _speech.listen(
+            onResult: (result) {
+              final recognizedText = result.recognizedWords.trim();
+              
+              // Only update if we have meaningful text (more than just whitespace)
+              if (recognizedText.isNotEmpty) {
+                setState(() {
+                  _searchQuery = recognizedText;
+                  _searchController.text = _searchQuery;
+                });
+                
+                // Provide feedback for very short inputs
+                if (recognizedText.length <= 2) {
+                  _showInfoSnackBar('💡 Tip: Try saying the full name or word for better recognition');
+                }
+              }
+            },
+            listenFor: const Duration(seconds: 60),
+            pauseFor: const Duration(seconds: 3), // Reduced pause time for better responsiveness
+            partialResults: true,
+            localeId: 'en_US',
+            cancelOnError: false,
+            listenMode: stt.ListenMode.dictation,
+          );
+        } else {
+          _showErrorSnackBar('Speech recognition is not available');
+        }
+      } else {
+        setState(() => _isListening = false);
+        _speech.stop();
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to start speech recognition: ${e.toString()}');
+      setState(() => _isListening = false);
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red[700],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Dismiss',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showInfoSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.info, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.blue[700],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Dismiss',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }

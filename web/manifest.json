@@ -1,6 +1,6 @@
 {
-    "name": "varenium",
-    "short_name": "varenium",
+      "name": "Varenyam",
+  "short_name": "Varenyam",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

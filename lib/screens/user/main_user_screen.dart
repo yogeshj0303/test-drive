@@ -14,6 +14,8 @@ class MainUserScreen extends StatefulWidget {
 
 class _MainUserScreenState extends State<MainUserScreen> {
   int _currentIndex = 0;
+  final GlobalKey<UserProfileScreenState> _profileKey = GlobalKey<UserProfileScreenState>();
+  final GlobalKey<TestDriveStatusScreenState> _statusKey = GlobalKey<TestDriveStatusScreenState>();
 
   @override
   void initState() {
@@ -28,6 +30,13 @@ class _MainUserScreenState extends State<MainUserScreen> {
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
+      if (index == 3) {
+        // Status tab selected, refresh test drive data
+        _statusKey.currentState?.refreshData();
+      } else if (index == 4) {
+        // Profile tab selected, refresh profile data
+        _profileKey.currentState?.refreshProfileData();
+      }
     });
   }
 
@@ -43,8 +52,8 @@ class _MainUserScreenState extends State<MainUserScreen> {
           const UserHomeScreen(),
           const ShowroomsScreen(),
           const SearchScreen(),
-          const TestDriveStatusScreen(showBackButton: false),
-          const UserProfileScreen(showBackButton: false),
+          TestDriveStatusScreen(key: _statusKey, showBackButton: false),
+          UserProfileScreen(key: _profileKey, showBackButton: false),
         ],
       ),
       bottomNavigationBar: Container(

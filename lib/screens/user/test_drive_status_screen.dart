@@ -15,10 +15,10 @@ class TestDriveStatusScreen extends StatefulWidget {
   });
 
   @override
-  State<TestDriveStatusScreen> createState() => _TestDriveStatusScreenState();
+  State<TestDriveStatusScreen> createState() => TestDriveStatusScreenState();
 }
 
-class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
+class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with WidgetsBindingObserver {
   final ApiService _apiService = ApiService();
   final StorageService _storageService = StorageService();
   
@@ -30,6 +30,7 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTestDrives();
   }
 
@@ -42,6 +43,21 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
         _refreshData();
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh data when app becomes active
+    if (state == AppLifecycleState.resumed && mounted && !_isLoading) {
+      _refreshData();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _loadTestDrives() async {
@@ -79,6 +95,10 @@ class _TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> refreshData() async {
+    await _refreshData();
   }
 
   Future<void> _refreshData() async {

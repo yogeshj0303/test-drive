@@ -183,4 +183,64 @@ class EmployeeApiResponse<T> {
       statusCode: statusCode,
     );
   }
+}
+
+class EmployeeProfileResponse {
+  final Employee user;
+
+  EmployeeProfileResponse({
+    required this.user,
+  });
+
+  factory EmployeeProfileResponse.fromJson(Map<String, dynamic> json) {
+    return EmployeeProfileResponse(
+      user: Employee.fromJson(json['user'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+    };
+  }
+}
+
+class PerformanceCountResponse {
+  final bool success;
+  final String message;
+  final PerformanceCountData data;
+
+  PerformanceCountResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory PerformanceCountResponse.fromJson(Map<String, dynamic> json) {
+    return PerformanceCountResponse(
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      data: PerformanceCountData.fromJson(json['data'] ?? {}),
+    );
+  }
+}
+
+class PerformanceCountData {
+  final int totalTestdrives;
+  final int pendingTestdrives;
+  final int thisMonthTestdrives;
+
+  PerformanceCountData({
+    required this.totalTestdrives,
+    required this.pendingTestdrives,
+    required this.thisMonthTestdrives,
+  });
+
+  factory PerformanceCountData.fromJson(Map<String, dynamic> json) {
+    return PerformanceCountData(
+      totalTestdrives: json['total_testdrives'] ?? 0,
+      pendingTestdrives: json['pending_testdrives'] ?? 0,
+      thisMonthTestdrives: json['this_month_testdrives'] ?? 0,
+    );
+  }
 } 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -7,57 +8,59 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF3080A5);
     
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          elevation: 0,
+          leading: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.arrow_back_rounded,
+                size: 20,
+                color: Colors.grey[700],
+              ),
             ),
-            child: Icon(
-              Icons.arrow_back_rounded,
-              size: 20,
-              color: Colors.grey[700],
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'About',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
             ),
           ),
-          onPressed: () => Navigator.pop(context),
+          centerTitle: true,
         ),
-        title: Text(
-          'About',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              _buildAppInfoCard(primaryBlue),
+              const SizedBox(height: 24),
+              _buildSectionHeader('App Information', primaryBlue),
+              const SizedBox(height: 12),
+              _buildInfoSection(primaryBlue),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Company Information', primaryBlue),
+              const SizedBox(height: 12),
+              _buildCompanySection(primaryBlue),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Support & Contact', primaryBlue),
+              const SizedBox(height: 12),
+              _buildSupportSection(primaryBlue),
+              const SizedBox(height: 32),
+              _buildLegalSection(primaryBlue),
+            ],
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            _buildAppInfoCard(primaryBlue),
-            const SizedBox(height: 24),
-            _buildSectionHeader('App Information', primaryBlue),
-            const SizedBox(height: 12),
-            _buildInfoSection(primaryBlue),
-            const SizedBox(height: 24),
-            _buildSectionHeader('Company Information', primaryBlue),
-            const SizedBox(height: 12),
-            _buildCompanySection(primaryBlue),
-            const SizedBox(height: 24),
-            _buildSectionHeader('Support & Contact', primaryBlue),
-            const SizedBox(height: 12),
-            _buildSupportSection(primaryBlue),
-            const SizedBox(height: 32),
-            _buildLegalSection(primaryBlue),
-          ],
         ),
       ),
     );

@@ -50,6 +50,26 @@ class EmployeeStorageService {
     return prefs.getBool(_isEmployeeLoggedInKey) ?? false;
   }
 
+  // Check if employee data exists
+  static Future<bool> hasEmployeeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final employeeJson = prefs.getString(_employeeKey);
+    return employeeJson != null;
+  }
+
+  // Check if employee has a valid authentication session
+  static Future<bool> hasValidSession() async {
+    try {
+      final isLoggedIn = await isEmployeeLoggedIn();
+      final hasData = await hasEmployeeData();
+      
+      // Check if employee is logged in and has data
+      return isLoggedIn && hasData;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Clear employee data (logout)
   static Future<void> clearEmployeeData() async {
     final prefs = await SharedPreferences.getInstance();

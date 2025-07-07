@@ -12,42 +12,85 @@ class UserProfileScreen extends StatefulWidget {
   final bool showBackButton;
   
   const UserProfileScreen({
-    super.key,
+    Key? key,
     this.showBackButton = true,
-  });
+  }) : super(key: key);
 
   // Static cache to store user data across instances
   static User? _cachedUser;
   static int _cachedTestDriveCount = 0;
+  static int _cachedReviewCount = 0;
   static DateTime? _lastCacheTime;
   static const Duration _cacheValidDuration = Duration(minutes: 5);
+  static List<Function()> _refreshCallbacks = [];
 
   // Method to clear cache (call this when user data is updated)
   static void clearCache() {
     _cachedUser = null;
     _cachedTestDriveCount = 0;
+    _cachedReviewCount = 0;
     _lastCacheTime = null;
   }
 
   // Getter methods to access cached data
   static User? get cachedUser => _cachedUser;
   static int get cachedTestDriveCount => _cachedTestDriveCount;
+  static int get cachedReviewCount => _cachedReviewCount;
   static DateTime? get lastCacheTime => _lastCacheTime;
   static Duration get cacheValidDuration => _cacheValidDuration;
 
   // Method to update cache
-  static void updateCache(User user, int testDriveCount) {
+  static void updateCache(User user, int testDriveCount, int reviewCount) {
     _cachedUser = user;
     _cachedTestDriveCount = testDriveCount;
+    _cachedReviewCount = reviewCount;
     _lastCacheTime = DateTime.now();
+    
+    // Notify all active profile screens to refresh
+    for (final callback in _refreshCallbacks) {
+      callback();
+    }
+  }
+
+  // Method to register refresh callback
+  static void registerRefreshCallback(Function() callback) {
+    _refreshCallbacks.add(callback);
+  }
+
+  // Method to unregister refresh callback
+  static void unregisterRefreshCallback(Function() callback) {
+    _refreshCallbacks.remove(callback);
+  }
+
+  // Static method to force refresh profile data
+  static Future<void> forceRefreshProfileData() async {
+    try {
+      final storageService = StorageService();
+      final currentUser = await storageService.getUser();
+      if (currentUser != null) {
+        final apiService = ApiService();
+        final testDrivesResponse = await apiService.getUserTestDrives(currentUser.id);
+        final reviewedTestDrives = await storageService.getReviewedTestDrives();
+        
+        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+        final reviewCount = reviewedTestDrives.length;
+        
+        // Update cache with new counts
+        if (_cachedUser != null) {
+          updateCache(_cachedUser!, testDriveCount, reviewCount);
+        }
+      }
+    } catch (e) {
+      print('Error forcing profile refresh: $e');
+    }
   }
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  State<UserProfileScreen> createState() => UserProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen>
-    with SingleTickerProviderStateMixin {
+class UserProfileScreenState extends State<UserProfileScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -59,10 +102,12 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   bool _isLoading = true;
   String? _errorMessage;
   int _testDriveCount = 0;
+  int _reviewCount = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -81,6 +126,26 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     _loadUserProfile();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Refresh data when app becomes active
+      _refreshProfileData();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes active (but only once)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isLoading) {
+        _refreshProfileData();
+      }
+    });
+  }
+
   Future<void> _loadUserProfile() async {
     // Check if we have valid cached data
     if (UserProfileScreen.cachedUser != null && UserProfileScreen.lastCacheTime != null) {
@@ -89,6 +154,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         setState(() {
           _user = UserProfileScreen.cachedUser;
           _testDriveCount = UserProfileScreen.cachedTestDriveCount;
+          _reviewCount = UserProfileScreen.cachedReviewCount;
           _isLoading = false;
         });
         return;
@@ -98,20 +164,26 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     try {
       final currentUser = await _storageService.getUser();
       if (currentUser != null) {
-        // Load user profile and test drive count in parallel
+        // Load user profile, test drive count, and review count in parallel
         final profileResponse = await _apiService.getUserProfile(currentUser.id);
         final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        final reviewedTestDrives = await _storageService.getReviewedTestDrives();
         
         if (profileResponse.success && profileResponse.data != null) {
+          final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+          final reviewCount = reviewedTestDrives.length;
+          
           // Cache the data
           UserProfileScreen.updateCache(
             profileResponse.data!,
-            testDrivesResponse.success ? testDrivesResponse.data!.length : 0,
+            testDriveCount,
+            reviewCount,
           );
           
           setState(() {
             _user = UserProfileScreen.cachedUser;
             _testDriveCount = UserProfileScreen.cachedTestDriveCount;
+            _reviewCount = UserProfileScreen.cachedReviewCount;
             _isLoading = false;
           });
         } else {
@@ -141,8 +213,44 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     await _loadUserProfile();
   }
 
+  // Method to refresh profile data without clearing cache (for real-time updates)
+  Future<void> _refreshProfileData() async {
+    try {
+      final currentUser = await _storageService.getUser();
+      if (currentUser != null) {
+        // Only refresh the counts, not the entire profile
+        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        final reviewedTestDrives = await _storageService.getReviewedTestDrives();
+        
+        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+        final reviewCount = reviewedTestDrives.length;
+        
+        // Update cache with new counts
+        if (UserProfileScreen.cachedUser != null) {
+          UserProfileScreen.updateCache(
+            UserProfileScreen.cachedUser!,
+            testDriveCount,
+            reviewCount,
+          );
+        }
+        
+        // Update UI if counts have changed
+        if (mounted && (_testDriveCount != testDriveCount || _reviewCount != reviewCount)) {
+          setState(() {
+            _testDriveCount = testDriveCount;
+            _reviewCount = reviewCount;
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors to avoid disrupting the UI
+      print('Error refreshing profile data: $e');
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
   }
@@ -569,7 +677,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         _buildStatCard(
           context,
           'Reviews',
-          '2',
+          '$_reviewCount',
           Icons.rate_review_outlined,
           AppTheme.warningColor,
         ),
@@ -1005,5 +1113,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         );
       }
     }
+  }
+
+  // Expose this method for parent to call
+  void refreshProfileData() {
+    _refreshProfileData();
   }
 }

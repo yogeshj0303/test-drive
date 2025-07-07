@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/employee_storage_service.dart';
+import '../../services/employee_api_service.dart';
 import '../../models/employee_model.dart';
+import '../../models/activity_log_model.dart';
+import 'employee_main_screen.dart';
+import 'employee_notification_screen.dart';
 import 'assigned_test_drives_screen.dart';
 import 'update_status_screen.dart';
 import 'add_expense_screen.dart';
 import 'location_tracking_screen.dart';
-import 'employee_notification_screen.dart';
-import 'employee_profile_screen.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   const EmployeeHomeScreen({super.key});
@@ -22,6 +25,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   Employee? _currentEmployee;
+  PerformanceCountData? _performanceData;
+  bool _isLoadingPerformance = true;
+  List<ActivityLog> _recentActivities = [];
+  bool _isLoadingActivities = true;
+  String? _activityError;
 
   @override
   void initState() {
@@ -54,7 +62,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     _fadeController.forward();
     _slideController.forward();
     
-    // Load employee data
+    // Load employee data and performance data
     _loadEmployeeData();
   }
 
@@ -64,6 +72,77 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
       setState(() {
         _currentEmployee = employee;
       });
+      
+      // Load performance data if employee is available
+      if (employee != null) {
+        await _loadPerformanceData(employee.id);
+        await _loadRecentActivities(employee.id);
+      }
+    }
+  }
+
+  Future<void> _loadPerformanceData(int driverId) async {
+    setState(() {
+      _isLoadingPerformance = true;
+    });
+
+    try {
+      final response = await EmployeeApiService().getPerformanceCount(driverId);
+      
+      if (mounted) {
+        setState(() {
+          _isLoadingPerformance = false;
+          if (response.success) {
+            _performanceData = response.data!.data;
+          } else {
+            // Handle error - keep default values
+            _performanceData = PerformanceCountData(
+              totalTestdrives: 0,
+              pendingTestdrives: 0,
+              thisMonthTestdrives: 0,
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPerformance = false;
+          // Set default values on error
+          _performanceData = PerformanceCountData(
+            totalTestdrives: 0,
+            pendingTestdrives: 0,
+            thisMonthTestdrives: 0,
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRecentActivities(int userId) async {
+    setState(() {
+      _isLoadingActivities = true;
+      _activityError = null;
+    });
+    try {
+      final response = await EmployeeApiService().getRecentActivities(userId: userId);
+      if (mounted) {
+        setState(() {
+          _isLoadingActivities = false;
+          if (response.success) {
+            _recentActivities = response.data?.data ?? [];
+          } else {
+            _activityError = response.message;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingActivities = false;
+          _activityError = 'Failed to load activities';
+        });
+      }
     }
   }
 
@@ -81,28 +160,37 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     const Color secondaryBlue = Color(0xFF0095D9);
     const Color darkGray = Color(0xFF1D1B1C);
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(primaryBlue),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildWelcomeSection(primaryBlue, darkGray),
-                  const SizedBox(height: 20),
-                  _buildQuickStats(primaryBlue, secondaryBlue),
-                  const SizedBox(height: 24),
-                  _buildQuickActions(primaryBlue),
-                  const SizedBox(height: 20),
-                  _buildRecentActivity(primaryBlue),
-                  const SizedBox(height: 20),
-                ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: SafeArea(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  if (_currentEmployee != null) {
+                    await _loadPerformanceData(_currentEmployee!.id);
+                  }
+                },
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(primaryBlue),
+                      const SizedBox(height: 20),
+                      _buildQuickStats(primaryBlue, secondaryBlue),
+                      const SizedBox(height: 24),
+                      _buildQuickActions(primaryBlue),
+                      const SizedBox(height: 20),
+                      _buildRecentActivity(primaryBlue),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -111,24 +199,30 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(Color primaryBlue) {
-    return AppBar(
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      backgroundColor: primaryBlue,
-      foregroundColor: Colors.white,
-      centerTitle: false,
-      titleSpacing: 0,
-      title: Row(
+  Widget _buildHeader(Color primaryBlue) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: primaryBlue,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: primaryBlue.withOpacity(0.25),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Row(
         children: [
           Container(
-            margin: const EdgeInsets.only(left: 20),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.directions_car, size: 20),
+            child: const Icon(Icons.directions_car, size: 20, color: Colors.white),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -138,74 +232,31 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
                 letterSpacing: 0.5,
+                color: Colors.white,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EmployeeNotificationScreen(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.notifications_outlined, size: 20, color: Colors.white),
+            ),
+          ),
         ],
       ),
-      actions: [
-        Container(
-          height: 36,
-          width: 36,
-          margin: const EdgeInsets.only(right: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 18),
-            onPressed: () => _showNotifications(),
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        Container(
-          height: 36,
-          width: 36,
-          margin: const EdgeInsets.only(right: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.account_circle_outlined, size: 18),
-            onPressed: () => _showProfile(),
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        Container(
-          height: 36,
-          width: 36,
-          margin: const EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.logout_outlined, size: 18),
-            onPressed: () => _showLogoutDialog(),
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -324,15 +375,33 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           child: Row(
             children: [
               Expanded(
-                child: _buildStatusCard('Test Drives', '3', primaryBlue, Icons.directions_car_outlined, '2 pending'),
+                child: _buildStatusCard(
+                  'Test Drives', 
+                  _isLoadingPerformance ? '...' : '${_performanceData?.totalTestdrives ?? 0}', 
+                  primaryBlue, 
+                  Icons.directions_car_outlined, 
+                  '${_performanceData?.pendingTestdrives ?? 0} pending'
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildStatusCard('Pending', '2', Colors.orange, Icons.pending_outlined, 'Need attention'),
+                child: _buildStatusCard(
+                  'Pending', 
+                  _isLoadingPerformance ? '...' : '${_performanceData?.pendingTestdrives ?? 0}', 
+                  Colors.orange, 
+                  Icons.pending_outlined, 
+                  'Need attention'
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildStatusCard('This Month', '15', Colors.purple, Icons.calendar_month_outlined, '+5 from last month'),
+                child: _buildStatusCard(
+                  'This Month', 
+                  _isLoadingPerformance ? '...' : '${_performanceData?.thisMonthTestdrives ?? 0}', 
+                  Colors.purple, 
+                  Icons.calendar_month_outlined, 
+                  '${_getCurrentMonthName()} test drives'
+                ),
               ),
             ],
           ),
@@ -441,14 +510,23 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                 child: Icon(icon, color: color, size: 14),
               ),
               const Spacer(),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-              ),
+              _isLoadingPerformance 
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                  )
+                : Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
             ],
           ),
           const SizedBox(height: 8),
@@ -498,87 +576,105 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           mainAxisSpacing: 12,
           childAspectRatio: 1.1,
           children: [
-            _buildActionCard('Assigned Drives', Icons.directions_car_outlined, 'Manage your test drive assignments', primaryBlue, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AssignedTestDrivesScreen()))),
-            _buildActionCard('Update Status', Icons.update_outlined, 'Update test drive status', Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UpdateStatusScreen()))),
-            _buildActionCard('Add Expense', Icons.receipt_long_outlined, 'Submit expense reports', Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()))),
-            _buildActionCard('Location Tracking', Icons.location_on_outlined, 'Track your location', Colors.purple, () => Navigator.push(context, MaterialPageRoute(builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>())))),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AssignedTestDrivesScreen(),
+                  ),
+                );
+              },
+              child: _buildActionCard('Assigned Drives', Icons.directions_car_outlined, 'View and manage test drives', primaryBlue),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddExpenseScreen(),
+                  ),
+                );
+              },
+              child: _buildActionCard('Add Expense', Icons.receipt_long_outlined, 'Submit expense reports', Colors.green),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+                  ),
+                );
+              },
+              child: _buildActionCard('Location Tracking', Icons.location_on_outlined, 'Track your location', Colors.purple),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EmployeeNotificationScreen(),
+                  ),
+                );
+              },
+              child: _buildActionCard('Notifications', Icons.notifications_outlined, 'View notifications', Colors.orange),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, String subtitle, Color color, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+  Widget _buildActionCard(String title, IconData icon, String subtitle, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.1), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+        border: Border.all(color: color.withOpacity(0.1), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    'Tap to open',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward_ios, size: 10, color: color),
-                ],
-              ),
-            ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-        ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -596,29 +692,44 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildActivityItem('Test drive completed', 'Tesla Model 3 - John Smith', '2 hours ago', Icons.check_circle_outline, Colors.green),
-              const Divider(height: 20),
-              _buildActivityItem('Expense submitted', 'Fuel expense - \$45.00', '4 hours ago', Icons.receipt_outlined, Colors.blue),
-              const Divider(height: 20),
-              _buildActivityItem('Status updated', 'BMW X5 - In Progress', '6 hours ago', Icons.update_outlined, Colors.orange),
-            ],
-          ),
-        ),
+        if (_isLoadingActivities)
+          Center(child: CircularProgressIndicator()),
+        if (_activityError != null)
+          Center(child: Text(_activityError!, style: TextStyle(color: Colors.red))),
+        if (!_isLoadingActivities && _activityError == null)
+          _recentActivities.isEmpty
+              ? Center(child: Text('No recent activities'))
+              : Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: _recentActivities.take(5).map((activity) {
+                      return Column(
+                        children: [
+                          _buildActivityItem(
+                            activity.operation,
+                            activity.operationDescription,
+                            _formatActivityTime(activity.createdAt),
+                            _getActivityIcon(activity),
+                            _getActivityColor(activity),
+                          ),
+                          if (activity != _recentActivities.take(5).last)
+                            const Divider(height: 20),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
       ],
     );
   }
@@ -671,100 +782,34 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     );
   }
 
-  void _showNotifications() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const EmployeeNotificationScreen(),
-      ),
-    );
+  String _formatActivityTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 
-  void _showProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const EmployeeProfileScreen(),
-      ),
-    );
+  IconData _getActivityIcon(ActivityLog activity) {
+    if (activity.tableName == 'expenses') return Icons.receipt_outlined;
+    if (activity.operation.toLowerCase().contains('canceled')) return Icons.cancel_outlined;
+    if (activity.operation.toLowerCase().contains('completed')) return Icons.check_circle_outline;
+    return Icons.info_outline;
   }
 
-  Future<void> _showLogoutDialog() async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Logout',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _logout();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
+  Color _getActivityColor(ActivityLog activity) {
+    if (activity.tableName == 'expenses') return Colors.blue;
+    if (activity.operation.toLowerCase().contains('canceled')) return Colors.red;
+    if (activity.operation.toLowerCase().contains('completed')) return Colors.green;
+    return Colors.grey;
   }
 
-  Future<void> _logout() async {
-    try {
-      // Clear employee data from storage
-      await EmployeeStorageService.clearEmployeeData();
-      
-      if (mounted) {
-        // Navigate back to login screen
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/employee-login',
-          (route) => false,
-        );
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logged out successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Logout failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
+  String _getCurrentMonthName() {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[DateTime.now().month - 1];
   }
 } 

@@ -283,12 +283,26 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           );
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.message ?? 'Failed to submit test drive request'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          // Show error with retry option for server errors
+          final isServerError = response.message?.contains('maintenance') == true || 
+                               response.message?.contains('Server') == true;
+          
+          if (isServerError) {
+            _showServerErrorDialog(response.message ?? 'Server error occurred');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response.message ?? 'Failed to submit test drive request'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+                action: SnackBarAction(
+                  label: 'Retry',
+                  textColor: Colors.white,
+                  onPressed: () => _submitRequest(),
+                ),
+              ),
+            );
+          }
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -317,6 +331,35 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         ),
       );
     }
+  }
+
+  void _showServerErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Server Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _submitRequest();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0095D9),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -497,83 +540,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 24),
-                              // Trip Information Section (if dates were passed)
-                              if (widget.selectedStartDate != null && widget.selectedEndDate != null) ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.event,
-                                        color: Colors.green,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Trip Information',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A1A1A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.green.withOpacity(0.2)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.calendar_today, color: Colors.green, size: 16),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              'Trip Period: ${widget.selectedStartDate!.day}/${widget.selectedStartDate!.month}/${widget.selectedStartDate!.year} - ${widget.selectedEndDate!.day}/${widget.selectedEndDate!.month}/${widget.selectedEndDate!.year}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (widget.pickupLocation != null) ...[
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.location_on, color: Colors.green, size: 16),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                'Pickup Location: Current Location',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.green,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
+                              const SizedBox(height: 16),
                               // Test Drive Schedule Section
                               Row(
                                 children: [

@@ -6,6 +6,7 @@ class ApiConfig {
   static const String signupEndpoint = '/api/app-users/store';
   static const String loginEndpoint = '/api/front-user/login';
   static const String employeeLoginEndpoint = '/api/driver/login';
+  static const String employeeProfileEndpoint = '/api/driver/profile'; // Endpoint for fetching employee profile
   static const String changePasswordEndpoint = '/api/front-user/change-password';
   static const String forgotPasswordOtpEndpoint = '/api/front-user/forgot-password-otp';
   static const String verifyForgotPasswordOtpEndpoint = '/api/front-user/verify-forgot-password-otp';
@@ -20,6 +21,8 @@ class ApiConfig {
   static const String userCanceledTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user canceled test drives
   static const String userCompletedTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user completed test drives
   static const String reviewEndpoint = '/api/app-users/reviews'; // Endpoint for submitting reviews
+  static const String expenseEndpoint = '/api/expenses'; // Endpoint for submitting expenses
+  static const String testDriveStatusUpdateEndpoint = '/api/textdrives/driver/status-update'; // Endpoint for updating test drive status
   
   // API Headers
   static const Map<String, String> defaultHeaders = {

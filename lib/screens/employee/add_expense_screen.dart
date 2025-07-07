@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import '../../services/employee_api_service.dart';
+import '../../services/employee_storage_service.dart';
+import '../../models/expense_model.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final bool showBackButton;
+  
+  const AddExpenseScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -301,34 +309,143 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // TODO: Implement actual API call to submit expense with media files
-      // You would typically upload the files to a server and get URLs
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Expense submitted successfully',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            margin: const EdgeInsets.all(16),
-          ),
+      try {
+        // Validate file size if a file is selected
+        if (_selectedImage != null) {
+          final fileSize = await _selectedImage!.length();
+          final maxSize = 10 * 1024 * 1024; // 10MB limit for images
+          if (fileSize > maxSize) {
+            throw Exception('Image file size must be less than 10MB');
+          }
+        }
+        
+        if (_selectedVideo != null) {
+          final fileSize = await _selectedVideo!.length();
+          final maxSize = 50 * 1024 * 1024; // 50MB limit for videos
+          if (fileSize > maxSize) {
+            throw Exception('Video file size must be less than 50MB');
+          }
+        }
+
+        // Get current employee data
+        final employee = await EmployeeStorageService.getEmployeeData();
+        if (employee == null) {
+          throw Exception('Employee data not found. Please login again.');
+        }
+
+        // Format date to YYYY-MM-DD
+        final formattedDate = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
+        // Create expense request
+        final expenseRequest = ExpenseRequest(
+          userId: employee.id,
+          description: _descriptionController.text.trim(),
+          amount: double.parse(_amountController.text.trim()),
+          date: formattedDate,
+          classification: _selectedCategory,
+          paymentMode: _selectedPaymentMethod,
+          receiptNo: _receiptNumberController.text.trim().isNotEmpty 
+              ? _receiptNumberController.text.trim() 
+              : null,
+          note: _notesController.text.trim().isNotEmpty 
+              ? _notesController.text.trim() 
+              : null,
+          proofFile: _selectedImage ?? _selectedVideo,
+          proofFileType: _selectedImage != null ? 'image' : _selectedVideo != null ? 'video' : null,
         );
-        _resetForm();
+
+        // Debug: Show what's being sent
+        debugPrint('Submitting expense with data:');
+        debugPrint('- User ID: ${expenseRequest.userId}');
+        debugPrint('- Description: ${expenseRequest.description}');
+        debugPrint('- Amount: ${expenseRequest.amount}');
+        debugPrint('- Date: ${expenseRequest.date}');
+        debugPrint('- Classification: ${expenseRequest.classification}');
+        debugPrint('- Payment Mode: ${expenseRequest.paymentMode}');
+        debugPrint('- Receipt No: ${expenseRequest.receiptNo ?? 'N/A'}');
+        debugPrint('- Note: ${expenseRequest.note ?? 'N/A'}');
+        debugPrint('- Proof File: ${expenseRequest.proofFile?.path ?? 'N/A'}');
+        debugPrint('- Proof File Type: ${expenseRequest.proofFileType ?? 'N/A'}');
+
+        // Submit expense via API
+        final apiService = EmployeeApiService();
+        final response = await apiService.submitExpense(expenseRequest);
+
+        if (response.success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        response.message ?? 'Expense submitted successfully',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green.shade600,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+            _resetForm();
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        response.message ?? 'Failed to submit expense',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.red.shade600,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Error: ${e.toString()}',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -357,50 +474,43 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     required List<Widget> children,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3080A5).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
                     icon,
                     color: const Color(0xFF3080A5),
-                    size: 16,
+                    size: 14,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             ...children,
           ],
         ),
@@ -419,7 +529,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     String? prefixText,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
@@ -428,32 +538,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           labelText: label,
           hintText: hint,
           prefixText: prefixText,
-          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 18),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.red.shade300),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.red.shade400, width: 2),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
         ),
         validator: validator,
       ),
@@ -468,60 +578,60 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     required Function(String?) onChanged,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: DropdownButtonFormField<String>(
         value: value,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 18),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
         items: items.map((item) {
           return DropdownMenuItem(
             value: item,
-            child: Text(item, style: const TextStyle(fontSize: 14)),
+            child: Text(item, style: const TextStyle(fontSize: 13)),
           );
         }).toList(),
         onChanged: onChanged,
         icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF3080A5)),
         dropdownColor: Colors.white,
-        style: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 14),
+        style: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 13),
       ),
     );
   }
 
   Widget _buildDateField() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: _selectDate,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             color: Colors.grey.shade50,
           ),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 20),
-              const SizedBox(width: 8),
+              Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 18),
+              const SizedBox(width: 6),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,16 +639,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     Text(
                       'Date',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: Colors.grey.shade600,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Color(0xFF1A1A1A),
                         fontWeight: FontWeight.w500,
                       ),
@@ -546,7 +656,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ],
                 ),
               ),
-              Icon(Icons.keyboard_arrow_right, color: Colors.grey.shade600, size: 20),
+              Icon(Icons.keyboard_arrow_right, color: Colors.grey.shade600, size: 18),
             ],
           ),
         ),
@@ -556,39 +666,39 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   Widget _buildMediaUploadSection() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Receipt/Proof',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: Colors.grey.shade700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           
           if (_selectedImage != null || _selectedVideo != null) ...[
             // Media Preview
             Container(
               width: double.infinity,
-              height: 200,
+              height: 150,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 color: Colors.grey.shade50,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: Stack(
                   children: [
                     if (_selectedImage != null)
                       Image.file(
                         _selectedImage!,
                         width: double.infinity,
-                        height: 200,
+                        height: 150,
                         fit: BoxFit.cover,
                       )
                     else if (_selectedVideo != null && _isVideoInitialized)
@@ -600,8 +710,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     
                     // Remove button
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 6,
+                      right: 6,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.6),
@@ -612,12 +722,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           icon: const Icon(
                             Icons.close,
                             color: Colors.white,
-                            size: 20,
+                            size: 16,
                           ),
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
+                            minWidth: 28,
+                            minHeight: 28,
                           ),
                         ),
                       ),
@@ -646,7 +756,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                   ? Icons.pause
                                   : Icons.play_arrow,
                               color: Colors.white,
-                              size: 32,
+                              size: 24,
                             ),
                           ),
                         ),
@@ -655,76 +765,85 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
           ],
           
           // Upload buttons with improved design
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
               color: Colors.grey.shade50,
             ),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Upload Media',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _pickImage,
-                        icon: const Icon(Icons.image, size: 16),
+                        icon: const Icon(Icons.image, size: 14),
                         label: const Text(
                           'Photo',
-                          style: TextStyle(fontSize: 11),
+                          style: TextStyle(fontSize: 10),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3080A5),
                           side: BorderSide(color: const Color(0xFF3080A5)),
-                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _pickVideo,
-                        icon: const Icon(Icons.videocam, size: 16),
+                        icon: const Icon(Icons.videocam, size: 14),
                         label: const Text(
                           'Video',
-                          style: TextStyle(fontSize: 11),
+                          style: TextStyle(fontSize: 10),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3080A5),
                           side: BorderSide(color: const Color(0xFF3080A5)),
-                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   'Tap to choose from camera or gallery',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Max: 10MB for photos, 50MB for videos',
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: Colors.grey.shade500,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ],
@@ -738,7 +857,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
           'Add Expense',
@@ -747,223 +866,227 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             fontSize: 18,
           ),
         ),
-        backgroundColor: const Color(0xFF3080A5),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E293B),
         elevation: 0,
-        centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(16),
+        shadowColor: Colors.black.withOpacity(0.1),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withOpacity(0.2),
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'New Expense Entry',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Fill in the details below to submit your expense',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Basic Information Card
+                _buildSectionCard(
+                  title: 'Expense Details',
+                  icon: Icons.receipt_long,
                   children: [
-                    Text(
-                      'New Expense Entry',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
+                    _buildFormField(
+                      controller: _descriptionController,
+                      label: 'Description',
+                      icon: Icons.description,
+                      hint: 'Enter expense description',
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a description';
+                        }
+                        return null;
+                      },
+                    ),
+                    _buildFormField(
+                      controller: _amountController,
+                      label: 'Amount',
+                      icon: Icons.attach_money,
+                      hint: '0.00',
+                      prefixText: '\$',
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter an amount';
+                        }
+                        if (double.tryParse(value) == null) {
+                          return 'Please enter a valid amount';
+                        }
+                        if (double.parse(value) <= 0) {
+                          return 'Amount must be greater than 0';
+                        }
+                        return null;
+                      },
+                    ),
+                    _buildDateField(),
+                  ],
+                ),
+
+                // Category and Payment Method Card
+                _buildSectionCard(
+                  title: 'Classification',
+                  icon: Icons.category,
+                  children: [
+                    _buildDropdownField(
+                      label: 'Category',
+                      icon: Icons.label,
+                      value: _selectedCategory,
+                      items: _categories,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                      },
+                    ),
+                    _buildDropdownField(
+                      label: 'Payment Method',
+                      icon: Icons.payment,
+                      value: _selectedPaymentMethod,
+                      items: _paymentMethods,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedPaymentMethod = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+
+                // Receipt and Notes Card
+                _buildSectionCard(
+                  title: 'Additional Information',
+                  icon: Icons.note_add,
+                  children: [
+                    _buildFormField(
+                      controller: _receiptNumberController,
+                      label: 'Receipt Number',
+                      icon: Icons.receipt,
+                      hint: 'Enter receipt number (optional)',
+                    ),
+                    _buildFormField(
+                      controller: _notesController,
+                      label: 'Notes',
+                      icon: Icons.note,
+                      hint: 'Add any additional notes (optional)',
+                      maxLines: 2,
+                    ),
+                    _buildMediaUploadSection(),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF3080A5)),
+                        ),
+                        child: TextButton(
+                          onPressed: _resetForm,
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF3080A5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: const Text(
+                            'Reset Form',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Fill in the details below to submit your expense',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF3080A5), Color(0xFF1E5A7A)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF3080A5).withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submitExpense,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Submit Expense',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-
-              // Basic Information Card
-              _buildSectionCard(
-                title: 'Expense Details',
-                icon: Icons.receipt_long,
-                children: [
-                  _buildFormField(
-                    controller: _descriptionController,
-                    label: 'Description',
-                    icon: Icons.description,
-                    hint: 'Enter expense description',
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      return null;
-                    },
-                  ),
-                  _buildFormField(
-                    controller: _amountController,
-                    label: 'Amount',
-                    icon: Icons.attach_money,
-                    hint: '0.00',
-                    prefixText: '\$',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Please enter a valid amount';
-                      }
-                      if (double.parse(value) <= 0) {
-                        return 'Amount must be greater than 0';
-                      }
-                      return null;
-                    },
-                  ),
-                  _buildDateField(),
-                ],
-              ),
-
-              // Category and Payment Method Card
-              _buildSectionCard(
-                title: 'Classification',
-                icon: Icons.category,
-                children: [
-                  _buildDropdownField(
-                    label: 'Category',
-                    icon: Icons.label,
-                    value: _selectedCategory,
-                    items: _categories,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value!;
-                      });
-                    },
-                  ),
-                  _buildDropdownField(
-                    label: 'Payment Method',
-                    icon: Icons.payment,
-                    value: _selectedPaymentMethod,
-                    items: _paymentMethods,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentMethod = value!;
-                      });
-                    },
-                  ),
-                ],
-              ),
-
-              // Receipt and Notes Card
-              _buildSectionCard(
-                title: 'Additional Information',
-                icon: Icons.note_add,
-                children: [
-                  _buildFormField(
-                    controller: _receiptNumberController,
-                    label: 'Receipt Number',
-                    icon: Icons.receipt,
-                    hint: 'Enter receipt number (optional)',
-                  ),
-                  _buildFormField(
-                    controller: _notesController,
-                    label: 'Notes',
-                    icon: Icons.note,
-                    hint: 'Add any additional notes (optional)',
-                    maxLines: 2,
-                  ),
-                  _buildMediaUploadSection(),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF3080A5)),
-                      ),
-                      child: TextButton(
-                        onPressed: _resetForm,
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF3080A5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Reset Form',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3080A5), Color(0xFF1E5A7A)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF3080A5).withOpacity(0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitExpense,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'Submit Expense',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

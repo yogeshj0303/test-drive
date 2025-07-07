@@ -3,6 +3,7 @@ import '../../models/test_drive_model.dart';
 import '../../models/review_model.dart' as review;
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
+import '../../screens/user/user_profile_screen.dart';
 
 class ReviewFormScreen extends StatefulWidget {
   final TestDriveListResponse? testDrive;
@@ -14,55 +15,101 @@ class ReviewFormScreen extends StatefulWidget {
 }
 
 class _ReviewFormScreenState extends State<ReviewFormScreen> {
-  // Mock data for test drive requests
-  final List<Map<String, dynamic>> _testDriveRequests = [
-    {
-      'id': 'TD001',
-      'carName': 'Tata Nexon EV',
-      'showroom': 'Tata Motors, Andheri East',
-      'date': '2024-03-25',
-      'time': '14:00',
-      'status': 'completed',
-      'duration': '30 mins',
-      'hasReview': false,
-    },
-    {
-      'id': 'TD002',
-      'carName': 'Mahindra XUV700',
-      'showroom': 'Mahindra Auto, Powai',
-      'date': '2024-03-28',
-      'time': '11:30',
-      'status': 'completed',
-      'duration': '45 mins',
-      'hasReview': true,
-    },
-    {
-      'id': 'TD003',
-      'carName': 'Hyundai Creta',
-      'showroom': 'Hyundai Motors, Vikhroli',
-      'date': '2024-03-20',
-      'time': '15:30',
-      'status': 'completed',
-      'duration': '30 mins',
-      'hasReview': false,
-    },
-  ];
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
+  
+  List<TestDriveListResponse> _completedTestDrives = [];
+  Set<int> _reviewedTestDriveIds = {};
+  bool _isLoading = true;
+  String? _errorMessage;
+  bool _isRefreshing = false;
 
-  void _showReviewForm(Map<String, dynamic> request) {
+  @override
+  void initState() {
+    super.initState();
+    _loadCompletedTestDrives();
+  }
+
+  Future<void> _loadCompletedTestDrives() async {
+    if (widget.testDrive != null) {
+      // If a specific test drive is provided, we don't need to load the list
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final user = await _storageService.getUser();
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'User data not found. Please login again.';
+        });
+        return;
+      }
+
+      // Load both completed test drives and reviewed test drive IDs
+      final response = await _apiService.getUserCompletedTestDrives(user.id);
+      
+      // Handle storage errors gracefully
+      Set<int> reviewedTestDrives = <int>{};
+      try {
+        reviewedTestDrives = await _storageService.getReviewedTestDrives();
+      } catch (e) {
+        print('Error loading reviewed test drives: $e');
+        // Continue with empty set if storage fails
+      }
+      
+      if (response.success) {
+        setState(() {
+          _completedTestDrives = response.data ?? [];
+          _reviewedTestDriveIds = reviewedTestDrives;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.message ?? 'Failed to load completed test drives';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshData() async {
+    if (_isRefreshing) return;
+    setState(() {
+      _isRefreshing = true;
+    });
+    await _loadCompletedTestDrives();
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
+  void _showReviewForm(TestDriveListResponse testDrive) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => _ReviewFormContent(
-          carName: request['carName'],
-          showroom: request['showroom'],
-          testDrive: null, // For mock data, we don't have a test drive object
+          carName: testDrive.car.name,
+          showroom: testDrive.showroom.name,
+          testDrive: testDrive,
         ),
       ),
     ).then((_) {
       // Refresh the list after review submission
-      setState(() {
-        request['hasReview'] = true;
-      });
+      _loadCompletedTestDrives();
     });
   }
 
@@ -76,11 +123,6 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
         testDrive: widget.testDrive,
       );
     }
-
-    // Filter only completed test drives
-    final completedTestDrives = _testDriveRequests
-        .where((request) => request['status'] == 'completed')
-        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -99,172 +141,226 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Color(0xFF1A1A1A)),
+            onPressed: _refreshData,
+          ),
+        ],
       ),
-      body: completedTestDrives.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_car_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Test Drives to Review',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Complete a test drive to leave a review',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: completedTestDrives.length,
-              itemBuilder: (context, index) {
-                final request = completedTestDrives[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey[200]!),
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error Loading Test Drives',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadCompletedTestDrives,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0095D9),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                  child: InkWell(
-                    onTap: request['hasReview']
-                        ? null
-                        : () => _showReviewForm(request),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
+                )
+              : _completedTestDrives.isEmpty
+                  ? Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0095D9).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.directions_car_outlined,
-                                  color: Color(0xFF0095D9),
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      request['carName'],
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A1A1A),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      request['showroom'],
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (request['hasReview'])
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'Reviewed',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF4CAF50),
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          Icon(
+                            Icons.directions_car_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoItem(
-                                  'Date',
-                                  request['date'],
-                                  Icons.calendar_today_outlined,
-                                ),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem(
-                                  'Time',
-                                  request['time'],
-                                  Icons.access_time_rounded,
-                                ),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem(
-                                  'Duration',
-                                  request['duration'],
-                                  Icons.timer_outlined,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (!request['hasReview']) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0095D9).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Tap to Leave a Review',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF0095D9),
-                                  ),
-                                ),
-                              ),
+                          Text(
+                            'No Test Drives to Review',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[800],
                             ),
-                          ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Complete a test drive to leave a review',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ],
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _completedTestDrives.length,
+                      itemBuilder: (context, index) {
+                        final testDrive = _completedTestDrives[index];
+                        final hasReview = _reviewedTestDriveIds.contains(testDrive.id);
+                        
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          child: InkWell(
+                            onTap: hasReview ? null : () => _showReviewForm(testDrive),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF0095D9).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.directions_car_outlined,
+                                          color: Color(0xFF0095D9),
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              testDrive.car.name,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1A1A1A),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              testDrive.showroom.name,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (hasReview)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'Reviewed',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF4CAF50),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildInfoItem(
+                                          'Date',
+                                          testDrive.date,
+                                          Icons.calendar_today_outlined,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: _buildInfoItem(
+                                          'Time',
+                                          testDrive.time,
+                                          Icons.access_time_rounded,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: _buildInfoItem(
+                                          'Duration',
+                                          '30 mins', // Default duration since it's not in the model
+                                          Icons.timer_outlined,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: hasReview 
+                                        ? Colors.grey[100]
+                                        : const Color(0xFF0095D9).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        hasReview ? 'Already Reviewed' : 'Tap to Leave a Review',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: hasReview 
+                                            ? Colors.grey[600]
+                                            : const Color(0xFF0095D9),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                );
-              },
-            ),
     );
   }
 
@@ -321,6 +417,7 @@ class _ReviewFormContent extends StatefulWidget {
 class _ReviewFormContentState extends State<_ReviewFormContent> {
   final _formKey = GlobalKey<FormState>();
   final _commentController = TextEditingController();
+  final StorageService _storageService = StorageService();
   double _overallRating = 0;
   double _comfortRating = 0;
   double _performanceRating = 0;
@@ -377,10 +474,16 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
           return;
         }
 
-        // Get test drive ID from the passed test drive or use a default
-        int testDriveId = 3; // Default fallback
-        if (widget.testDrive != null) {
-          testDriveId = widget.testDrive!.id;
+        // Get test drive ID from the passed test drive
+        if (widget.testDrive == null) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Test drive data not found.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
         }
 
         // Convert ratings to string values
@@ -395,7 +498,7 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
         // Create review request
         final reviewRequest = review.ReviewRequest(
           userId: user.id,
-          testDriveId: testDriveId,
+          testDriveId: widget.testDrive!.id,
           overallExperience: _ratingToString(_overallRating),
           comfortInterior: _ratingToString(_comfortRating),
           performanceHandling: _ratingToString(_performanceRating),
@@ -411,9 +514,22 @@ class _ReviewFormContentState extends State<_ReviewFormContent> {
         Navigator.pop(context); // Close loading dialog
 
         if (response.success) {
+          // Mark the test drive as reviewed in local storage
+          try {
+            await _storageService.markTestDriveAsReviewed(widget.testDrive!.id);
+            
+            // Force refresh profile data
+            await UserProfileScreen.forceRefreshProfileData();
+          } catch (e) {
+            print('Error marking test drive as reviewed: $e');
+            // Continue even if storage fails - don't block the success flow
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message ?? 'Review submitted successfully'),
+              content: Text(
+                response.message ?? 'Review submitted successfully'
+              ),
               backgroundColor: const Color(0xFF4CAF50),
             ),
           );

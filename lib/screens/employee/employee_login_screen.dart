@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../services/employee_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../models/employee_model.dart';
-import 'employee_home_screen.dart';
+import 'employee_main_screen.dart';
 
 class EmployeeLoginScreen extends StatefulWidget {
   const EmployeeLoginScreen({super.key});
@@ -86,10 +86,10 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
               ),
             );
             
-            // Navigate to employee home screen after successful login
+            // Navigate to employee main screen after successful login
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => const EmployeeHomeScreen(),
+                builder: (context) => const EmployeeMainScreen(),
               ),
             );
           }
@@ -233,6 +233,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
             flex: 1,
             child: Container(
               height: double.infinity,
+              width: double.infinity,
               padding: EdgeInsets.symmetric(
                 horizontal: 48,
                 vertical: size.height * 0.05,
@@ -369,7 +370,8 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     const Color darkGray = Color(0xFF1D1B1C);
     
     return Container(
-      padding: const EdgeInsets.all(36),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -428,50 +430,56 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildInputField(
-                      controller: _employeeIdController,
-                      label: 'Employee ID / Email',
-                      hint: 'Enter your employee ID or email',
-                      prefixIcon: Icons.badge_outlined,
-                      keyboardType: TextInputType.text,
-                      accentColor: primaryBlue,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your employee ID or email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _buildInputField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      hint: 'Enter your password',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: !_isPasswordVisible,
-                      accentColor: primaryBlue,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: primaryBlue,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
+                    SizedBox(
+                      width: double.infinity,
+                      child: _buildInputField(
+                        controller: _employeeIdController,
+                        label: 'Employee ID / Email',
+                        hint: 'Enter your employee ID or email',
+                        prefixIcon: Icons.badge_outlined,
+                        keyboardType: TextInputType.text,
+                        accentColor: primaryBlue,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your employee ID or email';
+                          }
+                          return null;
                         },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _buildInputField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: 'Enter your password',
+                        prefixIcon: Icons.lock_outline,
+                        obscureText: !_isPasswordVisible,
+                        accentColor: primaryBlue,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: primaryBlue,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Align(

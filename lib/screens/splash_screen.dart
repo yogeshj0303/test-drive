@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
+import '../services/employee_storage_service.dart';
 import '../main.dart';
 import 'user/main_user_screen.dart';
-import 'employee/employee_home_screen.dart';
+import 'employee/employee_main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -52,11 +53,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       
       if (mounted) {
         // Check if user has a valid session
-        final hasValidSession = await _storageService.hasValidSession();
+        final hasUserSession = await _storageService.hasValidSession();
+        final hasEmployeeSession = await EmployeeStorageService.hasValidSession();
         
-        debugPrint('Auto-login check: hasValidSession=$hasValidSession');
+        debugPrint('Auto-login check: hasUserSession=$hasUserSession, hasEmployeeSession=$hasEmployeeSession');
         
-        if (hasValidSession) {
+        if (hasUserSession) {
           // User has valid session, get user data
           final user = await _storageService.getUser();
           if (user != null) {
@@ -70,7 +72,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           }
         }
         
-        // User is not logged in, navigate to auth screen
+        if (hasEmployeeSession) {
+          // Employee has valid session, get employee data
+          final employee = await EmployeeStorageService.getEmployeeData();
+          if (employee != null) {
+            debugPrint('Auto-login successful for employee: ${employee.name}');
+            
+            // Navigate to employee main screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const EmployeeMainScreen()),
+            );
+            return;
+          }
+        }
+        
+        // No valid session found, navigate to auth screen
         debugPrint('No valid session found, navigating to auth screen');
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const AuthScreen()),

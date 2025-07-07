@@ -3,6 +3,7 @@ import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
 import 'review_form_screen.dart';
+import 'user_profile_screen.dart';
 
 class CompletedTestDrivesScreen extends StatefulWidget {
   const CompletedTestDrivesScreen({super.key});
@@ -16,6 +17,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
   final StorageService _storageService = StorageService();
 
   List<TestDriveListResponse> _completedTestDrives = [];
+  Set<int> _reviewedTestDriveIds = {};
   bool _isLoading = true;
   String? _errorMessage;
   bool _isRefreshing = false;
@@ -40,10 +42,23 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
         });
         return;
       }
+      
+      // Load both completed test drives and reviewed test drive IDs
       final response = await _apiService.getUserCompletedTestDrives(user.id);
+      
+      // Handle storage errors gracefully
+      Set<int> reviewedTestDrives = <int>{};
+      try {
+        reviewedTestDrives = await _storageService.getReviewedTestDrives();
+      } catch (e) {
+        print('Error loading reviewed test drives: $e');
+        // Continue with empty set if storage fails
+      }
+      
       if (response.success) {
         setState(() {
           _completedTestDrives = response.data ?? [];
+          _reviewedTestDriveIds = reviewedTestDrives;
           _isLoading = false;
         });
       } else {
@@ -366,6 +381,27 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
                           ),
                         ),
                       ),
+                      if (_reviewedTestDriveIds.contains(request.id)) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CAF50).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Reviewed',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF4CAF50),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -456,24 +492,41 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
               _buildDetailRow('Showroom', request.showroom.name),
               _buildDetailRow('Status', 'Completed', isStatus: true),
               const Spacer(),
+              // Write Review Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReviewFormScreen(
-                          testDrive: request,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.rate_review, size: 18),
-                  label: const Text('Write Review'),
+                  onPressed: _reviewedTestDriveIds.contains(request.id) 
+                    ? null 
+                    : () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ReviewFormScreen(
+                              testDrive: request,
+                            ),
+                          ),
+                        ).then((_) {
+                          // Refresh the data when returning from review form
+                          _loadCompletedTestDrives();
+                          // Also refresh profile data
+                          UserProfileScreen.forceRefreshProfileData();
+                        });
+                      },
+                  icon: Icon(
+                    Icons.rate_review, 
+                    size: 18,
+                    color: _reviewedTestDriveIds.contains(request.id) ? Colors.grey : Colors.white,
+                  ),
+                  label: Text(
+                    _reviewedTestDriveIds.contains(request.id) ? 'Already Reviewed' : 'Write Review',
+                    style: TextStyle(
+                      color: _reviewedTestDriveIds.contains(request.id) ? Colors.grey : Colors.white,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: _reviewedTestDriveIds.contains(request.id) ? Colors.grey[300] : Colors.green,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(

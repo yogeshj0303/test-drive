@@ -227,7 +227,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     if (_formKey.currentState!.validate() &&
         _selectedCar != null &&
         hasValidDates &&
-        _selectedTime != null) {
+        _selectedTime != null &&
+        _drivingLicenseController.text.isNotEmpty &&
+        _aadharNoController.text.isNotEmpty) {
       
       setState(() {
         _isSubmitting = true;
@@ -240,6 +242,17 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('User not logged in. Please login again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        
+        // Validate user has required information
+        if (user.name.isEmpty || user.mobileNo.isEmpty || user.email.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User profile incomplete. Please update your profile first.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -269,7 +282,23 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           note: _noteController.text,
           status: 'pending',
           showroomId: widget.showroomId ?? 2, // This should be passed from CarDetailsScreen
+          userName: user.name,
+          userMobile: user.mobileNo,
+          userEmail: user.email,
+          userAdhar: user.aadharNo ?? _aadharNoController.text,
         );
+        
+        // Debug log the request
+        print('Test Drive Request Data:');
+        print('Car ID: $carId');
+        print('User ID: ${user.id}');
+        print('Date: $dateString');
+        print('Time: $timeString');
+        print('Showroom ID: ${widget.showroomId ?? 2}');
+        print('User Name: ${user.name}');
+        print('User Mobile: ${user.mobileNo}');
+        print('User Email: ${user.email}');
+        print('User Aadhar: ${user.aadharNo ?? _aadharNoController.text}');
         
         // Submit request
         final response = await _apiService.requestTestDrive(testDriveRequest);
@@ -322,6 +351,16 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         errorMessage = 'Please select a test drive date';
       } else if (_selectedTime == null) {
         errorMessage = 'Please select a test drive time';
+      } else if (_drivingLicenseController.text.isEmpty) {
+        errorMessage = 'Please enter your driving license number';
+      } else if (_aadharNoController.text.isEmpty) {
+        errorMessage = 'Please enter your Aadhar number';
+      } else if (_pickupAddressController.text.isEmpty) {
+        errorMessage = 'Please enter pickup address';
+      } else if (_pickupCityController.text.isEmpty) {
+        errorMessage = 'Please enter pickup city';
+      } else if (_pickupPincodeController.text.isEmpty) {
+        errorMessage = 'Please enter pickup pincode';
       }
       
       ScaffoldMessenger.of(context).showSnackBar(

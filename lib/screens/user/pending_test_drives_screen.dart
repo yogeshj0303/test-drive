@@ -358,6 +358,14 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                               color: Colors.black87,
                             ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Requested by: ${request.userName ?? 'Unknown'}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           Row(
                             children: [
@@ -542,6 +550,27 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    _buildDetailSection(
+                      'User Information',
+                      [
+                        _buildDetailRow('Name', request.userName ?? 'Unknown'),
+                        _buildDetailRow('Mobile', request.userMobile ?? 'Unknown'),
+                        _buildDetailRow('Email', request.userEmail ?? 'Unknown'),
+                        _buildDetailRow('Aadhar', request.userAdhar ?? 'Unknown'),
+                      ],
+                    ),
+                    if (request.requestbyEmplyee != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Requested By Employee',
+                        [
+                          _buildDetailRow('Name', request.requestbyEmplyee?.name ?? 'Unknown'),
+                          _buildDetailRow('Mobile', request.requestbyEmplyee?.mobileNo ?? 'Unknown'),
+                          _buildDetailRow('Email', request.requestbyEmplyee?.email ?? 'Unknown'),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 16),
                     if (request.note?.isNotEmpty == true)
                       _buildDetailSection(
                         'Additional Notes',
@@ -718,7 +747,9 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text('Test drive canceled successfully'),
+                const Expanded(
+                  child: Text('Test drive canceled successfully'),
+                ),
               ],
             ),
             backgroundColor: Colors.green,
@@ -743,9 +774,14 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(response.message.isNotEmpty 
-                    ? response.message 
-                    : 'Failed to cancel test drive'),
+                Expanded(
+                  child: Text(
+                    response.message.isNotEmpty 
+                        ? response.message 
+                        : 'Failed to cancel test drive',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             backgroundColor: Colors.red,
@@ -917,96 +953,310 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   }
 
   void _showApproveDialog(TestDriveListResponse request) {
+    _showApproveDialogWithDrivers(request);
+  }
+
+  void _showApproveDialogWithDrivers(TestDriveListResponse request) async {
+    // Show loading dialog while fetching drivers
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: Row(
+        content: Row(
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: Colors.green.shade600,
-              size: 24,
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+              strokeWidth: 2,
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'Approve Test Drive',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+            const SizedBox(width: 16),
             Text(
-              'Are you sure you want to approve the test drive for ${request.car?.name ?? 'Unknown'}?',
-              style: const TextStyle(
+              'Loading drivers...',
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.green.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This will confirm the test drive and notify the showroom.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                  ),
-                ],
+                color: Colors.grey.shade700,
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
+      ),
+    );
+
+    try {
+      // Get showroom ID from the test drive request
+      final showroomId = int.tryParse(request.showroomId ?? '1') ?? 1;
+      final response = await _apiService.getShowroomDrivers(showroomId);
+      
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (response.success) {
+        final List<Map<String, dynamic>> drivers = response.data ?? [];
+        
+        if (drivers.isEmpty) {
+          // Show error if no drivers available
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                          content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('No drivers available for this showroom'),
+                ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _approveTestDrive(request);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Approve'),
+          );
+          return;
+        }
+
+        // Show approve dialog with real driver data
+        _showApproveDialogWithDriverList(request, drivers);
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    response.message.isNotEmpty 
+                        ? response.message 
+                        : 'Failed to load drivers',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-        ],
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      Navigator.pop(context);
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text('Connection error. Please try again.'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showApproveDialogWithDriverList(TestDriveListResponse request, List<Map<String, dynamic>> drivers) {
+    Map<String, dynamic>? selectedDriver = null; // Start with no driver selected
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: Colors.green.shade600,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Approve Test Drive',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to approve the test drive for ${request.car?.name ?? 'Unknown'}?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    'Select Driver:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '*',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: selectedDriver == null ? Colors.red.shade300 : Colors.grey.shade300,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<Map<String, dynamic>>(
+                    value: selectedDriver,
+                    isExpanded: true,
+                    hint: const Text('-----'),
+                    items: drivers.map((driver) {
+                      return DropdownMenuItem<Map<String, dynamic>>(
+                        value: driver,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              driver['name'],
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              driver['email'] ?? 'No email',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (Map<String, dynamic>? value) {
+                      setState(() {
+                        selectedDriver = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              if (selectedDriver == null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Please select a driver to approve this test drive',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.red.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.green.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This will confirm the test drive, assign the selected driver, and notify the user.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: selectedDriver == null ? null : () {
+                Navigator.pop(context);
+                _approveTestDrive(request, selectedDriver!);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: selectedDriver == null ? Colors.grey : Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(selectedDriver == null ? 'Select Driver First' : 'Approve'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1194,7 +1444,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Future<void> _approveTestDrive(TestDriveListResponse request) async {
+  Future<void> _approveTestDrive(TestDriveListResponse request, Map<String, dynamic> selectedDriver) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1211,7 +1461,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(width: 16),
             Text(
-              'Approving test drive...',
+              'Approving test drive and assigning driver...',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade700,
@@ -1235,17 +1485,22 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: Colors.white,
-                size: 20,
+                  content: Row(
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Test drive approved and assigned to ${selectedDriver['name']}',
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 8),
-              const Text('Test drive approved successfully'),
-            ],
-          ),
+            ),
+          ],
+        ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -1263,17 +1518,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Failed to approve test drive'),
-            ],
-          ),
+                  content: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Failed to approve test drive'),
+            ),
+          ],
+        ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -1325,17 +1582,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Test drive rescheduled successfully'),
-            ],
-          ),
+                  content: Row(
+          children: [
+            Icon(
+              Icons.schedule,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Test drive rescheduled successfully'),
+            ),
+          ],
+        ),
           backgroundColor: Colors.blue,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -1353,17 +1612,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Failed to reschedule test drive'),
-            ],
-          ),
+                  content: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Failed to reschedule test drive'),
+            ),
+          ],
+        ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -1373,4 +1634,5 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       );
     }
   }
+
 } 

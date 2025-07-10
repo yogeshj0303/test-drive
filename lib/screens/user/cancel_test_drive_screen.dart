@@ -43,8 +43,8 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
         return;
       }
 
-      // Fetch canceled test drives
-      final response = await _apiService.getUserCanceledTestDrives(_currentUser!.id);
+      // Fetch rejected test drives (these are the canceled ones)
+      final response = await _apiService.getUserRejectedTestDrives(_currentUser!.id);
       
       if (response.success) {
         setState(() {
@@ -148,7 +148,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       ),
                     ),
                     child: Text(
-                      'CANCELED',
+                      'REJECTED',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -190,16 +190,16 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                           _buildModernDetailRow('Pickup City', testDrive.pickupCity ?? 'Unknown', Icons.location_city_outlined),
                           const SizedBox(height: 16),
                           _buildModernDetailRow('Status', testDrive.status?.toUpperCase() ?? 'Unknown', Icons.info_outline),
-                          if (testDrive.cancelDateTime != null && testDrive.cancelDateTime!.isNotEmpty) ...[
+                          if (testDrive.approvedOrRejectDate != null && testDrive.approvedOrRejectDate!.isNotEmpty) ...[
                             const SizedBox(height: 16),
-                            _buildModernDetailRow('Canceled On', testDrive.cancelDateTime!, Icons.cancel_outlined),
+                            _buildModernDetailRow('Rejected On', _formatDateTime(testDrive.approvedOrRejectDate!), Icons.cancel_outlined),
                           ],
                         ],
                       ),
                     ),
                     
-                    // Cancel Reason Section
-                    if (testDrive.cancelDescription != null && testDrive.cancelDescription!.isNotEmpty) ...[
+                    // Rejection Reason Section
+                    if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -217,13 +217,13 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                             Row(
                               children: [
                                 Icon(
-                                  Icons.cancel_outlined,
+                                  Icons.block_outlined,
                                   size: 16,
                                   color: Colors.red[600],
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Cancel Reason',
+                                  'Rejection Reason',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -234,7 +234,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              testDrive.cancelDescription!,
+                              testDrive.rejectDescription!,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.red[700],
@@ -289,6 +289,64 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                 height: 1.4,
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    // Rejected By Section
+                    if (testDrive.approverRejecter != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange[200]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_off_outlined,
+                                  size: 16,
+                                  color: Colors.orange[600],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Rejected By',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.orange[800],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              testDrive.approverRejecter!.name ?? 'Unknown',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (testDrive.approverRejecter!.email != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                testDrive.approverRejecter!.email!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange[600],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -393,6 +451,15 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
     );
   }
 
+  String _formatDateTime(String dateTimeString) {
+    try {
+      final date = DateTime.parse(dateTimeString);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+    } catch (e) {
+      return dateTimeString; // Return original if parsing fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -401,7 +468,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Canceled Test Drives',
+          'Rejected Test Drives',
           style: TextStyle(
             color: Color(0xFF1A1A1A),
             fontSize: 16,
@@ -480,7 +547,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No Canceled Test Drives',
+                            'No Rejected Test Drives',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -489,7 +556,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'You don\'t have any canceled test drives',
+                            'You don\'t have any rejected test drives',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -568,7 +635,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
-                                            'CANCELED',
+                                            'REJECTED',
                                             style: TextStyle(
                                               fontSize: 9,
                                               fontWeight: FontWeight.w600,
@@ -633,7 +700,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                         ),
                                       ),
                                     ],
-                                    if (testDrive.cancelDescription != null && testDrive.cancelDescription!.isNotEmpty) ...[
+                                    if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty) ...[
                                       const SizedBox(height: 8),
                                       Container(
                                         padding: const EdgeInsets.all(6),
@@ -644,14 +711,14 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                         child: Row(
                                           children: [
                                             Icon(
-                                              Icons.cancel_outlined,
+                                              Icons.block_outlined,
                                               size: 12,
                                               color: Colors.red[600],
                                             ),
                                             const SizedBox(width: 3),
                                             Expanded(
                                               child: Text(
-                                                testDrive.cancelDescription!,
+                                                testDrive.rejectDescription!,
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.red[700],

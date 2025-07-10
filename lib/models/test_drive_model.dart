@@ -159,6 +159,10 @@ class TestDriveRequest {
   final String note;
   final String status;
   final int showroomId;
+  final String userName;
+  final String userMobile;
+  final String userEmail;
+  final String userAdhar;
 
   TestDriveRequest({
     required this.carId,
@@ -173,6 +177,10 @@ class TestDriveRequest {
     required this.note,
     required this.status,
     required this.showroomId,
+    required this.userName,
+    required this.userMobile,
+    required this.userEmail,
+    required this.userAdhar,
   });
 
   Map<String, dynamic> toJson() {
@@ -189,6 +197,10 @@ class TestDriveRequest {
       'note': note,
       'status': status,
       'showroom_id': showroomId.toString(),
+      'user_name': userName,
+      'user_mobile': userMobile,
+      'user_email': userEmail,
+      'user_adhar': userAdhar,
     };
   }
 
@@ -206,6 +218,10 @@ class TestDriveRequest {
       'note': note,
       'status': status,
       'showroom_id': showroomId.toString(),
+      'user_name': userName,
+      'user_mobile': userMobile,
+      'user_email': userEmail,
+      'user_adhar': userAdhar,
     };
   }
 }
@@ -224,6 +240,10 @@ class TestDriveResponse {
   final String aadharNo;
   final String note;
   final String status;
+  final String userName;
+  final String userMobile;
+  final String userEmail;
+  final String userAdhar;
   final String createdAt;
   final String updatedAt;
 
@@ -241,6 +261,10 @@ class TestDriveResponse {
     required this.aadharNo,
     required this.note,
     required this.status,
+    required this.userName,
+    required this.userMobile,
+    required this.userEmail,
+    required this.userAdhar,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -260,6 +284,10 @@ class TestDriveResponse {
       aadharNo: json['aadhar_no'] as String,
       note: json['note'] as String,
       status: json['status'] as String,
+      userName: json['user_name'] as String,
+      userMobile: json['user_mobile'] as String,
+      userEmail: json['user_email'] as String,
+      userAdhar: json['user_adhar'] as String,
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
     );
@@ -286,9 +314,22 @@ class TestDriveListResponse {
   final String? approvedEmployeeId;
   final String? cancelDescription;
   final String? cancelDateTime;
+  final String? driverId;
+  final String? driverUpdateDate;
+  final String? approverOrRejectBy;
+  final String? approvedOrRejectDate;
+  final String? userName;
+  final String? userMobile;
+  final String? userEmail;
+  final String? userAdhar;
+  final String? rescheduledBy;
+  final String? rescheduledDate;
   final TestDriveCar? car;
   final Showroom? showroom;
   final TestDriveUser? frontUser;
+  final TestDriveUser? requestbyEmplyee;
+  final TestDriveUser? approverRejecter;
+  final TestDriveUser? rescheduler;
 
   TestDriveListResponse({
     required this.id,
@@ -310,9 +351,22 @@ class TestDriveListResponse {
     this.approvedEmployeeId,
     this.cancelDescription,
     this.cancelDateTime,
+    this.driverId,
+    this.driverUpdateDate,
+    this.approverOrRejectBy,
+    this.approvedOrRejectDate,
+    this.userName,
+    this.userMobile,
+    this.userEmail,
+    this.userAdhar,
+    this.rescheduledBy,
+    this.rescheduledDate,
     this.car,
     this.showroom,
     this.frontUser,
+    this.requestbyEmplyee,
+    this.approverRejecter,
+    this.rescheduler,
   });
 
   factory TestDriveListResponse.fromJson(Map<String, dynamic> json) {
@@ -320,6 +374,9 @@ class TestDriveListResponse {
       final carJson = json['car'] as Map<String, dynamic>?;
       final frontUserJson = json['front_user'] as Map<String, dynamic>?;
       final showroomJson = carJson?['showroom'] as Map<String, dynamic>?;
+      final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
+      final approverRejecterJson = json['approver_rejecter'] as Map<String, dynamic>?;
+      final reschedulerJson = json['rescheduler'] as Map<String, dynamic>?;
       
       return TestDriveListResponse(
         id: json['id'] as int? ?? 0,
@@ -341,9 +398,22 @@ class TestDriveListResponse {
         approvedEmployeeId: json['approved_employee_id']?.toString(),
         cancelDescription: json['cancel_description'] as String?,
         cancelDateTime: json['cancel_date_time'] as String?,
+        driverId: json['driver_id']?.toString(),
+        driverUpdateDate: json['driver_update_date'] as String?,
+        approverOrRejectBy: json['approver_or_reject_by']?.toString(),
+        approvedOrRejectDate: json['approved_or_reject_date'] as String?,
+        userName: json['user_name'] as String?,
+        userMobile: json['user_mobile'] as String?,
+        userEmail: json['user_email'] as String?,
+        userAdhar: json['user_adhar'] as String?,
+        rescheduledBy: json['rescheduled_by']?.toString(),
+        rescheduledDate: json['rescheduled_date'] as String?,
         car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
         showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
         frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
+        requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
+        approverRejecter: approverRejecterJson != null ? TestDriveUser.fromJson(approverRejecterJson) : null,
+        rescheduler: reschedulerJson != null ? TestDriveUser.fromJson(reschedulerJson) : null,
       );
     } catch (e) {
       print('Error parsing TestDriveListResponse: $e');
@@ -486,6 +556,16 @@ class TestDriveUser {
   final String? name;
   final String? email;
   final String? mobile;
+  final String? mobileNo;
+  final String? aadharNo;
+  final String? drivingLicenseNo;
+  final String? emailVerifiedAt;
+  final String? isAdmin;
+  final String? status;
+  final int? roleId;
+  final int? showroomId;
+  final String? avatar;
+  final String? avatarUrl;
   final String? createdAt;
   final String? updatedAt;
   final String? city;
@@ -498,6 +578,16 @@ class TestDriveUser {
     this.name,
     this.email,
     this.mobile,
+    this.mobileNo,
+    this.aadharNo,
+    this.drivingLicenseNo,
+    this.emailVerifiedAt,
+    this.isAdmin,
+    this.status,
+    this.roleId,
+    this.showroomId,
+    this.avatar,
+    this.avatarUrl,
     this.createdAt,
     this.updatedAt,
     this.city,
@@ -512,6 +602,16 @@ class TestDriveUser {
       name: json['name'] as String?,
       email: json['email'] as String?,
       mobile: json['mobile'] as String?,
+      mobileNo: json['mobile_no'] as String?,
+      aadharNo: json['aadhar_no'] as String?,
+      drivingLicenseNo: json['driving_license_no'] as String?,
+      emailVerifiedAt: json['email_verified_at'] as String?,
+      isAdmin: json['is_admin'] as String?,
+      status: json['status'] as String?,
+      roleId: json['role_id'] as int?,
+      showroomId: json['showroom_id'] as int?,
+      avatar: json['avatar'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       city: json['city'] as String?,

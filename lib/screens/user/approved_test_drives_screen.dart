@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/test_drive_model.dart';
 import '../../models/showroom_model.dart';
+import '../../services/api_service.dart';
+import '../../services/storage_service.dart';
+import '../../models/user_model.dart';
 
 class ApprovedTestDrivesScreen extends StatefulWidget {
   const ApprovedTestDrivesScreen({super.key});
@@ -13,161 +16,70 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
   List<TestDriveListResponse> _approvedTestDrives = [];
   bool _isLoading = true;
   bool _isRefreshing = false;
+  
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    _loadDummyData();
+    _loadUserDataAndApprovedTestDrives();
   }
 
-  Future<void> _loadDummyData() async {
+  Future<void> _loadUserDataAndApprovedTestDrives() async {
+    try {
+      // Load current user data
+      _currentUser = await _storageService.getUser();
+      
+      if (_currentUser != null) {
+        await _loadApprovedTestDrives();
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar('User data not found. Please login again.');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorSnackBar('Failed to load user data: ${e.toString()}');
+    }
+  }
+
+  Future<void> _loadApprovedTestDrives() async {
+    if (_currentUser == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Dummy data for approved test drives
-    final dummyData = [
-      TestDriveListResponse(
-        id: 1,
-        carId: 1,
-        frontUserId: 1,
-        date: '2024-01-15',
-        time: '10:00 AM',
-        pickupAddress: '123 Main Street, Apartment 4B',
-        pickupCity: 'Mumbai',
-        pickupPincode: '400001',
-        note: 'Please arrive 10 minutes early for documentation',
-        car: TestDriveCar(
-          id: 1,
-          showroomId: 1,
-          yearOfManufacture: 2024,
-          seatingCapacity: 5,
-          name: 'Honda City',
-          modelNumber: '2024',
-          mainImage: null,
-        ),
-        showroom: Showroom(
-          id: 1,
-          authId: 1,
-          name: 'Honda Showroom - Andheri',
-          address: 'Andheri West',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          district: 'Mumbai',
-          pincode: '400001',
-          ratting: 4,
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
-        ),
-      ),
-      TestDriveListResponse(
-        id: 2,
-        carId: 2,
-        frontUserId: 1,
-        date: '2024-01-18',
-        time: '2:30 PM',
-        pickupAddress: '456 Park Avenue, Floor 2',
-        pickupCity: 'Delhi',
-        pickupPincode: '110001',
-        note: 'Driver will contact you 30 minutes before pickup',
-        car: TestDriveCar(
-          id: 2,
-          showroomId: 2,
-          yearOfManufacture: 2024,
-          seatingCapacity: 5,
-          name: 'Maruti Swift',
-          modelNumber: '2024',
-          mainImage: null,
-        ),
-        showroom: Showroom(
-          id: 2,
-          authId: 2,
-          name: 'Maruti Suzuki - Connaught Place',
-          address: 'Connaught Place',
-          city: 'Delhi',
-          state: 'Delhi',
-          district: 'New Delhi',
-          pincode: '110001',
-          ratting: 4,
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
-        ),
-      ),
-      TestDriveListResponse(
-        id: 3,
-        carId: 3,
-        frontUserId: 1,
-        date: '2024-01-20',
-        time: '11:00 AM',
-        pickupAddress: '789 Lake Road, Villa 12',
-        pickupCity: 'Bangalore',
-        pickupPincode: '560001',
-        note: 'Test drive duration: 45 minutes',
-        car: TestDriveCar(
-          id: 3,
-          showroomId: 3,
-          yearOfManufacture: 2024,
-          seatingCapacity: 5,
-          name: 'Hyundai i20',
-          modelNumber: '2024',
-          mainImage: null,
-        ),
-        showroom: Showroom(
-          id: 3,
-          authId: 3,
-          name: 'Hyundai Motors - Koramangala',
-          address: 'Koramangala',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          district: 'Bangalore',
-          pincode: '560001',
-          ratting: 4,
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
-        ),
-      ),
-      TestDriveListResponse(
-        id: 4,
-        carId: 4,
-        frontUserId: 1,
-        date: '2024-01-22',
-        time: '3:00 PM',
-        pickupAddress: '321 Garden Street, Flat 8C',
-        pickupCity: 'Chennai',
-        pickupPincode: '600001',
-        note: 'Please bring valid ID proof',
-        car: TestDriveCar(
-          id: 4,
-          showroomId: 4,
-          yearOfManufacture: 2024,
-          seatingCapacity: 7,
-          name: 'Toyota Innova',
-          modelNumber: '2024',
-          mainImage: null,
-        ),
-        showroom: Showroom(
-          id: 4,
-          authId: 4,
-          name: 'Toyota Showroom - T Nagar',
-          address: 'T Nagar',
-          city: 'Chennai',
-          state: 'Tamil Nadu',
-          district: 'Chennai',
-          pincode: '600001',
-          ratting: 4,
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
-        ),
-      ),
-    ];
-
-    setState(() {
-      _approvedTestDrives = dummyData;
-      _isLoading = false;
-    });
+    try {
+      final response = await _apiService.getUserApprovedTestDrives(_currentUser!.id);
+      
+      if (response.success) {
+        setState(() {
+          _approvedTestDrives = response.data ?? [];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar(response.message);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorSnackBar('Failed to load approved test drives: ${e.toString()}');
+    }
   }
 
   Future<void> _refreshData() async {
@@ -175,7 +87,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     setState(() {
       _isRefreshing = true;
     });
-    await _loadDummyData();
+    await _loadApprovedTestDrives();
     setState(() {
       _isRefreshing = false;
     });
@@ -565,6 +477,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         _buildDetailRow('Date', request.date ?? 'Unknown'),
                         _buildDetailRow('Time', request.time ?? 'Unknown'),
                         _buildDetailRow('Status', 'Approved'),
+                        if (request.approvedOrRejectDate != null)
+                          _buildDetailRow('Approved On', _formatDateTime(request.approvedOrRejectDate!)),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -591,6 +505,25 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         'Additional Notes',
                         [
                           _buildDetailRow('Note', request.note ?? ''),
+                        ],
+                      ),
+                    if (request.approverRejecter != null)
+                      _buildDetailSection(
+                        'Approved By',
+                        [
+                          _buildDetailRow('Name', request.approverRejecter!.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.approverRejecter!.email ?? 'Unknown'),
+                          if (request.approverRejecter!.mobileNo != null)
+                            _buildDetailRow('Mobile', request.approverRejecter!.mobileNo!),
+                        ],
+                      ),
+                    if (request.driverId != null && request.driverId!.isNotEmpty)
+                      _buildDetailSection(
+                        'Driver Assignment',
+                        [
+                          _buildDetailRow('Driver ID', request.driverId!),
+                          if (request.driverUpdateDate != null)
+                            _buildDetailRow('Assigned On', _formatDateTime(request.driverUpdateDate!)),
                         ],
                       ),
                     const SizedBox(height: 24),
@@ -1040,7 +973,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       );
 
       // Refresh the list
-      _loadDummyData();
+      _loadApprovedTestDrives();
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
@@ -1128,5 +1061,33 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         ],
       ),
     );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeString; // Return original string if parsing fails
+    }
   }
 } 

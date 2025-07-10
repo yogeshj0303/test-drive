@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart';
 import '../../models/user_model.dart';
+import '../../models/showroom_model.dart';
 import '../../main.dart';
 import 'personal_info_screen.dart';
 import 'change_password_screen.dart';
@@ -105,6 +106,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
   final ApiService _apiService = ApiService();
 
   User? _user;
+  Showroom? _showroom;
   bool _isLoading = true;
   String? _errorMessage;
   int _testDriveCount = 0;
@@ -170,9 +172,51 @@ class UserProfileScreenState extends State<UserProfileScreen>
     try {
       final currentUser = await _storageService.getUser();
       if (currentUser != null) {
-        // Load user profile and test drive count in parallel
+        // Load user profile, test drive count, and showroom details in parallel
         final profileResponse = await _apiService.getUserProfile(currentUser.id);
         final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        
+        // Try to get showroom details - first try individual showroom, then fallback to all showrooms
+        Showroom? showroom;
+        try {
+          print('Debug: Fetching showroom for ID: ${currentUser.showroomId}');
+          final showroomResponse = await _apiService.getShowroomById(currentUser.showroomId);
+          print('Debug: Individual showroom response: ${showroomResponse.success}');
+          if (showroomResponse.success && showroomResponse.data != null) {
+            showroom = showroomResponse.data;
+            print('Debug: Found showroom via individual API: ${showroom!.name}');
+          } else {
+            print('Debug: Individual showroom API failed, trying all showrooms');
+            // Fallback: get all showrooms and find the matching one
+            final allShowroomsResponse = await _apiService.getShowrooms();
+            print('Debug: All showrooms response: ${allShowroomsResponse.success}');
+            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
+              print('Debug: Found ${allShowroomsResponse.data!.length} showrooms');
+              showroom = allShowroomsResponse.data!.firstWhere(
+                (s) => s.id == currentUser.showroomId,
+                orElse: () {
+                  print('Debug: No matching showroom found for ID: ${currentUser.showroomId}');
+                  return Showroom(
+                    id: 0,
+                    authId: 0,
+                    name: '',
+                    address: '',
+                    city: '',
+                    state: '',
+                    district: '',
+                    pincode: '',
+                    ratting: 0,
+                    createdAt: '',
+                    updatedAt: '',
+                  );
+                },
+              );
+              print('Debug: Found showroom via all showrooms: ${showroom.name}');
+            }
+          }
+        } catch (e) {
+          print('Error fetching showroom details: $e');
+        }
         
         if (profileResponse.success && profileResponse.data != null) {
           final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
@@ -192,6 +236,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
           
           setState(() {
             _user = profileResponse.data;
+            _showroom = showroom;
             _testDriveCount = testDriveCount;
             _completedTestDriveCount = completedTestDriveCount;
             _isLoading = false;
@@ -642,7 +687,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
                     ),
                     const SizedBox(width: AppTheme.spacingXS),
                     Text(
-                      'Not specified',
+                      _getLocationDisplay(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -735,6 +780,32 @@ class UserProfileScreenState extends State<UserProfileScreen>
     }
   }
 
+  String _getLocationDisplay() {
+    print('Debug: _showroom = $_showroom');
+    if (_showroom == null) {
+      print('Debug: Showroom is null, returning "Not specified"');
+      return 'Not specified';
+    }
+    
+    print('Debug: Showroom city = "${_showroom!.city}", state = "${_showroom!.state}"');
+    
+    // Use the showroom's locationDisplay method if available, otherwise format manually
+    if (_showroom!.city.isNotEmpty && _showroom!.state.isNotEmpty) {
+      final location = '${_showroom!.city}, ${_showroom!.state}';
+      print('Debug: Returning location: $location');
+      return location;
+    } else if (_showroom!.city.isNotEmpty) {
+      print('Debug: Returning city only: ${_showroom!.city}');
+      return _showroom!.city;
+    } else if (_showroom!.state.isNotEmpty) {
+      print('Debug: Returning state only: ${_showroom!.state}');
+      return _showroom!.state;
+    } else {
+      print('Debug: Both city and state are empty, returning "Not specified"');
+      return 'Not specified';
+    }
+  }
+
 
 
   Widget _buildStatCard(
@@ -747,61 +818,65 @@ class UserProfileScreenState extends State<UserProfileScreen>
   ) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: GestureDetector(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 16),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 1),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.2,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 16),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),

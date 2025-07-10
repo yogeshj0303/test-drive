@@ -94,6 +94,47 @@ class ApiService {
     }
   }
 
+  Future<ApiResponse<Showroom>> getShowroomById(int showroomId) async {
+    try {
+      debugPrint('Fetching showroom details for ID: $showroomId');
+      
+      // Try different endpoint patterns since we're not sure about the exact API structure
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.showroomsEndpoint)}/$showroomId');
+      debugPrint('Showroom details URL: $uri');
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Showroom details response status: ${response.statusCode}');
+      debugPrint('Showroom details response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final showroom = Showroom.fromJson(responseData);
+        debugPrint('Successfully fetched showroom details for ID $showroomId');
+        return ApiResponse.success(showroom, message: 'Showroom details fetched successfully');
+      } else if (response.statusCode == 404) {
+        debugPrint('Showroom not found for ID: $showroomId');
+        return ApiResponse.error('Showroom not found');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        debugPrint('Showroom details API error: $errorMessage');
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch showroom details');
+      }
+    } on SocketException {
+      debugPrint('Showroom details network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Showroom details format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Showroom details unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
   Future<ApiResponse<List<Showroom>>> getNearbyShowrooms(String pincode) async {
     try {
       debugPrint('Fetching nearby showrooms for pincode: $pincode');

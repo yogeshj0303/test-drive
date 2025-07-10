@@ -51,7 +51,7 @@ class _MainUserScreenState extends State<MainUserScreen> {
         children: [
           const UserHomeScreen(),
           // const ShowroomsScreen(), // Commented out - showroom is now shown in home screen
-          const UserExpenseScreen(),
+          const UserExpenseScreen(showBackButton: false),
           TestDriveStatusScreen(key: _statusKey, showBackButton: false),
           UserProfileScreen(key: _profileKey, showBackButton: false),
         ],
@@ -68,8 +68,8 @@ class _MainUserScreenState extends State<MainUserScreen> {
         ),
         child: SafeArea(
           child: Container(
-            height: 65,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Row(
               children: [
                 Expanded(child: _buildNavItem(

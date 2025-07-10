@@ -32,119 +32,141 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Change Password',
-          style: theme.textTheme.titleLarge?.copyWith(
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
         ),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+          ),
+        ),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.colorScheme.onSurface,
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.arrow_back_ios, size: 16),
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingL),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionHeader(context, 'Password Change'),
-                const SizedBox(height: AppTheme.spacingS),
-                Text(
-                  'Please enter your new password to update your account security.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingL),
-                _buildPasswordField(
-                  context,
-                  controller: _newPasswordController,
-                  label: 'New Password',
-                  obscureText: _obscureNewPassword,
-                  onToggleVisibility: () {
-                    setState(() {
-                      _obscureNewPassword = !_obscureNewPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a new password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingS),
-                _buildPasswordField(
-                  context,
-                  controller: _confirmPasswordController,
-                  label: 'Confirm New Password',
-                  obscureText: _obscureConfirmPassword,
-                  onToggleVisibility: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your new password';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingM),
-                _buildPasswordRequirements(context),
-                const SizedBox(height: AppTheme.spacingL),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _changePassword,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 350,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: AppTheme.spacingM),
+                  _buildSectionHeader(context, 'Password Change'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please enter your new password to update your account security.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.2,
                     ),
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                theme.colorScheme.onPrimary,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  _buildPasswordField(
+                    context,
+                    controller: _newPasswordController,
+                    label: 'New Password',
+                    obscureText: _obscureNewPassword,
+                    onToggleVisibility: () {
+                      setState(() {
+                        _obscureNewPassword = !_obscureNewPassword;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a new password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPasswordField(
+                    context,
+                    controller: _confirmPasswordController,
+                    label: 'Confirm New Password',
+                    obscureText: _obscureConfirmPassword,
+                    onToggleVisibility: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your new password';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildPasswordRequirements(context),
+                  const SizedBox(height: AppTheme.spacingM),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: _isLoading ? null : _changePassword,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.onPrimary,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Change Password',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
                               ),
                             ),
-                          )
-                        : Text(
-                            'Change Password',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppTheme.spacingM),
+                ],
+              ),
             ),
           ),
         ),
@@ -192,49 +214,55 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       controller: controller,
       obscureText: obscureText,
       validator: validator,
-      style: theme.textTheme.bodyLarge?.copyWith(
+      style: theme.textTheme.bodyMedium?.copyWith(
         letterSpacing: 0.2,
       ),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          letterSpacing: 0.2,
+        ),
         prefixIcon: Icon(
           Icons.lock_outline,
           color: theme.colorScheme.primary,
+          size: 20,
         ),
         suffixIcon: IconButton(
           icon: Icon(
             obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
             color: theme.colorScheme.onSurfaceVariant,
+            size: 20,
           ),
           onPressed: onToggleVisibility,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: theme.colorScheme.outlineVariant,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: theme.colorScheme.outlineVariant.withOpacity(0.5),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: theme.colorScheme.primary,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: theme.colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: theme.colorScheme.error,
             width: 2,
@@ -243,9 +271,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         filled: true,
         fillColor: theme.colorScheme.surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingL,
-          vertical: AppTheme.spacingS,
+          horizontal: AppTheme.spacingM,
+          vertical: AppTheme.spacingXS,
         ),
+        isDense: true,
       ),
     );
   }
@@ -254,10 +283,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final theme = Theme.of(context);
     
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingM),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withOpacity(0.5),
         ),
@@ -267,13 +296,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         children: [
           Text(
             'Password Requirements:',
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: AppTheme.spacingXS),
+          const SizedBox(height: 6),
           _buildRequirementItem(
             context,
             'At least 6 characters long',
@@ -291,31 +320,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   ) {
     final theme = Theme.of(context);
     
-    return Padding(
-      padding: const EdgeInsets.only(top: AppTheme.spacingXS),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Icon(
-              icon,
-              size: 14,
-              color: theme.colorScheme.primary,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            icon,
+            size: 14,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: AppTheme.spacingXS),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(width: AppTheme.spacingXS),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

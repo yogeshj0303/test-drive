@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart';
 import '../../models/user_model.dart';
+import '../../models/showroom_model.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -26,6 +27,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final ApiService _apiService = ApiService();
   
   User? _user;
+  Showroom? _showroom;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -67,10 +69,45 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     try {
       final currentUser = await _storageService.getUser();
       if (currentUser != null) {
+        // Load user profile and showroom details in parallel
         final response = await _apiService.getUserProfile(currentUser.id);
+        
+        // Try to get showroom details
+        Showroom? showroom;
+        try {
+          final showroomResponse = await _apiService.getShowroomById(currentUser.showroomId);
+          if (showroomResponse.success && showroomResponse.data != null) {
+            showroom = showroomResponse.data;
+          } else {
+            // Fallback: get all showrooms and find the matching one
+            final allShowroomsResponse = await _apiService.getShowrooms();
+            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
+              showroom = allShowroomsResponse.data!.firstWhere(
+                (s) => s.id == currentUser.showroomId,
+                orElse: () => Showroom(
+                  id: 0,
+                  authId: 0,
+                  name: '',
+                  address: '',
+                  city: '',
+                  state: '',
+                  district: '',
+                  pincode: '',
+                  ratting: 0,
+                  createdAt: '',
+                  updatedAt: '',
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          print('Error fetching showroom details: $e');
+        }
+        
         if (response.success && response.data != null) {
           setState(() {
             _user = response.data;
+            _showroom = showroom;
             _isLoading = false;
           });
           _populateControllers();
@@ -99,12 +136,33 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       _nameController.text = _user!.name;
       _emailController.text = _user!.email;
       _phoneController.text = _user!.mobileNo;
-      _locationController.text = 'Not specified'; // API doesn't provide city/state
+      
+      // Populate location fields from showroom data
+      if (_showroom != null) {
+        _cityController.text = _showroom!.city.isNotEmpty ? _showroom!.city : 'Not specified';
+        _stateController.text = _showroom!.state.isNotEmpty ? _showroom!.state : 'Not specified';
+        _districtController.text = _showroom!.district.isNotEmpty ? _showroom!.district : 'Not specified';
+        _pincodeController.text = _showroom!.pincode.isNotEmpty ? _showroom!.pincode : 'Not specified';
+        
+        // Update location field
+        if (_showroom!.city.isNotEmpty && _showroom!.state.isNotEmpty) {
+          _locationController.text = '${_showroom!.city}, ${_showroom!.state}';
+        } else if (_showroom!.city.isNotEmpty) {
+          _locationController.text = _showroom!.city;
+        } else if (_showroom!.state.isNotEmpty) {
+          _locationController.text = _showroom!.state;
+        } else {
+          _locationController.text = 'Not specified';
+        }
+      } else {
+        _locationController.text = 'Not specified';
+        _cityController.text = 'Not specified';
+        _stateController.text = 'Not specified';
+        _districtController.text = 'Not specified';
+        _pincodeController.text = 'Not specified';
+      }
+      
       _dobController.text = 'Not specified'; // API doesn't provide DOB
-      _cityController.text = 'Not specified'; // API doesn't provide city
-      _stateController.text = 'Not specified'; // API doesn't provide state
-      _districtController.text = 'Not specified'; // API doesn't provide district
-      _pincodeController.text = 'Not specified'; // API doesn't provide pincode
     }
   }
 
@@ -141,6 +199,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           shadowColor: Colors.transparent,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+            ),
+          ),
           leading: IconButton(
             icon: Container(
               padding: const EdgeInsets.all(6),
@@ -187,6 +252,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           shadowColor: Colors.transparent,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+            ),
+          ),
           leading: IconButton(
             icon: Container(
               padding: const EdgeInsets.all(6),
@@ -256,6 +328,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         shadowColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+          ),
+        ),
         leading: IconButton(
           icon: Container(
             padding: const EdgeInsets.all(6),

@@ -772,17 +772,23 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        shape: Border(
+          bottom: BorderSide(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        title: Text(
           'Test Drive Status',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 20,
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
           ),
         ),
         leading: widget.showBackButton
@@ -793,9 +799,21 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
             : null,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1A1A1A)),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                Icons.refresh_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+                size: 18,
+              ),
+            ),
             onPressed: _refreshData,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
@@ -946,107 +964,157 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                               onTap: () => _showTestDriveDetails(request),
                               borderRadius: BorderRadius.circular(16),
                               child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: _getStatusColor(request.status ?? 'Unknown')
-                                                .withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            _getStatusIcon(request.status ?? 'Unknown'),
-                                            color: _getStatusColor(request.status ?? 'Unknown'),
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                    // Status icon
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(request.status ?? 'Unknown')
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        _getStatusIcon(request.status ?? 'Unknown'),
+                                        color: _getStatusColor(request.status ?? 'Unknown'),
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    
+                                    // Main content
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Car name and status in same row
+                                          Row(
                                             children: [
-                                              Text(
-                                                request.car?.name ?? 'Unknown',
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF1A1A1A),
+                                              Expanded(
+                                                child: Text(
+                                                  request.car?.name ?? 'Unknown',
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF1A1A1A),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                request.showroom?.name ?? 'Unknown',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.grey[600],
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _getStatusColor(request.status ?? 'Unknown')
+                                                      .withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  _getStatusText(request.status ?? 'Unknown'),
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: _getStatusColor(request.status ?? 'Unknown'),
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getStatusColor(request.status ?? 'Unknown')
-                                                .withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            _getStatusText(request.status ?? 'Unknown'),
+                                          const SizedBox(height: 4),
+                                          
+                                          // Showroom name
+                                          Text(
+                                            request.showroom?.name ?? 'Unknown',
                                             style: TextStyle(
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: _getStatusColor(request.status ?? 'Unknown'),
+                                              color: Colors.grey[600],
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Date',
-                                            request.date ?? 'Unknown',
-                                            Icons.calendar_today_outlined,
+                                          const SizedBox(height: 4),
+                                          
+                                          // Date and time in same row
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today_outlined,
+                                                size: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                request.date ?? 'Unknown',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Icon(
+                                                Icons.access_time_rounded,
+                                                size: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                request.time ?? 'Unknown',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Time',
-                                            request.time ?? 'Unknown',
-                                            Icons.access_time_rounded,
+                                          const SizedBox(height: 4),
+                                          
+                                          // Pickup location and pincode in same row
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.location_on_outlined,
+                                                size: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  request.pickupCity ?? 'Unknown',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.grey[600],
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Icon(
+                                                Icons.pin_drop_outlined,
+                                                size: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                request.pickupPincode ?? 'Unknown',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Pickup',
-                                            request.pickupCity ?? 'Unknown',
-                                            Icons.location_on_outlined,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Pincode',
-                                            request.pickupPincode ?? 'Unknown',
-                                            Icons.pin_drop_outlined,
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1129,37 +1197,5 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     );
   }
 
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: Colors.grey[600],
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1A1A),
-          ),
-        ),
-      ],
-    );
-  }
+
 } 

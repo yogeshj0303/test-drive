@@ -8,7 +8,12 @@ import '../../models/expense_model.dart';
 import '../../models/user_model.dart';
 
 class UserExpenseScreen extends StatefulWidget {
-  const UserExpenseScreen({super.key});
+  final bool showBackButton;
+  
+  const UserExpenseScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
   State<UserExpenseScreen> createState() => _UserExpenseScreenState();
@@ -905,21 +910,29 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,
         toolbarHeight: 56,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              Icons.arrow_back_rounded,
-              color: theme.colorScheme.onSurfaceVariant,
-              size: 18,
-            ),
+        shape: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
           ),
-          onPressed: () => Navigator.pop(context),
         ),
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 18,
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         actions: [
           IconButton(
             icon: Container(
@@ -1184,162 +1197,177 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
           onTap: () => _showExpenseDetails(expense),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                // Main expense info
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _getClassificationColor(expense.classification).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _getClassificationIcon(expense.classification),
-                        color: _getClassificationColor(expense.classification),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Classification icon
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _getClassificationColor(expense.classification).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _getClassificationIcon(expense.classification),
+                    color: _getClassificationColor(expense.classification),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                
+                // Main content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title and amount in same row
+                      Row(
                         children: [
-                          Text(
-                            expense.description,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: Text(
+                              expense.description,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              _buildInfoChip(
-                                icon: Icons.calendar_today_outlined,
-                                label: _formatDate(expense.date),
-                                theme: theme,
-                              ),
-                              const SizedBox(width: 8),
-                              _buildInfoChip(
-                                icon: Icons.payment_outlined,
-                                label: expense.paymentMode,
-                                theme: theme,
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          Text(
+                            '₹${expense.amount.toStringAsFixed(2)}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '₹${expense.amount.toStringAsFixed(2)}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(expense.status).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            expense.status.toUpperCase(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: _getStatusColor(expense.status),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // User info and proof indicator
-                Row(
-                  children: [
-                    // User avatar and name
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 12,
-                          backgroundColor: theme.colorScheme.surfaceVariant,
-                          backgroundImage: expense.user.avatarUrl != null
-                              ? NetworkImage(expense.user.avatarUrl!)
-                              : null,
-                          child: expense.user.avatarUrl == null
-                              ? Text(
-                                  expense.user.name.isNotEmpty 
-                                      ? expense.user.name[0].toUpperCase()
-                                      : 'U',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          expense.user.name,
-                          style: theme.textTheme.bodySmall?.copyWith(
+                      const SizedBox(height: 4),
+                      
+                      // Date and payment mode in same row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 14,
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                      ],
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // Proof indicator
-                    if (expense.proofUrl != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.attach_file_rounded,
-                              size: 12,
-                              color: theme.colorScheme.onPrimaryContainer,
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDate(expense.date),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Proof',
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(
+                            Icons.payment_outlined,
+                            size: 14,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            expense.paymentMode,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      
+                      // User and status in same row
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 10,
+                            backgroundColor: theme.colorScheme.surfaceVariant,
+                            backgroundImage: expense.user.avatarUrl != null
+                                ? NetworkImage(expense.user.avatarUrl!)
+                                : null,
+                            child: expense.user.avatarUrl == null
+                                ? Text(
+                                    expense.user.name.isNotEmpty 
+                                        ? expense.user.name[0].toUpperCase()
+                                        : 'U',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 10,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              expense.user.name,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(expense.status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              expense.status.toUpperCase(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _getStatusColor(expense.status),
                                 fontWeight: FontWeight.w600,
-                                fontSize: 10,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ),
+                          if (expense.proofUrl != null) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.attach_file_rounded,
+                                    size: 10,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Proof',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1349,38 +1377,7 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
     );
   }
 
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-    required ThemeData theme,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Color _getClassificationColor(String classification) {
     switch (classification.toLowerCase()) {

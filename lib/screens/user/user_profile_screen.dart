@@ -619,7 +619,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
                                   _user!.avatarUrl!,
                                   width: 100,
                                   height: 100,
-                                  fit: BoxFit.cover,
+                                  fit: BoxFit.fill,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Center(
                                       child: Icon(

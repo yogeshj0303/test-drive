@@ -334,149 +334,154 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: Container(
-                constraints: const BoxConstraints(maxWidth: 400),
+                constraints: BoxConstraints(
+                  maxWidth: 400,
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header with icon and title
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.cancel_outlined,
-                        size: 32,
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Title
-                    Text(
-                      'Reject Expense',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    // Description
-                    Text(
-                      'Please provide a detailed reason for rejecting this expense. This information will be shared with the expense submitter.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Text field
-                    TextField(
-                      controller: reasonController,
-                      onChanged: (value) {
-                        setState(() {
-                          // This will rebuild the widget to update character count
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Enter rejection reason...',
-                        hintStyle: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header with icon and title
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                        child: Icon(
+                          Icons.cancel_outlined,
+                          size: 32,
+                          color: theme.colorScheme.error,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.error,
-                            width: 2,
-                          ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Title
+                      Text(
+                        'Reject Expense',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.error,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.edit_note_outlined,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // Description
+                      Text(
+                        'Please provide a detailed reason for rejecting this expense. This information will be shared with the expense submitter.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Text field
+                      TextField(
+                        controller: reasonController,
+                        onChanged: (value) {
+                          setState(() {
+                            // This will rebuild the widget to update character count
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter rejection reason...',
+                          hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.error,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.edit_note_outlined,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        maxLines: 4,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Character count
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '${reasonController.text.length}/500',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: reasonController.text.length > 450 
+                                ? theme.colorScheme.error 
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                      maxLines: 4,
-                      maxLength: 500,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    
-                    // Character count
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '${reasonController.text.length}/500',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: reasonController.text.length > 450 
-                              ? theme.colorScheme.error 
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Action buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            label: const Text('Cancel'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.colorScheme.onSurfaceVariant,
-                              side: BorderSide(
-                                color: theme.colorScheme.outline.withOpacity(0.3),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 24),
+                      
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: const Text('Cancel'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.onSurfaceVariant,
+                                side: BorderSide(
+                                  color: theme.colorScheme.outline.withOpacity(0.3),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () {
-                              final reason = reasonController.text.trim();
-                              if (reason.isNotEmpty) {
-                                Navigator.of(context).pop(reason);
-                              }
-                            },
-                            icon: const Icon(Icons.cancel_rounded, size: 18),
-                            label: const Text('Reject'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: theme.colorScheme.error,
-                              foregroundColor: theme.colorScheme.onError,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                final reason = reasonController.text.trim();
+                                if (reason.isNotEmpty) {
+                                  Navigator.of(context).pop(reason);
+                                }
+                              },
+                              icon: const Icon(Icons.cancel_rounded, size: 18),
+                              label: const Text('Reject'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.error,
+                                foregroundColor: theme.colorScheme.onError,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

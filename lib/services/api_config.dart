@@ -14,7 +14,7 @@ class ApiConfig {
   static const String carsByShowroomEndpoint = '/api/front-cars/by-showroom';
   static const String userProfileEndpoint = '/api/driver/profile'; // Base endpoint for user profile
   static const String updateUserProfileEndpoint = '/api/app-users/update'; // Endpoint for updating user profile
-  static const String testDriveStoreEndpoint = '/api/app-users/testdrives-store'; // Endpoint for creating test drive request
+  static const String testDriveStoreEndpoint = '/api/app-users/textdrives-store'; // Endpoint for creating test drive request
   static const String userTestDrivesEndpoint = '/api/app-users/testdrives'; // Endpoint for fetching user test drives
   static const String userPendingTestDrivesEndpoint = '/api/employee/all/testdrives/unassigned'; // Endpoint for fetching user pending test drives
   static const String userCanceledTestDrivesEndpoint = '/api/app-users/testdrives/user'; // Endpoint for fetching user canceled test drives

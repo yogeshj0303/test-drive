@@ -113,18 +113,23 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
         elevation: 0,
-        shadowColor: Colors.transparent,
         centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey[200],
+          ),
+        ),
         leading: IconButton(
           icon: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: const Icon(Icons.arrow_back_ios, size: 16),
+            child: const Icon(Icons.arrow_back_rounded, size: 18),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -134,13 +139,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.refresh, size: 18),
+              child: const Icon(Icons.refresh_rounded, size: 18),
             ),
             onPressed: _refreshData,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
         ],
       ),
       body: _isLoading
@@ -684,6 +689,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -850,6 +856,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -977,6 +984,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1104,6 +1112,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1296,6 +1305,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1461,6 +1471,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),

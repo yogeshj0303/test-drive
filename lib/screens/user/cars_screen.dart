@@ -110,11 +110,11 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600), // Reduced from 800
       vsync: this,
     );
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 400), // Reduced from 600
       vsync: this,
     );
     
@@ -127,7 +127,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
     ));
     
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.2), // Reduced from 0.3
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
@@ -296,15 +296,15 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Enhanced top bar with back button
+                // Compact top bar with back button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Reduced padding
                   child: Row(
                     children: [
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12), // Standardized
                           border: Border.all(
                             color: Colors.white.withOpacity(0.2),
                             width: 1,
@@ -312,11 +312,11 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                         ),
                         child: IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-                          padding: const EdgeInsets.all(6),
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16), // Reduced from 18
+                          padding: const EdgeInsets.all(4), // Reduced from 6
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8), // Reduced from 12
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,7 +325,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               'Choose a Car',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18, // Reduced from 20
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.5,
                               ),
@@ -335,7 +335,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               widget.showroomName,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
+                                fontSize: 11, // Reduced from 12
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -345,26 +345,26 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
-                // Enhanced search bar and filter
+                // Compact search bar and filter
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _slideAnimation,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12), // Reduced from 16
                       child: Row(
                         children: [
                           Expanded(
                             child: Container(
-                              height: 44,
+                              height: 40, // Reduced from 44
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(12), // Standardized
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
+                                    blurRadius: 8, // Reduced from 12
+                                    offset: const Offset(0, 3), // Reduced from 4
                                   ),
                                 ],
                               ),
@@ -377,27 +377,27 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                   hintText: 'Search cars or locations...',
                                   hintStyle: TextStyle(
                                     color: Colors.grey[600],
-                                    fontSize: 13,
+                                    fontSize: 12, // Reduced from 13
                                     fontWeight: FontWeight.w400,
                                   ),
                                   prefixIcon: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    margin: const EdgeInsets.only(right: 4),
+                                    padding: const EdgeInsets.all(6), // Reduced from 8
+                                    margin: const EdgeInsets.only(right: 2), // Reduced from 4
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(12), // Standardized
                                     ),
-                                    child: const Icon(Icons.search, color: Color(0xFF0095D9), size: 16),
+                                    child: const Icon(Icons.search, color: Color(0xFF0095D9), size: 14), // Reduced from 16
                                   ),
                                   suffixIcon: Container(
-                                    margin: const EdgeInsets.only(right: 4),
+                                    margin: const EdgeInsets.only(right: 2), // Reduced from 4
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 200),
                                       decoration: BoxDecoration(
                                         color: _isListening 
                                             ? const Color(0xFF0095D9).withOpacity(0.1)
                                             : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(12), // Standardized
                                       ),
                                       child: Stack(
                                         alignment: Alignment.center,
@@ -409,26 +409,26 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                                 _isListening ? Icons.mic : Icons.mic_none_rounded,
                                                 key: ValueKey<bool>(_isListening),
                                                 color: _isListening ? const Color(0xFF0095D9) : Colors.grey[600],
-                                                size: 18,
+                                                size: 16, // Reduced from 18
                                               ),
                                             ),
                                             onPressed: _startListening,
                                             tooltip: _isListening 
                                                 ? 'Stop listening' 
                                                 : 'Tap to start voice search',
-                                            padding: const EdgeInsets.all(8),
+                                            padding: const EdgeInsets.all(6), // Reduced from 8
                                             constraints: const BoxConstraints(
-                                              minWidth: 32,
-                                              minHeight: 32,
+                                              minWidth: 28, // Reduced from 32
+                                              minHeight: 28, // Reduced from 32
                                             ),
                                           ),
                                           if (_isListening)
                                             Positioned(
-                                              right: 8,
-                                              top: 8,
+                                              right: 6, // Reduced from 8
+                                              top: 6, // Reduced from 8
                                               child: Container(
-                                                width: 6,
-                                                height: 6,
+                                                width: 5, // Reduced from 6
+                                                height: 5, // Reduced from 6
                                                 decoration: BoxDecoration(
                                                   color: Colors.red,
                                                   shape: BoxShape.circle,
@@ -444,37 +444,37 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10), // Reduced
                                   isDense: true,
                                 ),
                                 style: const TextStyle(
                                   color: Color(0xFF0095D9),
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 13,
+                                  fontSize: 12, // Reduced from 13
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8), // Reduced from 10
                           // Remove 3 dots from search bar area
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Enhanced results count
+                const SizedBox(height: 12), // Reduced from 16
+                // Compact results count
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0), // Reduced from 24
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Reduced
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12), // Standardized
                             border: Border.all(
                               color: Colors.white.withOpacity(0.2),
                               width: 1,
@@ -489,7 +489,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                              fontSize: 11, // Reduced from 12
                             ),
                           ),
                         ),
@@ -497,37 +497,37 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                         GestureDetector(
                           onTap: _showOptionsMenu,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(5), // Reduced from 6
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12), // Standardized
                               border: Border.all(
                                 color: Colors.white.withOpacity(0.2),
                                 width: 1,
                               ),
                             ),
-                            child: Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.9), size: 18),
+                            child: Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.9), size: 16), // Reduced from 18
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Enhanced car list with proper scrolling boundaries
+                const SizedBox(height: 8), // Reduced from 12
+                // Compact car list with proper scrolling boundaries
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
+                        topLeft: Radius.circular(12), // Standardized
+                        topRight: Radius.circular(12), // Standardized
                       ),
                     ),
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
+                        topLeft: Radius.circular(24), // Reduced from 28
+                        topRight: Radius.circular(24), // Reduced from 28
                       ),
                       child: _isLoading
                           ? const Center(
@@ -537,12 +537,12 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                   CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
                                   ),
-                                  SizedBox(height: 16),
+                                  SizedBox(height: 12), // Reduced from 16
                                   Text(
                                     'Loading cars...',
                                     style: TextStyle(
                                       color: Color(0xFF666666),
-                                      fontSize: 16,
+                                      fontSize: 14, // Reduced from 16
                                     ),
                                   ),
                                 ],
@@ -555,19 +555,19 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                     children: [
                                       Icon(
                                         Icons.error_outline_rounded,
-                                        size: 64,
+                                        size: 56, // Reduced from 64
                                         color: Colors.grey[400],
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 12), // Reduced from 16
                                       Text(
                                         _errorMessage!,
                                         style: TextStyle(
                                           color: Colors.grey[600],
-                                          fontSize: 16,
+                                          fontSize: 14, // Reduced from 16
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 12), // Reduced from 16
                                       ElevatedButton(
                                         onPressed: _fetchCars,
                                         style: ElevatedButton.styleFrom(
@@ -591,34 +591,34 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                             _cars.isEmpty 
                                                 ? Icons.directions_car_outlined
                                                 : Icons.search_off_rounded,
-                                            size: 64,
+                                            size: 56, // Reduced from 64
                                             color: Colors.grey[400],
                                           ),
-                                          const SizedBox(height: 16),
+                                          const SizedBox(height: 12), // Reduced from 16
                                           Text(
                                             _cars.isEmpty 
                                                 ? 'No cars available'
                                                 : 'No cars match your filters',
                                             style: const TextStyle(
                                               color: Color(0xFF666666),
-                                              fontSize: 16,
+                                              fontSize: 14, // Reduced from 16
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6), // Reduced from 8
                                           Text(
                                             _cars.isEmpty 
                                                 ? 'Check back later for available cars'
                                                 : 'Try adjusting your search or filters',
                                             style: TextStyle(
                                               color: Colors.grey[600],
-                                              fontSize: 14,
+                                              fontSize: 13, // Reduced from 14
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
                                           if (_cars.isNotEmpty && (_searchQuery.isNotEmpty))
                                             Padding(
-                                              padding: const EdgeInsets.only(top: 16),
+                                              padding: const EdgeInsets.only(top: 12), // Reduced from 16
                                               child: TextButton(
                                                 onPressed: _clearAllFilters,
                                                 child: const Text(
@@ -657,15 +657,15 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
     const double buttonDiameter = 48;
     
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + (index * 100)),
+      duration: Duration(milliseconds: 500 + (index * 80)), // Reduced from 600 + 100
       tween: Tween(begin: 0.0, end: 1.0),
       builder: (context, value, child) {
         return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
+          offset: Offset(0, 20 * (1 - value)), // Reduced from 30
           child: Opacity(
             opacity: value,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 12, top: 2, left: 2, right: 2),
+              padding: const EdgeInsets.only(bottom: 8, top: 1, left: 1, right: 1), // Reduced padding
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -674,23 +674,23 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                     elevation: 0,
                     color: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(12), // Standardized
                     ),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12), // Standardized
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.06),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                            blurRadius: 16, // Reduced from 20
+                            offset: const Offset(0, 6), // Reduced from 8
                             spreadRadius: 0,
                           ),
                           BoxShadow(
                             color: Colors.black.withOpacity(0.03),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                            blurRadius: 4, // Reduced from 6
+                            offset: const Offset(0, 1), // Reduced from 2
                             spreadRadius: 0,
                           ),
                         ],
@@ -698,42 +698,42 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Professional header with rating and deals
+                          // Compact header with rating and deals
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0), // Reduced from 16
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Rating badge with enhanced design
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [Color(0xFFFF8A65), Color(0xFFFF5722)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(12), // Standardized
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0xFFFF5722).withOpacity(0.25),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
+                                        blurRadius: 8, // Reduced from 12
+                                        offset: const Offset(0, 3), // Reduced from 4
                                       ),
                                     ],
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.star_rounded, color: Colors.white, size: 14),
-                                      const SizedBox(width: 4),
+                                      const Icon(Icons.star_rounded, color: Colors.white, size: 12), // Reduced from 14
+                                      const SizedBox(width: 3), // Reduced from 4
                                       const Text(
                                         '4.5',
                                         style: TextStyle(
                                           color: Colors.white, 
                                           fontWeight: FontWeight.w700, 
-                                          fontSize: 12,
+                                          fontSize: 11, // Reduced from 12
                                           letterSpacing: 0.2,
                                         ),
                                       ),
@@ -742,33 +742,33 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 ),
                                 // Deals badge with enhanced design
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(12), // Standardized
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0xFF4CAF50).withOpacity(0.25),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
+                                        blurRadius: 8, // Reduced from 12
+                                        offset: const Offset(0, 3), // Reduced from 4
                                       ),
                                     ],
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.local_offer_rounded, color: Colors.white, size: 14),
-                                      const SizedBox(width: 4),
+                                      const Icon(Icons.local_offer_rounded, color: Colors.white, size: 12), // Reduced from 14
+                                      const SizedBox(width: 3), // Reduced from 4
                                       Text(
                                         '${car.hasDiscount ? "Discount" : "New"}',
                                         style: const TextStyle(
                                           color: Colors.white, 
                                           fontWeight: FontWeight.w700, 
-                                          fontSize: 12,
+                                          fontSize: 11, // Reduced from 12
                                           letterSpacing: 0.2,
                                         ),
                                       ),
@@ -778,135 +778,129 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          // Enhanced car image section
+                          const SizedBox(height: 12), // Reduced from 16
+                          // Compact car image section
                           Container(
-                            height: 120,
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  const Color(0xFF0095D9).withOpacity(0.05),
-                                  const Color(0xFF0095D9).withOpacity(0.02),
+                            height: 150, // Reduced from 120
+                            margin: const EdgeInsets.symmetric(horizontal: 12), // Reduced from 16
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12), // Reduced from 16
+                              child: Stack(
+                                children: [
+                                  // Car image
+                                  Positioned.fill(
+                                    child: CachedNetworkImage(
+                                      imageUrl: car.mainImage,
+                                      fit: BoxFit.fill,
+                                      placeholder: (context, url) => Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              const Color(0xFF0095D9).withOpacity(0.05),
+                                              const Color(0xFF0095D9).withOpacity(0.02),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(12), // Standardized
+                                          border: Border.all(
+                                            color: const Color(0xFF0095D9).withOpacity(0.1),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              SizedBox(
+                                                width: 18, // Reduced from 20
+                                                height: 18, // Reduced from 20
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                                ),
+                                              ),
+                                              SizedBox(height: 6), // Reduced from 8
+                                              Text(
+                                                'Loading...',
+                                                style: TextStyle(
+                                                  color: Color(0xFF0095D9),
+                                                  fontSize: 11, // Reduced from 12
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              const Color(0xFF0095D9).withOpacity(0.05),
+                                              const Color(0xFF0095D9).withOpacity(0.02),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(12), // Standardized
+                                          border: Border.all(
+                                            color: const Color(0xFF0095D9).withOpacity(0.1),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.directions_car_rounded, 
+                                                size: 32, // Reduced from 40
+                                                color: Color(0xFF0095D9),
+                                              ),
+                                              SizedBox(height: 4), // Reduced from 6
+                                              Text(
+                                                'Image not available',
+                                                style: TextStyle(
+                                                  color: Color(0xFF0095D9),
+                                                  fontSize: 10, // Reduced from 11
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Subtle overlay for depth
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12), // Reduced from 16
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.white.withOpacity(0.1),
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFF0095D9).withOpacity(0.1),
-                                width: 1,
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                // Car image
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: CachedNetworkImage(
-                                    imageUrl: car.mainImage,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.grey[300]!,
-                                            Colors.grey[200]!,
-                                            Colors.grey[300]!,
-                                          ],
-                                        ),
-                                      ),
-                                      child: const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
-                                              ),
-                                            ),
-                                            SizedBox(height: 8),
-                                            Text(
-                                              'Loading...',
-                                              style: TextStyle(
-                                                color: Color(0xFF0095D9),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) => Container(
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.grey[100]!,
-                                            Colors.grey[50]!,
-                                          ],
-                                        ),
-                                      ),
-                                      child: const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.directions_car_rounded, 
-                                              size: 40, 
-                                              color: Color(0xFF0095D9),
-                                            ),
-                                            SizedBox(height: 6),
-                                            Text(
-                                              'Image not available',
-                                              style: TextStyle(
-                                                color: Color(0xFF0095D9),
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Subtle overlay for depth
-                                Positioned.fill(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.white.withOpacity(0.1),
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          // Car details section
+                          const SizedBox(height: 12), // Reduced from 16
+                          // Compact car details section
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12), // Reduced from 16
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -914,7 +908,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 Text(
                                   car.name,
                                   style: const TextStyle(
-                                    fontSize: 18, 
+                                    fontSize: 16, // Reduced from 18
                                     fontWeight: FontWeight.w700,
                                     color: Color(0xFF1A1A1A),
                                     letterSpacing: -0.5,
@@ -923,28 +917,28 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4), // Reduced from 6
                                 // Car specifications row
                                 Row(
                                   children: [
                                     _buildSpecItem('Fuel', car.fuelType, Icons.local_gas_station_rounded),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 8), // Reduced from 12
                                     _buildSpecItem('Trans', car.transmission, Icons.settings_rounded),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 8), // Reduced from 12
                                     _buildSpecItem('Seats', '${car.seatingCapacity}', Icons.airline_seat_recline_normal_rounded),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12), // Reduced from 16
                                 // Price and action section
                                 Row(
                                   children: [
                                     // Book test drive button (full width)
                                     Expanded(
                                       child: Container(
-                                        height: 44,
+                                        height: 40, // Reduced from 44
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(12), // Standardized
                                           border: Border.all(
                                             color: const Color(0xFF0095D9),
                                             width: 2,
@@ -952,8 +946,8 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                           boxShadow: [
                                             BoxShadow(
                                               color: const Color(0xFF0095D9).withOpacity(0.15),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
+                                              blurRadius: 6, // Reduced from 8
+                                              offset: const Offset(0, 1), // Reduced from 2
                                             ),
                                           ],
                                         ),
@@ -973,7 +967,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                                 ),
                                               );
                                             },
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12), // Standardized
                                             child: const Center(
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
@@ -982,14 +976,14 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                                   Icon(
                                                     Icons.directions_car_rounded,
                                                     color: Color(0xFF0095D9),
-                                                    size: 16,
+                                                    size: 14, // Reduced from 16
                                                   ),
-                                                  SizedBox(width: 4),
+                                                  SizedBox(width: 3), // Reduced from 4
                                                   Text(
                                                     'Request to test drive',
                                                     style: TextStyle(
                                                       color: Color(0xFF0095D9),
-                                                      fontSize: 13,
+                                                      fontSize: 12, // Reduced from 13
                                                       fontWeight: FontWeight.w600,
                                                       letterSpacing: 0.2,
                                                     ),
@@ -1006,7 +1000,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8), // Reduced from 12
                         ],
                       ),
                     ),
@@ -1025,18 +1019,18 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(4), // Reduced from 6
             decoration: BoxDecoration(
               color: const Color(0xFF0095D9).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12), // Standardized
             ),
             child: Icon(
               icon,
-              size: 14,
+              size: 12, // Reduced from 14
               color: const Color(0xFF0095D9),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6), // Reduced from 8
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1044,16 +1038,16 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9, // Reduced from 10
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1), // Reduced from 2
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11, // Reduced from 12
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1A1A),
                   ),
@@ -1575,7 +1569,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       ),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Reduced from 12
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -1588,7 +1582,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
         ),
         // Add extra padding at the bottom for better scrolling experience
         const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
+          child: SizedBox(height: 12), // Reduced from 16
         ),
       ],
     );
@@ -1602,13 +1596,13 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       ),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8), // Reduced from 6
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
+              crossAxisSpacing: 4, // Reduced from 6
+              mainAxisSpacing: 4, // Reduced from 6
+              childAspectRatio: 1, // Reduced from 0.7 for smaller cards
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -1620,7 +1614,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
           ),
         ),
         const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
+          child: SizedBox(height: 6), // Reduced from 8
         ),
       ],
     );
@@ -1628,22 +1622,22 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
 
   Widget _buildGridCard(Car car, int index) {
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + (index * 100)),
+      duration: Duration(milliseconds: 500 + (index * 80)), // Reduced from 600 + 100
       tween: Tween(begin: 0.0, end: 1.0),
       builder: (context, value, child) {
         return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
+          offset: Offset(0, 20 * (1 - value)), // Reduced from 30
           child: Opacity(
             opacity: value,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12), // Standardized
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.06),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    blurRadius: 8, // Reduced from 12
+                    offset: const Offset(0, 2), // Reduced from 4
                     spreadRadius: 0,
                   ),
                 ],
@@ -1653,41 +1647,37 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                 children: [
                   // Car image
                   Expanded(
-                    flex: 3,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
+                    flex: 2, // Reduced from 4 to make image smaller
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12), // Standardized
+                        topRight: Radius.circular(12), // Standardized
                       ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                        child: CachedNetworkImage(
-                          imageUrl: car.mainImage,
+                      child: CachedNetworkImage(
+                        imageUrl: car.mainImage,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover, // Changed back to cover for better aspect ratio
+                        placeholder: (context, url) => Container(
                           width: double.infinity,
                           height: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[200],
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
-                                strokeWidth: 2,
-                              ),
+                          color: const Color(0xFF0095D9).withOpacity(0.05),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                              strokeWidth: 2,
                             ),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[100],
-                            child: const Center(
-                              child: Icon(
-                                Icons.directions_car_rounded,
-                                color: Color(0xFF0095D9),
-                                size: 32,
-                              ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          color: const Color(0xFF0095D9).withOpacity(0.05),
+                          child: const Center(
+                            child: Icon(
+                              Icons.directions_car_rounded,
+                              color: Color(0xFF0095D9),
+                              size: 16, // Reduced from 20
                             ),
                           ),
                         ),
@@ -1696,9 +1686,9 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                   ),
                   // Car details
                   Expanded(
-                    flex: 2,
+                    flex: 3, // Increased from 2 to give more space for car data
                     child: Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(4), // Increased from 3
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1706,19 +1696,44 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                           Text(
                             car.name,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12, // Increased from 10
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF1A1A1A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 2), // Increased from 1
+                          // Car specifications
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridSpecItem('Fuel', car.fuelType, Icons.local_gas_station_rounded),
+                              ),
+                              const SizedBox(width: 3), // Increased from 2
+                              Expanded(
+                                child: _buildGridSpecItem('Trans', car.transmission, Icons.settings_rounded),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2), // Increased from 1
+                          // Seating capacity
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridSpecItem('Seats', '${car.seatingCapacity}', Icons.airline_seat_recline_normal_rounded),
+                              ),
+                              const SizedBox(width: 3), // Increased from 2
+                              Expanded(
+                                child: _buildGridSpecItem('Year', '${car.yearOfManufacture}', Icons.calendar_today_rounded),
+                              ),
+                            ],
+                          ),
                           const Spacer(),
                           // Book button
                           SizedBox(
                             width: double.infinity,
-                            height: 28,
+                            height: 20, // Increased from 16
                             child: ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
@@ -1737,7 +1752,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 backgroundColor: const Color(0xFF0095D9),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(12), // Standardized
                                 ),
                                 padding: EdgeInsets.zero,
                                 elevation: 0,
@@ -1745,7 +1760,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               child: const Text(
                                 'Request to test drive',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 9, // Increased from 7
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1761,6 +1776,51 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGridSpecItem(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(2), // Increased from 1
+          decoration: BoxDecoration(
+            color: const Color(0xFF0095D9).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12), // Standardized
+          ),
+          child: Icon(
+            icon,
+            size: 8, // Increased from 6
+            color: const Color(0xFF0095D9),
+          ),
+        ),
+        const SizedBox(width: 3), // Increased from 2
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 8, // Increased from 6
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 9, // Increased from 7
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A1A),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 } 

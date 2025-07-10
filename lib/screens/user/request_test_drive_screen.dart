@@ -169,8 +169,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
             }
           });
           
-          // Show notification if required fields are missing
-          _checkMissingRequiredFields(userProfile);
+
         }
       }
     } catch (e) {
@@ -179,66 +178,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     }
   }
 
-  void _checkMissingRequiredFields(User userProfile) {
-    List<String> missingFields = [];
-    
-    if (userProfile.drivingLicenseNo == null || userProfile.drivingLicenseNo!.isEmpty) {
-      missingFields.add('Driving License Number');
-    }
-    
-    if (userProfile.aadharNo == null || userProfile.aadharNo!.isEmpty) {
-      missingFields.add('Aadhar Number');
-    }
-    
-    if (missingFields.isNotEmpty && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Missing Information',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Please fill in: ${missingFields.join(', ')}',
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF0095D9),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Update Profile',
-              textColor: Colors.white,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PersonalInfoScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      });
-    }
-  }
+
 
   List<String> get _carOptions {
     if (widget.availableCars != null && widget.availableCars!.isNotEmpty) {
@@ -515,7 +455,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         children: [
           // Enhanced gradient background
           Container(
-            height: 200,
+            height: 100, // Reduced from 150
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -535,22 +475,22 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                 children: [
                   // Enhanced top bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced vertical padding
                     child: Row(
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1,
-                            ),
                           ),
                           child: IconButton(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
                           ),
                         ),
                         const Spacer(),
@@ -558,7 +498,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                           'Request Test Drive',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -567,116 +507,80 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8), // Reduced from 12
                   // Main form content
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12), // Reduced from 16
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
+                            blurRadius: 15,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20), // Increased from 12
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Car Details Section
+                              // Combined Car Details & Schedule Section
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
                                       Icons.directions_car,
                                       color: Color(0xFF0095D9),
-                                      size: 20,
+                                      size: 16,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 8),
                                   const Text(
-                                    'Car Details',
+                                    'Schedule Details',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF1A1A1A),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              // Car Model Dropdown
-                              DropdownButtonFormField<String>(
-                                value: _selectedCar,
-                                decoration: InputDecoration(
-                                  labelText: 'Car Model',
-                                  hintText: 'Select car model',
-                                  prefixIcon: const Icon(Icons.directions_car_outlined, color: Color(0xFF0095D9)),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
-                                items: _carOptions.map((String car) {
-                                  return DropdownMenuItem<String>(
-                                    value: car,
-                                    child: Text(car),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedCar = newValue;
-                                  });
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please select a car model';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              // Showroom Field
+                              const SizedBox(height: 8),
+                              // Showroom field
                               TextFormField(
                                 controller: _showroomController,
+                                style: const TextStyle(fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'Showroom',
+                                  labelStyle: const TextStyle(fontSize: 14),
                                   hintText: 'Enter showroom name',
-                                  prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9)),
+                                  hintStyle: const TextStyle(fontSize: 14),
+                                  prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -685,126 +589,118 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 16),
-                              // Test Drive Schedule Section
+                              const SizedBox(height: 8),
+                              // Two-column layout for date and time
                               Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                      Icons.schedule,
-                                      color: Color(0xFF0095D9),
-                                      size: 20,
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => _selectDate(context),
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'Date',
+                                          labelStyle: const TextStyle(fontSize: 14),
+                                          prefixIcon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF0095D9), size: 20),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: Colors.grey[300]!),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.grey[50],
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        ),
+                                        child: Text(
+                                          _selectedDate != null
+                                              ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                                              : 'Select date',
+                                          style: TextStyle(
+                                            color: _selectedDate != null
+                                                ? const Color(0xFF1A1A1A)
+                                                : Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Test Drive Schedule',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1A1A1A),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => _selectTime(context),
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'Time',
+                                          labelStyle: const TextStyle(fontSize: 14),
+                                          prefixIcon: const Icon(Icons.access_time_rounded, color: Color(0xFF0095D9), size: 20),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: Colors.grey[300]!),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.grey[50],
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        ),
+                                        child: Text(
+                                          _selectedTime != null
+                                              ? _selectedTime!.format(context)
+                                              : 'Select time',
+                                          style: TextStyle(
+                                            color: _selectedTime != null
+                                                ? const Color(0xFF1A1A1A)
+                                                : Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              // Date Picker
-                              InkWell(
-                                onTap: () => _selectDate(context),
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Date',
-                                    prefixIcon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF0095D9)),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  child: Text(
-                                    _selectedDate != null
-                                        ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                                        : 'Select date',
-                                    style: TextStyle(
-                                      color: _selectedDate != null
-                                          ? const Color(0xFF1A1A1A)
-                                          : Colors.grey[600],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              // Time Picker
-                              InkWell(
-                                onTap: () => _selectTime(context),
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Time',
-                                    prefixIcon: const Icon(Icons.access_time_rounded, color: Color(0xFF0095D9)),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  child: Text(
-                                    _selectedTime != null
-                                        ? _selectedTime!.format(context)
-                                        : 'Select time',
-                                    style: TextStyle(
-                                      color: _selectedTime != null
-                                          ? const Color(0xFF1A1A1A)
-                                          : Colors.grey[600],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
                               // Duration Dropdown
                               DropdownButtonFormField<String>(
                                 value: _selectedDuration,
                                 decoration: InputDecoration(
                                   labelText: 'Duration',
-                                  prefixIcon: const Icon(Icons.timer_outlined, color: Color(0xFF0095D9)),
+                                  labelStyle: const TextStyle(fontSize: 14),
+                                  prefixIcon: const Icon(Icons.timer_outlined, color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
                                 items: _durationOptions.map((String duration) {
                                   return DropdownMenuItem<String>(
                                     value: duration,
-                                    child: Text(duration),
+                                    child: Text(
+                                      duration,
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
@@ -814,58 +710,64 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                     });
                                   }
                                 },
+                                menuMaxHeight: 150,
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 12),
                               // Personal Information Section
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(
                                       Icons.person,
                                       color: Color(0xFF0095D9),
-                                      size: 20,
+                                      size: 18,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 8),
                                   const Text(
                                     'Personal Information',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF1A1A1A),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              // Pickup Address
+                              const SizedBox(height: 8),
+                              
+                              // Pickup Address with location button
                               Row(
                                 children: [
                                   Expanded(
                                     child: TextFormField(
                                       controller: _pickupAddressController,
+                                      style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Pickup Address',
+                                        labelStyle: const TextStyle(fontSize: 14),
                                         hintText: 'Enter pickup address',
-                                        prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9)),
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9), size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(10),
                                           borderSide: BorderSide(color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(10),
                                           borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
@@ -879,145 +781,167 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   Container(
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: IconButton(
                                       onPressed: _isLoadingLocation ? null : _getCurrentLocation,
                                       icon: _isLoadingLocation
                                           ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
+                                              width: 18,
+                                              height: 18,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
                                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                               ),
                                             )
-                                          : const Icon(Icons.my_location, color: Colors.white),
+                                          : const Icon(Icons.my_location, color: Colors.white, size: 20),
                                       tooltip: 'Use Current Location',
+                                      padding: const EdgeInsets.all(8),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              // Pickup City
-                              TextFormField(
-                                controller: _pickupCityController,
-                                decoration: InputDecoration(
-                                  labelText: 'Pickup City',
-                                  hintText: 'Enter pickup city',
-                                  prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF0095D9)),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 8),
+                              
+                              // Two-column layout for city and pincode
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _pickupCityController,
+                                      style: const TextStyle(fontSize: 14),
+                                      decoration: InputDecoration(
+                                        labelText: 'Pickup City',
+                                        labelStyle: const TextStyle(fontSize: 14),
+                                        hintText: 'Enter pickup city',
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF0095D9), size: 20),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter pickup city';
+                                        }
+                                        return null;
+                                      },
+                                    ),
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _pickupPincodeController,
+                                      style: const TextStyle(fontSize: 14),
+                                      decoration: InputDecoration(
+                                        labelText: 'Pickup Pincode',
+                                        labelStyle: const TextStyle(fontSize: 14),
+                                        hintText: 'Enter pickup pincode',
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.pin_drop_outlined, color: Color(0xFF0095D9), size: 20),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter pickup pincode';
+                                        }
+                                        if (value.length != 6) {
+                                          return 'Pincode must be 6 digits';
+                                        }
+                                        return null;
+                                      },
+                                    ),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter pickup city';
-                                  }
-                                  return null;
-                                },
+                                ],
                               ),
-                              const SizedBox(height: 16),
-                              // Pickup Pincode
-                              TextFormField(
-                                controller: _pickupPincodeController,
-                                decoration: InputDecoration(
-                                  labelText: 'Pickup Pincode',
-                                  hintText: 'Enter pickup pincode',
-                                  prefixIcon: const Icon(Icons.pin_drop_outlined, color: Color(0xFF0095D9)),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter pickup pincode';
-                                  }
-                                  if (value.length != 6) {
-                                    return 'Pincode must be 6 digits';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              // Driving License
+                              const SizedBox(height: 8),
+                              
+                              // Driving License field
                               TextFormField(
                                 controller: _drivingLicenseController,
+                                style: const TextStyle(fontSize: 14),
                                 decoration: InputDecoration(
-                                  labelText: 'Driving License Number',
+                                  labelText: 'Driving License',
+                                  labelStyle: const TextStyle(fontSize: 14),
                                   hintText: _drivingLicenseController.text.isEmpty 
-                                      ? 'Enter your driving license number' 
-                                      : 'Driving license number',
-                                  prefixIcon: const Icon(Icons.card_membership_outlined, color: Color(0xFF0095D9)),
+                                      ? 'Enter license number' 
+                                      : 'License number',
+                                  hintStyle: const TextStyle(fontSize: 14),
+                                  prefixIcon: const Icon(Icons.card_membership_outlined, color: Color(0xFF0095D9), size: 20),
                                   suffixIcon: _drivingLicenseController.text.isNotEmpty
                                       ? Container(
-                                          margin: const EdgeInsets.all(8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
                                             color: Colors.green.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             border: Border.all(color: Colors.green.withOpacity(0.3)),
                                           ),
                                           child: const Text(
-                                            'Auto-filled',
+                                            '✓',
                                             style: TextStyle(
                                               color: Colors.green,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         )
                                       : Container(
-                                          margin: const EdgeInsets.all(8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
                                             color: Colors.orange.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             border: Border.all(color: Colors.orange.withOpacity(0.3)),
                                           ),
                                           child: const Text(
-                                            'Required',
+                                            '!',
                                             style: TextStyle(
                                               color: Colors.orange,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1026,64 +950,69 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 16),
-                              // Aadhar Number
+                              const SizedBox(height: 8),
+                              
+                              // Aadhar Number field
                               TextFormField(
                                 controller: _aadharNoController,
+                                style: const TextStyle(fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'Aadhar Number',
+                                  labelStyle: const TextStyle(fontSize: 14),
                                   hintText: _aadharNoController.text.isEmpty 
-                                      ? 'Enter your 12-digit Aadhar number' 
+                                      ? 'Enter 12-digit Aadhar' 
                                       : 'Aadhar number',
-                                  prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9)),
+                                  hintStyle: const TextStyle(fontSize: 14),
+                                  prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9), size: 20),
                                   suffixIcon: _aadharNoController.text.isNotEmpty
                                       ? Container(
-                                          margin: const EdgeInsets.all(8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
                                             color: Colors.green.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             border: Border.all(color: Colors.green.withOpacity(0.3)),
                                           ),
                                           child: const Text(
-                                            'Auto-filled',
+                                            '✓',
                                             style: TextStyle(
                                               color: Colors.green,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         )
                                       : Container(
-                                          margin: const EdgeInsets.all(8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
                                             color: Colors.orange.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             border: Border.all(color: Colors.orange.withOpacity(0.3)),
                                           ),
                                           child: const Text(
-                                            'Required',
+                                            '!',
                                             style: TextStyle(
                                               color: Colors.orange,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
@@ -1096,31 +1025,37 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 16),
-                              // Note
+                              const SizedBox(height: 8),
+                              
+                              // Note field
                               TextFormField(
                                 controller: _noteController,
+                                style: const TextStyle(fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'Additional Notes (Optional)',
+                                  labelStyle: const TextStyle(fontSize: 14),
                                   hintText: 'Enter any additional notes',
-                                  prefixIcon: const Icon(Icons.note_outlined, color: Color(0xFF0095D9)),
+                                  hintStyle: const TextStyle(fontSize: 14),
+                                  prefixIcon: const Icon(Icons.note_outlined, color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
-                                maxLines: 3,
+                                maxLines: 2, // Reduced from 3
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 12),
+                              
                               // Submit Button
                               SizedBox(
                                 width: double.infinity,
@@ -1129,9 +1064,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0095D9),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 14
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(8), // Reduced from 10
                                     ),
                                     elevation: 0,
                                   ),
@@ -1140,18 +1075,18 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             SizedBox(
-                                              width: 20,
-                                              height: 20,
+                                              width: 18,
+                                              height: 18,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
                                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                               ),
                                             ),
-                                            SizedBox(width: 12),
+                                            SizedBox(width: 10), // Reduced from 12
                                             Text(
                                               'Submitting...',
                                               style: TextStyle(
-                                                fontSize: 16,
+                                                fontSize: 14, // Reduced from 15
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -1160,7 +1095,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       : const Text(
                                           'Submit Request',
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -1172,7 +1107,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                                                    const SizedBox(height: 12), // Reduced from 16
                 ],
               ),
             ),

@@ -325,7 +325,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 'Your assigned showroom',
               ),
               Container(
-                height: 260,
+                height: 220, // Reduced from 260
                 child: _buildShowroomsContent(),
               ),
               // Quick Actions Section
@@ -338,9 +338,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.1,
+                    mainAxisSpacing: 8, // Reduced from 12
+                    crossAxisSpacing: 8, // Reduced from 12
+                    childAspectRatio: 1.2, // Increased from 1.1 to make cards shorter
                   ),
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -374,7 +374,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         },
                       },
                       {
-                        'title': 'Cancel Test Drive',
+                        'title': 'Rejected Test Drive',
                         'icon': Icons.cancel_outlined,
                         'color': Colors.red,
                         'onTap': () {
@@ -402,7 +402,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ];
                     final action = actions[index];
                     return SizedBox(
-                      height: 100,
+                      height: 80, // Reduced from 100
                       child: _buildActionCard(
                         action['title'] as String,
                         action['icon'] as IconData,
@@ -413,7 +413,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // Reduced from 24
             ],
           ),
         ),
@@ -424,7 +424,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Widget _buildSectionHeader(String title, String subtitle,
       {VoidCallback? onViewAll}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12), // Reduced top from 24, bottom from 16
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -439,7 +439,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       children: [
                         Container(
                           width: 4,
-                          height: 20,
+                          height: 18, // Reduced from 20
                           decoration: BoxDecoration(
                             color: const Color(0xFF0095D9),
                             borderRadius: BorderRadius.circular(2),
@@ -450,7 +450,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           child: Text(
                             title,
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 18, // Reduced from 20
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF1A1A1A),
                               letterSpacing: -0.5,
@@ -462,11 +462,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2), // Reduced from 4
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13, // Reduced from 14
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF757575),
                         letterSpacing: 0.2,
@@ -528,7 +528,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Reduced from 12, 8
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -548,22 +548,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6), // Reduced from 8
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  size: 24,
+                  size: 20, // Reduced from 24
                   color: color,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // Reduced from 8
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12, // Reduced from 13
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[800],
                   height: 1.2,
@@ -723,12 +723,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        height: 300,
+        height: 240, // Reduced from 300
         child: Column(
           children: [
             // Top image section with overlay
             Container(
-              height: 120,
+              height: 100, // Reduced from 120
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
@@ -747,12 +747,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ? Image.network(
                             '${ApiConfig.baseUrl}/${showroom.showroomImage!}',
                             width: double.infinity,
-                            height: 120,
+                            height: 100, // Reduced from 120
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 width: double.infinity,
-                                height: 120,
+                                height: 100, // Reduced from 120
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
@@ -769,7 +769,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                               if (loadingProgress == null) return child;
                               return Container(
                                 width: double.infinity,
-                                height: 120,
+                                height: 100, // Reduced from 120
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
@@ -795,7 +795,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           )
                         : Container(
                             width: double.infinity,
-                            height: 120,
+                            height: 100, // Reduced from 120
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -811,7 +811,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   // Gradient overlay for better text readability
                   Container(
                     width: double.infinity,
-                    height: 120,
+                    height: 100, // Reduced from 120
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(20),
@@ -829,13 +829,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   ),
                   // Showroom name overlay
                   Positioned(
-                    bottom: 12,
+                    bottom: 10, // Reduced from 12
                     left: 16,
                     right: 16,
                     child: Text(
                       showroom.name,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16, // Reduced from 18
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         letterSpacing: 0.2,
@@ -847,10 +847,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   ),
                   // Rating badge
                   Positioned(
-                    top: 12,
+                    top: 10, // Reduced from 12
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced from 10, 6
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(16),
@@ -861,14 +861,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           const Icon(
                             Icons.star_rounded,
                             color: Color(0xFF0095D9),
-                            size: 14,
+                            size: 12, // Reduced from 14
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 3), // Reduced from 4
                           Text(
                             showroom.ratting.toString(),
                             style: const TextStyle(
                               color: Color(0xFF0095D9),
-                              fontSize: 13,
+                              fontSize: 12, // Reduced from 13
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.2,
                             ),
@@ -883,7 +883,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             // Content section
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10), // Reduced from 12
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -892,15 +892,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       children: [
                         const Icon(
                           Icons.location_on_outlined,
-                          size: 14,
+                          size: 12, // Reduced from 14
                           color: Color(0xFF0095D9),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3), // Reduced from 4
                         Expanded(
                           child: Text(
                             showroom.locationDisplay,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12, // Reduced from 13
                               color: Color(0xFF757575),
                               height: 1.2,
                             ),
@@ -910,30 +910,30 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4), // Reduced from 6
                     // Available cars info
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3), // Reduced from 4
                           decoration: BoxDecoration(
                             color: const Color(0xFF0095D9).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
                             Icons.directions_car_rounded,
-                            size: 14,
+                            size: 12, // Reduced from 14
                             color: Color(0xFF0095D9),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4), // Reduced from 6
                         Expanded(
                           child: Row(
                             children: [
                               Text(
                                 'Available Cars',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10, // Reduced from 11
                                   color: Colors.grey[600],
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -941,7 +941,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                               // const SizedBox(width: 4),
                               Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), // Reduced from 8, 2
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF0095D9).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
@@ -953,7 +953,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                                 child: Text(
                                   _carCounts[showroom.id]?.toString() ?? 'N/A',
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11, // Reduced from 12
                                     color: Color(0xFF0095D9),
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -964,12 +964,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12), // Reduced from 20
                     // const Spacer(),
                     // Book button
                     SizedBox(
                       width: double.infinity,
-                      height: 40,
+                      height: 36, // Reduced from 40
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.push(
@@ -997,7 +997,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         child: const Text(
                           'Book Test Drive',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12, // Reduced from 13
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.2,
                           ),

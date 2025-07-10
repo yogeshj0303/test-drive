@@ -111,18 +111,23 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           ),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
         elevation: 0,
-        shadowColor: Colors.transparent,
         centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey[200],
+          ),
+        ),
         leading: IconButton(
           icon: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: const Icon(Icons.arrow_back_ios, size: 16),
+            child: const Icon(Icons.arrow_back_rounded, size: 18),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -132,13 +137,13 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.refresh, size: 18),
+              child: const Icon(Icons.refresh_rounded, size: 18),
             ),
             onPressed: _refreshData,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
         ],
       ),
       body: _isLoading
@@ -783,6 +788,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -882,6 +888,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -892,11 +899,15 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               strokeWidth: 2,
             ),
             const SizedBox(width: 16),
-            Text(
-              'Canceling test drive...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+            Expanded(
+              child: Text(
+                'Canceling test drive...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],
@@ -1235,6 +1246,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1245,11 +1257,15 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               strokeWidth: 2,
             ),
             const SizedBox(width: 16),
-            Text(
-              'Loading drivers...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+            Expanded(
+              child: Text(
+                'Loading drivers...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],
@@ -1362,6 +1378,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1542,6 +1559,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1552,11 +1570,15 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               strokeWidth: 2,
             ),
             const SizedBox(width: 16),
-            Text(
-              'Approving test drive and assigning driver...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+            Expanded(
+              child: Text(
+                'Approving test drive and assigning driver...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],

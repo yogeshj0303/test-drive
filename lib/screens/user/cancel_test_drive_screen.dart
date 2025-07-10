@@ -44,23 +44,42 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
         return;
       }
 
-      // Fetch rejected test drives (these are the canceled ones)
-      final response = await _apiService.getUserRejectedTestDrives(_currentUser!.id);
+      // Use the unified API to get all test drives and filter for rejected ones
+      final response = await _apiService.getUserTestDrives(_currentUser!.id);
       
       if (response.success) {
+        // Filter for rejected test drives
+        final rejectedTestDrives = response.data?.where((testDrive) => 
+            testDrive.status?.toLowerCase() == 'rejected').toList() ?? [];
+        
         setState(() {
-          _canceledTestDrives = response.data ?? [];
+          _canceledTestDrives = rejectedTestDrives;
           _isLoading = false;
         });
       } else {
-        setState(() {
-          _errorMessage = response.message;
-          _isLoading = false;
-        });
+        // Check if the error message indicates no data found
+        final errorMessage = response.message.toLowerCase();
+        if (errorMessage.contains('no test drives') || 
+            errorMessage.contains('not found') ||
+            errorMessage.contains('no data') ||
+            errorMessage.contains('empty')) {
+          // Treat as empty state rather than error
+          setState(() {
+            _canceledTestDrives = [];
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = response.message.isNotEmpty 
+                ? response.message 
+                : 'Unable to load rejected test drives. Please try again.';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'An error occurred: ${e.toString()}';
+        _errorMessage = 'Connection error. Please check your internet connection and try again.';
         _isLoading = false;
       });
     }
@@ -76,8 +95,8 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
         child: Column(
@@ -95,23 +114,23 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
             
             // Header
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   // Car Image
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       color: Colors.grey.shade100,
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       child: _buildCarImage(testDrive.car),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,26 +138,26 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                         Text(
                           testDrive.car?.name ?? 'Unknown',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1A1A1A),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        if (testDrive.car?.modelNumber != null) ...[
-                          Text(
-                            testDrive.car!.modelNumber!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
+                        // const SizedBox(height: 2),
+                        // if (testDrive.car?.modelNumber != null) ...[
+                        //   Text(
+                        //     testDrive.car!.modelNumber!,
+                        //     style: TextStyle(
+                        //       fontSize: 13,
+                        //       color: Colors.grey[600],
+                        //     ),
+                        //   ),
+                        //   const SizedBox(height: 2),
+                        // ],
                         Text(
                           testDrive.showroom?.name ?? 'Unknown',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
                           ),
@@ -148,12 +167,12 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 10,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: Colors.red.withOpacity(0.3),
                         width: 1,
@@ -162,7 +181,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     child: Text(
                       'REJECTED',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Colors.red[700],
                         letterSpacing: 0.5,
@@ -187,10 +206,10 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     const SizedBox(height: 16),
                     // Main Details Section
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: Colors.grey[200]!,
                           width: 1,
@@ -199,16 +218,16 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       child: Column(
                         children: [
                           _buildModernDetailRow('Date', testDrive.date ?? 'Unknown', Icons.calendar_today_outlined),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           _buildModernDetailRow('Time', testDrive.time ?? 'Unknown', Icons.access_time_rounded),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           _buildModernDetailRow('Pickup Address', testDrive.pickupAddress ?? 'Unknown', Icons.location_on_outlined),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           _buildModernDetailRow('Pickup City', testDrive.pickupCity ?? 'Unknown', Icons.location_city_outlined),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           _buildModernDetailRow('Status', testDrive.status?.toUpperCase() ?? 'Unknown', Icons.info_outline),
                           if (testDrive.approvedOrRejectDate != null && testDrive.approvedOrRejectDate!.isNotEmpty) ...[
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             _buildModernDetailRow('Rejected On', _formatDateTime(testDrive.approvedOrRejectDate!), Icons.cancel_outlined),
                           ],
                         ],
@@ -217,12 +236,12 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     
                     // Rejection Reason Section
                     if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: Colors.red[200]!,
                             width: 1,
@@ -235,27 +254,27 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                               children: [
                                 Icon(
                                   Icons.block_outlined,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.red[600],
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
                                   'Rejection Reason',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.red[800],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               testDrive.rejectDescription!,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Colors.red[700],
-                                height: 1.4,
+                                height: 1.3,
                               ),
                             ),
                           ],
@@ -265,12 +284,12 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     
                     // Note Section
                     if (testDrive.note?.isNotEmpty == true) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: Colors.blue[200]!,
                             width: 1,
@@ -283,27 +302,27 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                               children: [
                                 Icon(
                                   Icons.note_outlined,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.blue[600],
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
                                   'Note',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.blue[800],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               testDrive.note ?? '',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Colors.blue[700],
-                                height: 1.4,
+                                height: 1.3,
                               ),
                             ),
                           ],
@@ -313,12 +332,12 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     
                     // Rejected By Section
                     if (testDrive.approverRejecter != null) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.orange[50],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: Colors.orange[200]!,
                             width: 1,
@@ -331,35 +350,35 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                               children: [
                                 Icon(
                                   Icons.person_off_outlined,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.orange[600],
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
                                   'Rejected By',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.orange[800],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               testDrive.approverRejecter!.name ?? 'Unknown',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Colors.orange[700],
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             if (testDrive.approverRejecter!.email != null) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 testDrive.approverRejecter!.email!,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: Colors.orange[600],
                                 ),
                               ),
@@ -378,13 +397,13 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
             
             // Close Button
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
+                    blurRadius: 8,
                     offset: const Offset(0, -2),
                   ),
                 ],
@@ -396,16 +415,16 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0095D9),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
                   ),
                   child: const Text(
                     'Close',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -423,10 +442,10 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: Colors.grey[300]!,
               width: 1,
@@ -434,11 +453,11 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
           ),
           child: Icon(
             icon,
-            size: 16,
+            size: 14,
             color: const Color(0xFF0095D9),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,17 +465,17 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[600],
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: Color(0xFF1A1A1A),
                 ),
@@ -493,15 +512,36 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Icon(Icons.arrow_back_rounded, size: 18),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF1A1A1A)),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.refresh_rounded, size: 16),
+            ),
             onPressed: _loadCanceledTestDrives,
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey[200],
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -573,7 +613,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'You don\'t have any rejected test drives',
+                            'You don\'t have any rejected test drives at the moment',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],

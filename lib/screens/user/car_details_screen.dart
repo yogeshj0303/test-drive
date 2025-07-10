@@ -26,7 +26,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late PageController _pageController;
-  bool _isFavorite = false;
   int _currentImageIndex = 0;
 
   // API service and data
@@ -76,8 +75,6 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
       });
     }
   }
-
-
 
   @override
   void dispose() {
@@ -158,9 +155,9 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Enhanced gradient background
+          // Compact gradient background
           Container(
-            height: 280,
+            height: 200,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -178,7 +175,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Enhanced top bar
+                  // Compact top bar with only back button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
@@ -198,41 +195,17 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                             padding: const EdgeInsets.all(4),
                           ),
                         ),
-                        const Spacer(),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _isFavorite = !_isFavorite;
-                              });
-                            },
-                            icon: Icon(
-                              _isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: _isFavorite ? Colors.red : Colors.white,
-                              size: 16,
-                            ),
-                            padding: const EdgeInsets.all(4),
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  // Enhanced car image and info card
+                  // Compact car image and info card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      transform: Matrix4.translationValues(0, 10, 0),
+                      transform: Matrix4.translationValues(0, 5, 0),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
@@ -242,21 +215,21 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         child: Column(
                           children: [
-                            // Car image gallery with horizontal scrolling
+                            // Compact car image gallery
                             Container(
-                              height: 200,
+                              height: 160,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: data.images.isNotEmpty
                                   ? PageView.builder(
                                       controller: _pageController,
-                                      itemCount: data.images.length * 1000, // Create infinite loop
+                                      itemCount: data.images.length * 1000,
                                       onPageChanged: (index) {
                                         setState(() {
                                           _currentImageIndex = index % data.images.length;
@@ -265,19 +238,19 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                       itemBuilder: (context, index) {
                                         final imageIndex = index % data.images.length;
                                         return Container(
-                                          margin: const EdgeInsets.all(8),
+                                          margin: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Colors.black.withOpacity(0.1),
-                                                blurRadius: 8,
+                                                blurRadius: 6,
                                                 offset: const Offset(0, 2),
                                               ),
                                             ],
                                           ),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(6),
                                             child: CachedNetworkImage(
                                               imageUrl: data.images[imageIndex],
                                               fit: BoxFit.cover,
@@ -298,19 +271,19 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                                     mainAxisAlignment: MainAxisAlignment.center,
                                                     children: [
                                                       SizedBox(
-                                                        width: 20,
-                                                        height: 20,
+                                                        width: 16,
+                                                        height: 16,
                                                         child: CircularProgressIndicator(
                                                           strokeWidth: 2,
                                                           valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
                                                         ),
                                                       ),
-                                                      SizedBox(height: 8),
+                                                      SizedBox(height: 6),
                                                       Text(
                                                         'Loading...',
                                                         style: TextStyle(
                                                           color: Color(0xFF0095D9),
-                                                          fontSize: 12,
+                                                          fontSize: 10,
                                                           fontWeight: FontWeight.w500,
                                                         ),
                                                       ),
@@ -335,15 +308,15 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                                     children: [
                                                       Icon(
                                                         Icons.directions_car_rounded,
-                                                        size: 40,
+                                                        size: 32,
                                                         color: Color(0xFF0095D9),
                                                       ),
-                                                      SizedBox(height: 8),
+                                                      SizedBox(height: 6),
                                                       Text(
                                                         'Image not available',
                                                         style: TextStyle(
                                                           color: Color(0xFF0095D9),
-                                                          fontSize: 12,
+                                                          fontSize: 10,
                                                           fontWeight: FontWeight.w500,
                                                         ),
                                                       ),
@@ -373,15 +346,15 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                           children: [
                                             Icon(
                                               Icons.directions_car_rounded,
-                                              size: 60,
+                                              size: 48,
                                               color: Color(0xFF0095D9),
                                             ),
-                                            SizedBox(height: 8),
+                                            SizedBox(height: 6),
                                             Text(
                                               'No images available',
                                               style: TextStyle(
                                                 color: Color(0xFF0095D9),
-                                                fontSize: 14,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
@@ -390,16 +363,16 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                       ),
                                     ),
                             ),
-                            // Image indicator dots
+                            // Compact image indicator dots
                             if (data.images.length > 1) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: List.generate(
                                   data.images.length,
                                   (index) => Container(
-                                    width: 8,
-                                    height: 8,
+                                    width: 6,
+                                    height: 6,
                                     margin: const EdgeInsets.symmetric(horizontal: 2),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
@@ -409,110 +382,94 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 12),
-                            // Car name and type
+                            const SizedBox(height: 8),
+                            // Compact car name and type
                             Text(
                               data.name,
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF1A1A1A),
                                 letterSpacing: -0.5,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               data.bodyType ?? 'Car',
                               style: TextStyle(
                                 color: Colors.grey[600],
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 8),
-                            // Rating and reviews
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFFF8A65), Color(0xFFFF5722)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                            const SizedBox(height: 6),
+                            // Compact rating
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFF8A65), Color(0xFFFF5722)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFF5722).withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star, color: Colors.white, size: 12),
+                                  const SizedBox(width: 2),
+                                  const Text(
+                                    '4.5',
+                                    style: TextStyle(
+                                      color: Colors.white, 
+                                      fontWeight: FontWeight.w700, 
+                                      fontSize: 10,
                                     ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFFF5722).withOpacity(0.3),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.star, color: Colors.white, size: 14),
-                                      const SizedBox(width: 3),
-                                      const Text(
-                                        '4.5',
-                                        style: TextStyle(
-                                          color: Colors.white, 
-                                          fontWeight: FontWeight.w700, 
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '(New)',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            // Features grid with better sizing
+                            const SizedBox(height: 8),
+                            // Compact features grid
                             Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
+                              spacing: 4,
+                              runSpacing: 4,
                               children: [
                                 _buildFeatureItem(Icons.local_gas_station, data.fuelType),
                                 _buildFeatureItem(Icons.settings, data.transmission),
                                 _buildFeatureItem(Icons.event_seat, '${data.seatingCapacity} Seater'),
                                 _buildFeatureItem(Icons.palette, data.color.split(',').first.trim()),
                               ],
-                                                        ),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
                   
-
-                  
-                  // Showroom Information Section
-                  const SizedBox(height: 16),
+                  // Compact Showroom Information Section
+                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
+                            blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
                         ],
@@ -523,29 +480,29 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF0095D9).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.location_on,
                                   color: Color(0xFF0095D9),
-                                  size: 20,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 8),
                               const Text(
                                 'Showroom Information',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF1A1A1A),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           _buildSpecificationRow('Showroom', widget.showroomName),
                           _buildSpecificationRow('Location', widget.showroomLocation),
                           _buildSpecificationRow('Available', 'Yes'),
@@ -554,36 +511,34 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                     ),
                   ),
                   
-
- 
-                  const SizedBox(height: 16),
-                  // Enhanced Book Now Button
+                  const SizedBox(height: 12),
+                  // Compact Book Now Button
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
                       child: SizedBox(
                         width: double.infinity,
-                        height: 48,
+                        height: 44,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0095D9),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             elevation: 0,
                           ),
                           onPressed: () {
@@ -606,7 +561,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                             'Request Test Drive',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: 16,
+                              fontSize: 14,
                             ),
                           ),
                         ),
@@ -694,11 +649,11 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
 
   Widget _buildFeatureItem(IconData icon, String label) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 50,
+      height: 50,
       decoration: BoxDecoration(
         color: const Color(0xFF0095D9).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: const Color(0xFF0095D9).withOpacity(0.2),
           width: 1,
@@ -710,13 +665,13 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
           Icon(
             icon,
             color: const Color(0xFF0095D9),
-            size: 18,
+            size: 16,
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 8,
               color: Color(0xFF0095D9),
               fontWeight: FontWeight.w600,
             ),
@@ -731,7 +686,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
 
   Widget _buildSpecificationRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
@@ -739,7 +694,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
               ),
@@ -750,7 +705,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1A1A1A),
               ),

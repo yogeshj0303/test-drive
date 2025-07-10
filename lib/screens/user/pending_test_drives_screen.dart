@@ -720,13 +720,45 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
+      // Get current user data to get employee ID
+      final user = await _storageService.getUser();
+      if (user == null) {
+        // Close loading dialog
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('User data not found. Please login again.'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        return;
+      }
+
       final cancelDescription = reason.isNotEmpty 
           ? reason 
           : 'User canceled the test drive request';
       
       final response = await _apiService.cancelTestDrive(
         request.id, 
-        cancelDescription
+        cancelDescription,
+        user.id,
       );
 
       // Close loading dialog
@@ -747,8 +779,11 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
-                  child: Text('Test drive canceled successfully'),
+                Expanded(
+                  child: Text(
+                    response.message,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -1262,9 +1297,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   }
 
   void _showRescheduleDialog(TestDriveListResponse request) {
-    final TextEditingController reasonController = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
     
     showDialog(
       context: context,
@@ -1295,7 +1328,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select new date and time for ${request.car?.name ?? 'Unknown'}:',
+                'Select new date for ${request.car?.name ?? 'Unknown'}:',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black87,
@@ -1342,73 +1375,32 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Time Selection
-              InkWell(
-                onTap: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      selectedTime = picked;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        color: Colors.blue.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Time: ${selectedTime.format(context)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'The test drive will be rescheduled to the selected date. The time will be arranged by the showroom.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue.shade700,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Reason for rescheduling (optional):',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: reasonController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Enter reason for rescheduling...',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade400),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1427,7 +1419,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                _rescheduleTestDrive(request, selectedDate, selectedTime, reasonController.text.trim());
+                _rescheduleTestDrive(request, selectedDate, '');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
@@ -1473,44 +1465,108 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
+      // Get current user data to get employee ID
+      final user = await _storageService.getUser();
+      if (user == null) {
+        // Close loading dialog
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('User data not found. Please login again.'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Call the real API to approve the test drive
+      final response = await _apiService.approveTestDrive(
+        request.id,
+        int.parse(selectedDriver['id'].toString()),
+        user.id,
+      );
 
       // Close loading dialog
       Navigator.pop(context);
 
-      // Close detail modal
-      Navigator.pop(context);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-                  content: Row(
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 20,
+      if (response.success) {
+        // Close detail modal
+        Navigator.pop(context);
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    response.message,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Test drive approved and assigned to ${selectedDriver['name']}',
-                overflow: TextOverflow.ellipsis,
-              ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-        ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      );
+        );
 
-      // Refresh the list
-      _loadPendingTestDrives();
+        // Refresh the list
+        _loadPendingTestDrives();
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    response.message,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
@@ -1518,19 +1574,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-                  content: Row(
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text('Failed to approve test drive'),
-            ),
-          ],
-        ),
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('Connection error. Please try again.'),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -1541,7 +1597,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     }
   }
 
-  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, TimeOfDay newTime, String reason) async {
+  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, String reason) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1570,41 +1626,111 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
+      // Get current user data to get employee ID
+      final user = await _storageService.getUser();
+      if (user == null) {
+        // Close loading dialog
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('User data not found. Please login again.'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Format the new date
+      final formattedDate = '${newDate.year}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}';
+
+      // Call the reschedule API
+      final response = await _apiService.rescheduleTestDrive(
+        request.id,
+        formattedDate,
+        user.id,
+      );
 
       // Close loading dialog
       Navigator.pop(context);
 
-      // Close detail modal
-      Navigator.pop(context);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-                  content: Row(
-          children: [
-            Icon(
-              Icons.schedule,
-              color: Colors.white,
-              size: 20,
+      if (response.success) {
+        // Close detail modal
+        Navigator.pop(context);
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    response.message,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text('Test drive rescheduled successfully'),
+            backgroundColor: Colors.blue,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-        ),
-          backgroundColor: Colors.blue,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      );
+        );
 
-      // Refresh the list
-      _loadPendingTestDrives();
+        // Refresh the list
+        _loadPendingTestDrives();
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    response.message,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
@@ -1612,19 +1738,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-                  content: Row(
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text('Failed to reschedule test drive'),
-            ),
-          ],
-        ),
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('Connection error. Please try again.'),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(

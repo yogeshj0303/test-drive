@@ -880,12 +880,12 @@ class ApiService {
     }
   }
 
-  Future<ApiResponse<String>> cancelTestDrive(int testDriveId, String cancelDescription) async {
+  Future<ApiResponse<String>> cancelTestDrive(int testDriveId, String cancelDescription, int employeeId) async {
     try {
-      debugPrint('Canceling test drive ID: $testDriveId');
+      debugPrint('Canceling test drive ID: $testDriveId with employee ID: $employeeId');
       
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/app-users/textdrives/status-update/$testDriveId?status=canceled&cancel_description=${Uri.encodeComponent(cancelDescription)}');
-      final response = await http.patch(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update?employee_id=$employeeId&status=rejected&testdrive_id=$testDriveId&reject_description=${Uri.encodeComponent(cancelDescription)}');
+      final response = await http.post(
         uri,
         headers: ApiConfig.defaultHeaders,
       );
@@ -895,9 +895,15 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final message = responseData['message'] as String? ?? 'Test drive canceled successfully';
-        debugPrint('Successfully canceled test drive ID: $testDriveId');
-        return ApiResponse.success(message, message: message);
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive status updated to rejected.';
+          debugPrint('Successfully canceled test drive ID: $testDriveId');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to cancel test drive';
+          return ApiResponse.error(errorMessage);
+        }
       } else {
         final errorMessage = _extractErrorMessage(response.body);
         return ApiResponse.error(errorMessage ?? 'Failed to cancel test drive');
@@ -910,6 +916,86 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Cancel test drive unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> approveTestDrive(int testDriveId, int driverId, int employeeId) async {
+    try {
+      debugPrint('Approving test drive ID: $testDriveId with driver ID: $driverId and employee ID: $employeeId');
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/textdrives/driver/status-update?driver_id=$driverId&status=approved&testdrive_id=$testDriveId&employee_id=$employeeId');
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Approve test drive response status: ${response.statusCode}');
+      debugPrint('Approve test drive response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive approved successfully';
+          debugPrint('Successfully approved test drive ID: $testDriveId');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to approve test drive';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to approve test drive');
+      }
+    } on SocketException {
+      debugPrint('Approve test drive network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Approve test drive format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Approve test drive unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> rescheduleTestDrive(int testDriveId, String newDate, int employeeId) async {
+    try {
+      debugPrint('Rescheduling test drive ID: $testDriveId with new date: $newDate, employee ID: $employeeId');
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update?employee_id=$employeeId&status=rescheduled&testdrive_id=$testDriveId&next_date=$newDate');
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Reschedule test drive response status: ${response.statusCode}');
+      debugPrint('Reschedule test drive response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive status updated to rescheduled.';
+          debugPrint('Successfully rescheduled test drive ID: $testDriveId');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to reschedule test drive';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to reschedule test drive');
+      }
+    } on SocketException {
+      debugPrint('Reschedule test drive network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Reschedule test drive format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Reschedule test drive unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

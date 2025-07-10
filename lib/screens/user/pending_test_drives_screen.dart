@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
+import '../../models/user_model.dart';
+import '../../services/api_config.dart';
 
 class PendingTestDrivesScreen extends StatefulWidget {
   const PendingTestDrivesScreen({super.key});
@@ -18,6 +20,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _isRefreshing = false;
+  User? _currentUser;
 
   @override
   void initState() {
@@ -39,16 +42,25 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
         });
         return;
       }
-      final response = await _apiService.getUserPendingTestDrives(user.id);
+
+      // Store current user for permission checks
+      _currentUser = user;
+
+      // Use the unified API to get all test drives
+      final response = await _apiService.getUserTestDrives(user.id);
       if (response.success) {
+        // Filter for pending test drives
+        final pendingTestDrives = response.data?.where((testDrive) => 
+            testDrive.status?.toLowerCase() == 'pending').toList() ?? [];
+        
         setState(() {
-          _pendingTestDrives = response.data ?? [];
+          _pendingTestDrives = pendingTestDrives;
           _isLoading = false;
         });
       } else {
         // Check if the error message indicates no data found
         final errorMessage = response.message.toLowerCase();
-        if (errorMessage.contains('no pending test drives') || 
+        if (errorMessage.contains('no test drives') || 
             errorMessage.contains('not found') ||
             errorMessage.contains('no data') ||
             errorMessage.contains('empty')) {
@@ -328,82 +340,65 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               borderRadius: BorderRadius.circular(12),
               onTap: () => _showTestDriveDetails(request),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    // Status Icon
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.pending_actions_outlined,
-                        color: Colors.orange.shade600,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Content
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            request.car?.name ?? 'Unknown',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Requested by: ${request.userName ?? 'Unknown'}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Colors.grey.shade600,
+                              Expanded(
+                                child: Text(
+                                  request.car?.name ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.grey.shade600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                request.time ?? 'Unknown',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade600,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.orange.shade200),
+                                ),
+                                child: Text(
+                                  'Pending',
+                                  style: TextStyle(
+                                    color: Colors.orange.shade700,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
+                          Text(
+                            '${request.userName ?? 'Unknown'} • ${request.date ?? 'Unknown'} • ${request.time ?? 'Unknown'}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
                           Row(
                             children: [
                               Icon(
                                 Icons.location_on,
-                                size: 14,
+                                size: 12,
                                 color: Colors.grey.shade600,  
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 2),
                               Expanded(
                                 child: Text(
                                   '${request.pickupCity ?? 'Unknown'}, ${request.pickupPincode ?? 'Unknown'}',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     color: Colors.grey.shade600,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -414,26 +409,79 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                         ],
                       ),
                     ),
-                    // Status Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: Text(
-                        'Pending',
-                        style: TextStyle(
-                          color: Colors.orange.shade700,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCarImage(TestDriveCar? car) {
+    if (car == null) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.directions_car,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Try to get the main image first
+    String? imageUrl = car.mainImage;
+    
+    // If no main image, try to get the first image from the images array
+    if ((imageUrl == null || imageUrl.isEmpty) && car.images != null && car.images!.isNotEmpty) {
+      imageUrl = car.images!.first.imagePath;
+    }
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.directions_car,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Construct the full URL if it's a relative path
+    String fullImageUrl = imageUrl;
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+      fullImageUrl = '${ApiConfig.baseUrl}/$imageUrl';
+    }
+
+    return Image.network(
+      fullImageUrl,
+      fit: BoxFit.fill,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.directions_car,
+            color: Colors.grey.shade400,
+            size: 32,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
             ),
           ),
         );
@@ -447,7 +495,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
+        height: MediaQuery.of(context).size.height * 0.85,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -464,24 +512,25 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
+            // Header with car image
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
               child: Row(
                 children: [
+                  // Car Image
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
                       borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.shade100,
                     ),
-                    child: Icon(
-                      Icons.pending_actions_outlined,
-                      color: Colors.orange.shade600,
-                      size: 24,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _buildCarImage(request.car),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,6 +544,16 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
+                        if (request.car?.modelNumber != null) ...[
+                          Text(
+                            request.car!.modelNumber!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -524,6 +583,11 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Car Images Gallery
+                    if (request.car?.images != null && request.car!.images!.isNotEmpty)
+                      _buildCarImagesGallery(request.car!.images!),
+                    
+                    const SizedBox(height: 16),
                     _buildDetailSection(
                       'Request Information',
                       [
@@ -575,7 +639,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                       _buildDetailSection(
                         'Additional Notes',
                         [
-                          _buildDetailRow('Note', request.note ?? ''    ),
+                          _buildDetailRow('Note', request.note ?? ''),
                         ],
                       ),
                     const SizedBox(height: 24),
@@ -592,7 +656,128 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
+  Widget _buildCarImagesGallery(List<CarImage> images) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Car Images',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            clipBehavior: Clip.none,
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              final image = images[index];
+              return Container(
+                width: 120,
+                margin: EdgeInsets.only(right: index < images.length - 1 ? 8 : 0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey.shade100,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _buildGalleryImage(image.imagePath),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGalleryImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.image,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Construct the full URL if it's a relative path
+    String fullImageUrl = imagePath;
+    if (!imagePath.startsWith('http://') && !imagePath.startsWith('https://')) {
+      fullImageUrl = '${ApiConfig.baseUrl}/$imagePath';
+    }
+
+    return Image.network(
+      fullImageUrl,
+      fit: BoxFit.fill,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.image,
+            color: Colors.grey.shade400,
+            size: 32,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showCancelDialog(TestDriveListResponse request) {
+    // Check permission before showing dialog
+    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    
+    if (!canChangeTestDriveStatus && !canDeleteTestDrive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('You don\'t have permission to cancel test drives'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+    
     final TextEditingController reasonController = TextEditingController();
     
     showDialog(
@@ -720,9 +905,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
-      // Get current user data to get employee ID
-      final user = await _storageService.getUser();
-      if (user == null) {
+      // Use current user data for employee ID
+      if (_currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -758,7 +942,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       final response = await _apiService.cancelTestDrive(
         request.id, 
         cancelDescription,
-        user.id,
+        _currentUser!.id,
       );
 
       // Close loading dialog
@@ -917,6 +1101,11 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   }
 
   Widget _buildActionButtonsSection(TestDriveListResponse request) {
+    // Check permissions
+    final canApproveTestDrive = _currentUser?.role?.permissions.canApproveTestDrive ?? false;
+    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -929,65 +1118,114 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // Approve Button
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ElevatedButton.icon(
-            onPressed: () => _showApproveDialog(request),
-            icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: const Text('Approve Test Drive'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 2,
-            ),
-          ),
-        ),
-        // Reschedule Button
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: OutlinedButton.icon(
-            onPressed: () => _showRescheduleDialog(request),
-            icon: const Icon(Icons.schedule, size: 18),
-            label: const Text('Reschedule Test Drive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.blue,
-              side: BorderSide(color: Colors.blue.shade400),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+        
+        // Approve Button - Only show if user has permission
+        if (canApproveTestDrive) ...[
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ElevatedButton.icon(
+              onPressed: () => _showApproveDialog(request),
+              icon: const Icon(Icons.check_circle_outline, size: 18),
+              label: const Text('Approve Test Drive'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 2,
               ),
             ),
           ),
-        ),
-        // Cancel Button
-        Container(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _showCancelDialog(request),
-            icon: const Icon(Icons.cancel_outlined, size: 18),
-            label: const Text('Cancel Test Drive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: BorderSide(color: Colors.red.shade400),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+        ],
+
+        // Cancel Button - Only show if user has permission to change status or delete
+        if (canChangeTestDriveStatus || canDeleteTestDrive) ...[
+          Container(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showCancelDialog(request),
+              icon: const Icon(Icons.cancel_outlined, size: 18),
+              label: const Text('Cancel Test Drive'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: BorderSide(color: Colors.red.shade400),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
-        ),
+        ],
+
+        // Show message if no permissions
+        if (!canApproveTestDrive && !canChangeTestDriveStatus && !canDeleteTestDrive) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.grey.shade600,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'You don\'t have permission to perform actions on this test drive',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
   void _showApproveDialog(TestDriveListResponse request) {
+    // Check permission before showing dialog
+    final canApproveTestDrive = _currentUser?.role?.permissions.canApproveTestDrive ?? false;
+    
+    if (!canApproveTestDrive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('You don\'t have permission to approve test drives'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+    
     _showApproveDialogWithDrivers(request);
   }
 
@@ -1296,145 +1534,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  void _showRescheduleDialog(TestDriveListResponse request) {
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                color: Colors.blue.shade600,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Reschedule Test Drive',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select new date for ${request.car?.name ?? 'Unknown'}:',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Date Selection
-              InkWell(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate,
-                    firstDate: DateTime.now().add(const Duration(days: 1)),
-                    lastDate: DateTime.now().add(const Duration(days: 30)),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      selectedDate = picked;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        color: Colors.blue.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Date: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue.shade600,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'The test drive will be rescheduled to the selected date. The time will be arranged by the showroom.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rescheduleTestDrive(request, selectedDate, '');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Reschedule'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _approveTestDrive(TestDriveListResponse request, Map<String, dynamic> selectedDriver) async {
     // Show loading dialog
@@ -1465,9 +1565,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
-      // Get current user data to get employee ID
-      final user = await _storageService.getUser();
-      if (user == null) {
+      // Use current user data for employee ID
+      if (_currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -1500,7 +1599,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       final response = await _apiService.approveTestDrive(
         request.id,
         int.parse(selectedDriver['id'].toString()),
-        user.id,
+        _currentUser!.id,
       );
 
       // Close loading dialog
@@ -1597,168 +1696,6 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     }
   }
 
-  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, String reason) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Row(
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-              strokeWidth: 2,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'Rescheduling test drive...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
 
-    try {
-      // Get current user data to get employee ID
-      final user = await _storageService.getUser();
-      if (user == null) {
-        // Close loading dialog
-        Navigator.pop(context);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text('User data not found. Please login again.'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Format the new date
-      final formattedDate = '${newDate.year}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}';
-
-      // Call the reschedule API
-      final response = await _apiService.rescheduleTestDrive(
-        request.id,
-        formattedDate,
-        user.id,
-      );
-
-      // Close loading dialog
-      Navigator.pop(context);
-
-      if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    response.message,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.blue,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        // Refresh the list
-        _loadPendingTestDrives();
-      } else {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    response.message,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      // Close loading dialog
-      Navigator.pop(context);
-      
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('Connection error. Please try again.'),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
 
 } 

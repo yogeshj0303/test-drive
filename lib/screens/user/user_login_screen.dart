@@ -69,8 +69,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         );
         
         if (response.success && response.data != null) {
-          // Save user data and login state to secure storage
+          // Save user data, token, and login state to secure storage
           await _storageService.saveUser(response.data!.user);
+          await _storageService.saveToken(response.data!.token);
           await _storageService.setLoggedIn(true);
           
           if (mounted) {

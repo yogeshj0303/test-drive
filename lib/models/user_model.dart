@@ -12,6 +12,7 @@ class User {
   final String? avatarUrl;
   final List<Document>? documents;
   final Role? role;
+  final DateTime? createdAt;
 
   User({
     required this.id,
@@ -27,6 +28,7 @@ class User {
     this.avatarUrl,
     this.documents,
     this.role,
+    this.createdAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,9 @@ class User {
       role: json['role'] != null 
           ? Role.fromJson(json['role'] as Map<String, dynamic>)
           : null,
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
     );
   }
 
@@ -68,12 +73,13 @@ class User {
       'avatar_url': avatarUrl,
       'documents': documents?.map((doc) => doc.toJson()).toList(),
       'role': role?.toJson(),
+      'created_at': createdAt?.toIso8601String(),
     };
   }
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, status: $status, showroomId: $showroomId, mobileNo: $mobileNo)';
+    return 'User(id: $id, name: $name, email: $email, status: $status, showroomId: $showroomId, mobileNo: $mobileNo, createdAt: $createdAt)';
   }
 }
 
@@ -187,6 +193,18 @@ class Permissions {
     required this.deleteExpense,
     required this.statusChangeExpense,
   });
+
+  // Helper methods to check permissions
+  // 1 = not allowed, 2 = allowed
+  bool get canShowAllTestDrives => allTestDriveShow == 2;
+  bool get canViewTestDrive => viewTestDrive == 2;
+  bool get canChangeTestDriveStatus => statusChangeTestDrive == 2;
+  bool get canDeleteTestDrive => deleteTestDrive == 2;
+  bool get canApproveTestDrive => approvedTestDrive == 2;
+  bool get canShowAllExpenses => allExpenseShow == 2;
+  bool get canViewExpense => viewExpense == 2;
+  bool get canDeleteExpense => deleteExpense == 2;
+  bool get canChangeExpenseStatus => statusChangeExpense == 2;
 
   factory Permissions.fromJson(Map<String, dynamic> json) {
     return Permissions(

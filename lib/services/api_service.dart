@@ -6,13 +6,23 @@ import '../models/user_model.dart';
 import '../models/showroom_model.dart';
 import '../models/car_model.dart';
 import '../models/test_drive_model.dart';
-import '../models/review_model.dart' as review;
+
+import '../models/expense_model.dart';
 import 'api_config.dart';
+import 'storage_service.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
+
+  final StorageService _storageService = StorageService();
+
+  // Get authenticated headers with token
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final token = await _storageService.getToken();
+    return ApiConfig.getAuthHeaders(token);
+  }
 
 
 
@@ -20,14 +30,10 @@ class ApiService {
     try {
       debugPrint('Attempting login for: $emailOrMobile');
       
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.loginEndpoint));
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.loginEndpoint)}?email=$emailOrMobile&password=$password');
       final response = await http.post(
         uri,
         headers: ApiConfig.defaultHeaders,
-        body: jsonEncode({
-          'email': emailOrMobile,
-          'password': password,
-        }),
       );
 
       debugPrint('Login response status: ${response.statusCode}');
@@ -215,9 +221,10 @@ class ApiService {
       debugPrint('Fetching user profile for user ID: $userId');
       
       final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.userProfileEndpoint)}/$userId');
+      final headers = await _getAuthHeaders();
       final response = await http.get(
         uri,
-        headers: ApiConfig.defaultHeaders,
+        headers: headers,
       );
 
       debugPrint('User profile response status: ${response.statusCode}');
@@ -225,7 +232,16 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final user = User.fromJson(responseData);
+        
+        // Handle nested user structure
+        Map<String, dynamic> userData;
+        if (responseData.containsKey('user')) {
+          userData = responseData['user'] as Map<String, dynamic>;
+        } else {
+          userData = responseData; // Fallback to direct user data
+        }
+        
+        final user = User.fromJson(userData);
         debugPrint('Successfully fetched user profile for user $userId');
         return ApiResponse.success(user, message: 'User profile fetched successfully');
       } else {
@@ -291,15 +307,15 @@ class ApiService {
     }
   }
 
-  Future<ApiResponse<String>> changePassword(int userId, String currentPassword, String newPassword) async {
+  Future<ApiResponse<String>> changePassword(int userId, String newPassword) async {
     try {
       debugPrint('Changing password for user ID: $userId');
       
-      // Build query parameters
+      // Build query parameters for the new API
       final queryParams = <String, String>{
         'user_id': userId.toString(),
-        'current_password': currentPassword,
         'new_password': newPassword,
+        'confirm_password': newPassword, // Using newPassword as confirm_password
       };
       
       final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.changePasswordEndpoint))
@@ -402,10 +418,14 @@ class ApiService {
     try {
       debugPrint('Fetching test drives for user ID: $userId');
       
-      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.userTestDrivesEndpoint)}/$userId');
-      final response = await http.get(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/all/textdrives');
+      final headers = await _getAuthHeaders();
+      final response = await http.post(
         uri,
-        headers: ApiConfig.defaultHeaders,
+        headers: headers,
+        body: jsonEncode({
+          'users_id': userId,
+        }),
       );
 
       debugPrint('User test drives response status: ${response.statusCode}');
@@ -1000,50 +1020,203 @@ class ApiService {
     }
   }
 
-  Future<ApiResponse<review.ReviewResponse>> submitReview(review.ReviewRequest request) async {
+  Future<ApiResponse<String>> updateTestDriveStatus({
+    required String driverId,
+    required String status,
+    required int testDriveId,
+    required int employeeId,
+  }) async {
     try {
-      debugPrint('Submitting review for test drive ID: ${request.testDriveId}');
-      debugPrint('Review data: ${request.toQueryParameters()}');
+      debugPrint('Updating test drive status - ID: $testDriveId, Driver: $driverId, Status: $status, Employee: $employeeId');
       
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.reviewEndpoint))
-          .replace(queryParameters: request.toQueryParameters());
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update?driver_id=$driverId&status=$status&testdrive_id=$testDriveId&employee_id=$employeeId');
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Update test drive status response status: ${response.statusCode}');
+      debugPrint('Update test drive status response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive status updated successfully.';
+          debugPrint('Successfully updated test drive status ID: $testDriveId to $status');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to update test drive status';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to update test drive status');
+      }
+    } on SocketException {
+      debugPrint('Update test drive status network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Update test drive status format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Update test drive status unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+
+
+  Future<ApiResponse<List<ExpenseResponse>>> getExpensesList(int userId, {String? status}) async {
+    try {
+      debugPrint('Fetching expenses for user ID: $userId, status: $status');
       
-      debugPrint('Submit review URL: $uri');
+      final queryParams = <String, String>{
+        'user_id': userId.toString(),
+      };
+      
+      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+        queryParams['status'] = status.toLowerCase();
+      }
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/expenses/list')
+          .replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Expenses list response status: ${response.statusCode}');
+      debugPrint('Expenses list response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final List<dynamic> expensesData = responseData['data'] as List<dynamic>;
+          final expenses = expensesData.map((json) => ExpenseResponse.fromJson(json as Map<String, dynamic>)).toList();
+          
+          debugPrint('Successfully fetched ${expenses.length} expenses for user $userId with status: $status');
+          return ApiResponse.success(expenses, message: responseData['message'] as String? ?? 'Expenses fetched successfully');
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch expenses';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch expenses');
+      }
+    } on SocketException {
+      debugPrint('Expenses list network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Expenses list format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Expenses list unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> approveExpense(int expenseId, int approverId) async {
+    try {
+      debugPrint('Approving expense ID: $expenseId by approver ID: $approverId');
+      
+      // Build query parameters
+      final queryParams = <String, String>{
+        'expences_id': expenseId.toString(),
+        'approved_reject_by': approverId.toString(),
+        'status': 'approved',
+      };
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/expenses/change-status')
+          .replace(queryParameters: queryParams);
       
       final response = await http.post(
         uri,
         headers: ApiConfig.defaultHeaders,
       );
 
-      debugPrint('Submit review response status: ${response.statusCode}');
-      debugPrint('Submit review response data: ${response.body}');
+      debugPrint('Approve expense response status: ${response.statusCode}');
+      debugPrint('Approve expense response data: ${response.body}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         
         if (responseData['success'] == true) {
-          final reviewData = responseData['data'] as Map<String, dynamic>;
-          final reviewResponse = review.ReviewResponse.fromJson(reviewData);
-          final message = responseData['message'] as String? ?? 'Review submitted successfully';
-          
-          debugPrint('Successfully submitted review with ID: ${reviewResponse.id}');
-          return ApiResponse.success(reviewResponse, message: message);
+          final message = responseData['message'] as String? ?? 'Expense approved successfully';
+          debugPrint('Successfully approved expense ID: $expenseId');
+          return ApiResponse.success(message, message: message);
         } else {
-          final errorMessage = responseData['message'] as String? ?? 'Failed to submit review';
+          final errorMessage = responseData['message'] as String? ?? 'Failed to approve expense';
           return ApiResponse.error(errorMessage);
         }
       } else {
         final errorMessage = _extractErrorMessage(response.body);
-        return ApiResponse.error(errorMessage ?? 'Failed to submit review');
+        return ApiResponse.error(errorMessage ?? 'Failed to approve expense');
       }
     } on SocketException {
-      debugPrint('Submit review network error: No internet connection');
+      debugPrint('Approve expense network error: No internet connection');
       return ApiResponse.error(ApiConfig.networkErrorMessage);
     } on FormatException {
-      debugPrint('Submit review format error: Invalid response format');
+      debugPrint('Approve expense format error: Invalid response format');
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
-      debugPrint('Submit review unexpected error: ${e.toString()}');
+      debugPrint('Approve expense unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> rejectExpense(int expenseId, int rejectorId, {String? rejectDescription}) async {
+    try {
+      debugPrint('Rejecting expense ID: $expenseId by rejector ID: $rejectorId');
+      
+      // Build query parameters
+      final queryParams = <String, String>{
+        'expences_id': expenseId.toString(),
+        'approved_reject_by': rejectorId.toString(),
+        'status': 'rejected',
+      };
+      
+      if (rejectDescription != null && rejectDescription.isNotEmpty) {
+        queryParams['reject_description'] = rejectDescription;
+      }
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/expenses/change-status')
+          .replace(queryParameters: queryParams);
+      
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Reject expense response status: ${response.statusCode}');
+      debugPrint('Reject expense response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Expense rejected successfully';
+          debugPrint('Successfully rejected expense ID: $expenseId');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to reject expense';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to reject expense');
+      }
+    } on SocketException {
+      debugPrint('Reject expense network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Reject expense format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Reject expense unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

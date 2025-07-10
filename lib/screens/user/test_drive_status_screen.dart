@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'cancel_test_drive_screen.dart';
-import 'review_form_screen.dart';
 import 'showrooms_screen.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
@@ -23,9 +22,24 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   final StorageService _storageService = StorageService();
   
   List<TestDriveListResponse> _testDriveRequests = [];
+  List<TestDriveListResponse> _filteredTestDriveRequests = [];
   bool _isLoading = true;
   String? _errorMessage;
   bool _isRefreshing = false;
+  
+  // Filter state
+  String? _selectedStatusFilter;
+  
+  // Available status filters
+  final List<Map<String, dynamic>> _statusFilters = [
+    {'label': 'All', 'value': null, 'color': Colors.grey},
+    {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
+    {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
+    {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
+    {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
+    {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
+    {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
+  ];
 
   @override
   void initState() {
@@ -81,6 +95,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       if (response.success) {
         setState(() {
           _testDriveRequests = response.data!;
+          _applyFilters();
           _isLoading = false;
         });
       } else {
@@ -123,6 +138,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       if (response.success) {
         setState(() {
           _testDriveRequests = response.data!;
+          _applyFilters();
           _isRefreshing = false;
           _errorMessage = null;
         });
@@ -140,6 +156,26 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     }
   }
 
+  void _applyFilters() {
+    if (_selectedStatusFilter == null) {
+      // Show all test drives
+      _filteredTestDriveRequests = List.from(_testDriveRequests);
+    } else {
+      // Filter by selected status
+      _filteredTestDriveRequests = _testDriveRequests
+          .where((testDrive) => 
+              testDrive.status?.toLowerCase() == _selectedStatusFilter?.toLowerCase())
+          .toList();
+    }
+  }
+
+  void _onFilterChanged(String? statusFilter) {
+    setState(() {
+      _selectedStatusFilter = statusFilter;
+      _applyFilters();
+    });
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
@@ -149,7 +185,12 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return const Color(0xFF2196F3);
       case 'cancelled':
+      case 'canceled':
         return const Color(0xFFE53935);
+      case 'rejected':
+        return const Color(0xFFE53935);
+      case 'rescheduled':
+        return const Color(0xFF9C27B0);
       default:
         return Colors.grey;
     }
@@ -164,7 +205,12 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return 'Completed';
       case 'cancelled':
+      case 'canceled':
         return 'Cancelled';
+      case 'rejected':
+        return 'Rejected';
+      case 'rescheduled':
+        return 'Rescheduled';
       default:
         return status;
     }
@@ -179,7 +225,12 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return Icons.done_all_rounded;
       case 'cancelled':
+      case 'canceled':
         return Icons.cancel_outlined;
+      case 'rejected':
+        return Icons.cancel_outlined;
+      case 'rescheduled':
+        return Icons.schedule_outlined;
       default:
         return Icons.info_outline;
     }
@@ -197,12 +248,13 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
         );
         break;
       case 'completed':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ReviewFormScreen(),
-          ),
-        );
+        // Review functionality removed
+        break;
+      case 'rejected':
+      case 'cancelled':
+      case 'canceled':
+      case 'rescheduled':
+        // No action for these statuses
         break;
     }
   }
@@ -213,9 +265,14 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'pending':
         return 'Cancel Test Drive';
       case 'completed':
-        return 'Leave a Review';
+        return 'Completed';
       case 'cancelled':
+      case 'canceled':
         return 'Cancelled';
+      case 'rejected':
+        return 'Rejected';
+      case 'rescheduled':
+        return 'Rescheduled';
       default:
         return '';
     }
@@ -227,8 +284,11 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'pending':
         return Colors.red;
       case 'completed':
-        return const Color(0xFF0095D9);
+        return Colors.grey;
       case 'cancelled':
+      case 'canceled':
+      case 'rejected':
+      case 'rescheduled':
         return Colors.grey;
       default:
         return Colors.grey;
@@ -328,6 +388,28 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                     _getStatusText(request.status ?? 'Unknown'),
                     _getStatusIcon(request.status ?? 'Unknown'),
                     valueColor: _getStatusColor(request.status ?? 'Unknown'),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Pickup Details Section
+                  _buildSectionHeader('Pickup Details'),
+                  const SizedBox(height: 12),
+                  _buildDetailItem(
+                    'Address',
+                    request.pickupAddress ?? 'Unknown',
+                    Icons.location_on_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDetailItem(
+                    'City',
+                    request.pickupCity ?? 'Unknown',
+                    Icons.location_city_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDetailItem(
+                    'Pincode',
+                    request.pickupPincode ?? 'Unknown',
+                    Icons.pin_drop_outlined,
                   ),
                   const SizedBox(height: 20),
                   
@@ -527,6 +609,90 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                       Icons.note_outlined,
                     ),
                   ],
+                  if (request.rejectDescription?.isNotEmpty == true) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Rejection Reason',
+                      request.rejectDescription ?? 'Unknown',
+                      Icons.cancel_outlined,
+                      valueColor: Colors.red,
+                    ),
+                  ],
+                  if (request.cancelDescription?.isNotEmpty == true) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Cancellation Reason',
+                      request.cancelDescription ?? 'Unknown',
+                      Icons.cancel_outlined,
+                      valueColor: Colors.red,
+                    ),
+                  ],
+                  if (request.cancelDateTime != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Cancellation Date',
+                      request.cancelDateTime ?? 'Unknown',
+                      Icons.event_outlined,
+                      valueColor: Colors.red,
+                    ),
+                  ],
+                  if (request.rescheduledDate != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Rescheduled Date',
+                      request.rescheduledDate ?? 'Unknown',
+                      Icons.schedule_outlined,
+                      valueColor: const Color(0xFF9C27B0),
+                    ),
+                  ],
+                  if (request.approverRejecter != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Processed By',
+                      request.approverRejecter?.name ?? 'Unknown',
+                      Icons.person_outline,
+                    ),
+                  ],
+                  if (request.approvedOrRejectDate != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Processed Date',
+                      request.approvedOrRejectDate ?? 'Unknown',
+                      Icons.event_outlined,
+                    ),
+                  ],
+                  if (request.rescheduler != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Rescheduled By',
+                      request.rescheduler?.name ?? 'Unknown',
+                      Icons.person_outline,
+                    ),
+                  ],
+                  if (request.driverId != null && request.driverId!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Assigned Driver ID',
+                      request.driverId ?? 'Unknown',
+                      Icons.drive_eta_outlined,
+                    ),
+                  ],
+                  if (request.driverUpdateDate != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Driver Update Date',
+                      request.driverUpdateDate ?? 'Unknown',
+                      Icons.update_outlined,
+                    ),
+                  ],
+                  if (request.requestbyEmplyee != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailItem(
+                      'Requested By',
+                      request.requestbyEmplyee?.name ?? 'Unknown',
+                      Icons.person_add_outlined,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                 ],
               ),
@@ -649,7 +815,15 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       body: RefreshIndicator(
         onRefresh: _refreshData,
         color: const Color(0xFF0095D9),
-        child: _isLoading
+        child: Column(
+          children: [
+            // Filter Chips Section
+            if (!_isLoading && _errorMessage == null && _testDriveRequests.isNotEmpty)
+              _buildFilterChips(),
+            
+            // Main Content
+            Expanded(
+              child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(
                   color: Color(0xFF0095D9),
@@ -730,7 +904,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Schedule a test drive to see it here',
+                              'You haven\'t scheduled any test drives yet',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -739,7 +913,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                             const SizedBox(height: 24),
                             ElevatedButton(
                               onPressed: () {
-                                // Navigate to showrooms screen to schedule a test drive
+                                // Navigate to showrooms screen to browse available cars
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -759,7 +933,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                 ),
                               ),
                               child: const Text(
-                                'Schedule Test Drive',
+                                'Browse Showrooms',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -772,9 +946,9 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: _testDriveRequests.length,
+                        itemCount: _filteredTestDriveRequests.length,
                         itemBuilder: (context, index) {
-                          final request = _testDriveRequests[index];
+                          final request = _filteredTestDriveRequests[index];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 16),
                             elevation: 0,
@@ -863,8 +1037,27 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Time',
-                                            request.time ?? 'Unknown'     ,
+                                            request.time ?? 'Unknown',
                                             Icons.access_time_rounded,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildInfoItem(
+                                            'Pickup',
+                                            request.pickupCity ?? 'Unknown',
+                                            Icons.location_on_outlined,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _buildInfoItem(
+                                            'Pincode',
+                                            request.pickupPincode ?? 'Unknown',
+                                            Icons.pin_drop_outlined,
                                           ),
                                         ),
                                       ],
@@ -876,6 +1069,101 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                           );
                         },
                       ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+
+  Widget _buildFilterChips() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Filter by Status',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[800],
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            clipBehavior: Clip.none,
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _statusFilters.map((filter) {
+                final isSelected = _selectedStatusFilter == filter['value'];
+                final color = filter['color'] as Color;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? color : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isSelected ? color : Colors.grey[300]!,
+                      width: 1.5,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: color.withOpacity(0.18),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => _onFilterChanged(
+                        isSelected ? null : filter['value'] as String?,
+                      ),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        child: Row(
+                          children: [
+                            if (isSelected)
+                              Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            if (isSelected) const SizedBox(width: 6),
+                            Text(
+                              filter['label'] as String,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : color,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                fontSize: 14.5,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

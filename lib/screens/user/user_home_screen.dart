@@ -60,11 +60,27 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     });
 
     try {
+      // Get current user to check their showroom_id
+      final currentUser = await _storageService.getUser();
+      if (currentUser == null) {
+        setState(() {
+          _showroomsErrorMessage = 'User not found. Please login again.';
+          _isLoadingShowrooms = false;
+        });
+        return;
+      }
+
       final response = await _apiService.getShowrooms();
       
       if (response.success) {
+        // Filter showrooms to only show the one that matches user's showroom_id
+        final allShowrooms = response.data ?? [];
+        final filteredShowrooms = allShowrooms.where((showroom) => 
+          showroom.id == currentUser.showroomId
+        ).toList();
+        
         setState(() {
-          _showrooms = response.data ?? [];
+          _showrooms = filteredShowrooms;
           _isLoadingShowrooms = false;
         });
         
@@ -339,7 +355,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Search showrooms or locations...',
+                                'Search cars in your showroom...',
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 13,
@@ -368,8 +384,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               ),
               // Showrooms Section
               _buildSectionHeader(
-                'Showrooms',
-                'Find nearby showrooms',
+                'My Showroom',
+                'Your assigned showroom',
                 onViewAll: () {
                   Navigator.push(
                     context,
@@ -743,7 +759,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'No showrooms available',
+              'No showroom assigned',
               style: TextStyle(
                 color: Color(0xFF666666),
                 fontSize: 14,
@@ -752,7 +768,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check back later for available showrooms',
+              'Please contact your administrator to assign a showroom',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,

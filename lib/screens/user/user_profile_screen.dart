@@ -9,6 +9,7 @@ import 'change_password_screen.dart';
 import 'about_screen.dart';
 import 'completed_test_drives_screen.dart';
 import 'user_expense_screen.dart';
+import 'test_drive_status_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -21,7 +22,7 @@ class UserProfileScreen extends StatefulWidget {
   // Static cache to store user data across instances
   static User? _cachedUser;
   static int _cachedTestDriveCount = 0;
-  static int _cachedReviewCount = 0;
+  static int _cachedCompletedTestDriveCount = 0;
   static DateTime? _lastCacheTime;
   static const Duration _cacheValidDuration = Duration(minutes: 5);
   static List<Function()> _refreshCallbacks = [];
@@ -30,22 +31,22 @@ class UserProfileScreen extends StatefulWidget {
   static void clearCache() {
     _cachedUser = null;
     _cachedTestDriveCount = 0;
-    _cachedReviewCount = 0;
+    _cachedCompletedTestDriveCount = 0;
     _lastCacheTime = null;
   }
 
   // Getter methods to access cached data
   static User? get cachedUser => _cachedUser;
   static int get cachedTestDriveCount => _cachedTestDriveCount;
-  static int get cachedReviewCount => _cachedReviewCount;
+  static int get cachedCompletedTestDriveCount => _cachedCompletedTestDriveCount;
   static DateTime? get lastCacheTime => _lastCacheTime;
   static Duration get cacheValidDuration => _cacheValidDuration;
 
   // Method to update cache
-  static void updateCache(User user, int testDriveCount, int reviewCount) {
+  static void updateCache(User user, int testDriveCount, int completedTestDriveCount) {
     _cachedUser = user;
     _cachedTestDriveCount = testDriveCount;
-    _cachedReviewCount = reviewCount;
+    _cachedCompletedTestDriveCount = completedTestDriveCount;
     _lastCacheTime = DateTime.now();
     
     // Notify all active profile screens to refresh
@@ -67,25 +68,23 @@ class UserProfileScreen extends StatefulWidget {
   // Static method to force refresh profile data
   static Future<void> forceRefreshProfileData() async {
     try {
-      // COMMENTED OUT API CALLS - USING DUMMY DATA TEMPORARILY
-      // final storageService = StorageService();
-      // final currentUser = await storageService.getUser();
-      // if (currentUser != null) {
-      //   final apiService = ApiService();
-      //   final testDrivesResponse = await apiService.getUserTestDrives(currentUser.id);
-      //   final reviewedTestDrives = await storageService.getReviewedTestDrives();
-      //   
-      //   final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-      //   final reviewCount = reviewedTestDrives.length;
-      //   
-      //   // Update cache with new counts
-      //   if (_cachedUser != null) {
-      //     updateCache(_cachedUser!, testDriveCount, reviewCount);
-      //   }
-      // }
-
-      // USING DUMMY DATA TEMPORARILY - No refresh needed for dummy data
-      print('Force refresh profile data skipped - using dummy data');
+      final storageService = StorageService();
+      final currentUser = await storageService.getUser();
+      if (currentUser != null) {
+        final apiService = ApiService();
+        final testDrivesResponse = await apiService.getUserTestDrives(currentUser.id);
+        
+        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+        final completedTestDriveCount = testDrivesResponse.success 
+            ? testDrivesResponse.data!.where((testDrive) => 
+                testDrive.status?.toLowerCase() == 'completed').length 
+            : 0;
+        
+        // Update cache with new counts
+        if (_cachedUser != null) {
+          updateCache(_cachedUser!, testDriveCount, completedTestDriveCount);
+        }
+      }
       
     } catch (e) {
       print('Error forcing profile refresh: $e');
@@ -109,7 +108,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
   bool _isLoading = true;
   String? _errorMessage;
   int _testDriveCount = 0;
-  int _reviewCount = 0;
+  int _completedTestDriveCount = 0;
 
   @override
   void initState() {
@@ -161,7 +160,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
         setState(() {
           _user = UserProfileScreen.cachedUser;
           _testDriveCount = UserProfileScreen.cachedTestDriveCount;
-          _reviewCount = UserProfileScreen.cachedReviewCount;
+          _completedTestDriveCount = UserProfileScreen.cachedCompletedTestDriveCount;
           _isLoading = false;
         });
         return;
@@ -169,70 +168,46 @@ class UserProfileScreenState extends State<UserProfileScreen>
     }
 
     try {
-      // COMMENTED OUT API CALLS - USING DUMMY DATA TEMPORARILY
-      // final currentUser = await _storageService.getUser();
-      // if (currentUser != null) {
-      //   // Load user profile, test drive count, and review count in parallel
-      //   final profileResponse = await _apiService.getUserProfile(currentUser.id);
-      //   // final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
-      //   final reviewedTestDrives = await _storageService.getReviewedTestDrives();
-      //   
-      //   if (profileResponse.success && profileResponse.data != null) {
-      //     // final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-      //     final reviewCount = reviewedTestDrives.length;
-      //     
-      //     // Cache the data
-      //     // UserProfileScreen.updateCache(
-      //       // profileResponse.data!,
-      //       // testDriveCount,
-      //       // reviewCount
-      //     // );
-      //     
-      //     setState(() {
-      //       _user = UserProfileScreen.cachedUser;
-      //       _testDriveCount = UserProfileScreen.cachedTestDriveCount;
-      //       _reviewCount = UserProfileScreen.cachedReviewCount;
-      //       _isLoading = false;
-      //     });
-      //   } else {
-      //     setState(() {
-      //       _errorMessage = profileResponse.message;
-      //       _isLoading = false;
-      //     });
-      //   }
-      // } else {
-      //   setState(() {
-      //     _errorMessage = 'No user data found';
-      //       _isLoading = false;
-      //   });
-      // }
-
-      // USING DUMMY DATA TEMPORARILY
-      await Future.delayed(const Duration(milliseconds: 500)); // Simulate loading
-      
-      // Create dummy user data
-      final dummyUser = User(
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        status: 'active',
-        showroomId: 1,
-        mobileNo: '+1234567890',
-      );
-      
-      // Set dummy counts
-      const dummyTestDriveCount = 5;
-      const dummyReviewCount = 3;
-      
-      // Cache the dummy data
-      UserProfileScreen.updateCache(dummyUser, dummyTestDriveCount, dummyReviewCount);
-      
-      setState(() {
-        _user = dummyUser;
-        _testDriveCount = dummyTestDriveCount;
-        _reviewCount = dummyReviewCount;
-        _isLoading = false;
-      });
+      final currentUser = await _storageService.getUser();
+      if (currentUser != null) {
+        // Load user profile and test drive count in parallel
+        final profileResponse = await _apiService.getUserProfile(currentUser.id);
+        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        
+        if (profileResponse.success && profileResponse.data != null) {
+          final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+          
+          // Filter completed test drives from the main response
+          final completedTestDriveCount = testDrivesResponse.success 
+              ? testDrivesResponse.data!.where((testDrive) => 
+                  testDrive.status?.toLowerCase() == 'completed').length 
+              : 0;
+          
+          // Cache the data
+          UserProfileScreen.updateCache(
+            profileResponse.data!,
+            testDriveCount,
+            completedTestDriveCount
+          );
+          
+          setState(() {
+            _user = profileResponse.data;
+            _testDriveCount = testDriveCount;
+            _completedTestDriveCount = completedTestDriveCount;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = profileResponse.message;
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'No user data found';
+          _isLoading = false;
+        });
+      }
       
     } catch (e) {
       setState(() {
@@ -252,36 +227,36 @@ class UserProfileScreenState extends State<UserProfileScreen>
   // Method to refresh profile data without clearing cache (for real-time updates)
   Future<void> _refreshProfileData() async {
     try {
-      // COMMENTED OUT API CALLS - USING DUMMY DATA TEMPORARILY
-      // final currentUser = await _storageService.getUser();
-      // if (currentUser != null) {
-      //   // Only refresh the counts, not the entire profile
-      //   final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
-      //   final reviewedTestDrives = await _storageService.getReviewedTestDrives();
-      //   
-      //   final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-      //   final reviewCount = reviewedTestDrives.length;
-      //   
-      //   // Update cache with new counts
-      //   if (UserProfileScreen.cachedUser != null) {
-      //     UserProfileScreen.updateCache(
-      //       UserProfileScreen.cachedUser!,
-      //       testDriveCount,
-      //       reviewCount,
-      //     );
-      //   }
-      //   
-      //   // Update UI if counts have changed
-      //   if (mounted && (_testDriveCount != testDriveCount || _reviewCount != reviewCount)) {
-      //     setState(() {
-      //       _testDriveCount = testDriveCount;
-      //       _reviewCount = reviewCount;
-      //     });
-      //   }
-      // }
-
-      // USING DUMMY DATA TEMPORARILY - No refresh needed for dummy data
-      print('Profile data refresh skipped - using dummy data');
+      final currentUser = await _storageService.getUser();
+      if (currentUser != null) {
+        // Only refresh the counts, not the entire profile
+        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
+        
+        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
+        
+        // Filter completed test drives from the main response
+        final completedTestDriveCount = testDrivesResponse.success 
+            ? testDrivesResponse.data!.where((testDrive) => 
+                testDrive.status?.toLowerCase() == 'completed').length 
+            : 0;
+        
+        // Update cache with new counts
+        if (UserProfileScreen.cachedUser != null) {
+          UserProfileScreen.updateCache(
+            UserProfileScreen.cachedUser!,
+            testDriveCount,
+            completedTestDriveCount,
+          );
+        }
+        
+        // Update UI if counts have changed
+        if (mounted && (_testDriveCount != testDriveCount || _completedTestDriveCount != completedTestDriveCount)) {
+          setState(() {
+            _testDriveCount = testDriveCount;
+            _completedTestDriveCount = completedTestDriveCount;
+          });
+        }
+      }
       
     } catch (e) {
       // Silently handle errors to avoid disrupting the UI
@@ -593,13 +568,31 @@ class UserProfileScreenState extends State<UserProfileScreen>
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 50,
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                        ),
+                        child: _user?.avatarUrl != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  _user!.avatarUrl!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                            : Center(
+                                child: Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
+                              ),
                       ),
                       const SizedBox(width: 40), // Placeholder to maintain spacing
                     ],
@@ -683,23 +676,63 @@ class UserProfileScreenState extends State<UserProfileScreen>
           '$_testDriveCount',
           Icons.directions_car_outlined,
           theme.colorScheme.primary,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TestDriveStatusScreen(),
+              ),
+            );
+          },
         ),
         _buildStatCard(
           context,
-          'Reviews',
-          '$_reviewCount',
-          Icons.rate_review_outlined,
-          AppTheme.warningColor,
+          'Completed',
+          '$_completedTestDriveCount',
+          Icons.check_circle_outline,
+          Colors.green,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CompletedTestDrivesScreen(),
+              ),
+            );
+          },
         ),
         _buildStatCard(
           context,
           'Member Since',
-          'Not available',
+          _formatMemberSinceDate(),
           Icons.calendar_today_outlined,
           AppTheme.successColor,
         ),
       ],
     );
+  }
+
+  String _formatMemberSinceDate() {
+    if (_user?.createdAt == null) {
+      return 'Not available';
+    }
+    
+    try {
+      final date = _user!.createdAt!;
+      
+      // Format as "Jun 17, 2025"
+      final months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      
+      final monthName = months[date.month - 1];
+      final day = date.day;
+      final year = date.year;
+      
+      return '$monthName $day, $year';
+    } catch (e) {
+      return 'Not available';
+    }
   }
 
 
@@ -710,6 +743,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
     String value,
     IconData icon,
     Color color,
+    {VoidCallback? onTap}
   ) {
     final theme = Theme.of(context);
 
@@ -730,7 +764,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
         ),
       ),
       child: GestureDetector(
-        onTap: () {},
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(6),
           child: Column(

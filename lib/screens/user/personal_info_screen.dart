@@ -138,10 +138,17 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             ),
           ),
           centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: theme.colorScheme.onSurface,
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.arrow_back_ios, size: 16),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -177,10 +184,17 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             ),
           ),
           centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: theme.colorScheme.onSurface,
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.arrow_back_ios, size: 16),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -239,14 +253,20 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           ),
         ),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.colorScheme.onSurface,
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.arrow_back_ios, size: 16),
           ),
           onPressed: () => Navigator.pop(context),
         ),
-
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -334,7 +354,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 _buildInfoCard(
                   context,
                   'Member Since',
-                  'Not available',
+                  _formatMemberSinceDate(),
                   Icons.calendar_month_outlined,
                 ),
                 const SizedBox(height: AppTheme.spacingS),
@@ -352,7 +372,24 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       );
   }
 
-
+  String _formatMemberSinceDate() {
+    if (_user?.createdAt == null) {
+      return 'Not available';
+    }
+    
+    try {
+      final date = _user!.createdAt!;
+      
+      // Format as "DD/MM/YYYY"
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year;
+      
+      return '$day/$month/$year';
+    } catch (e) {
+      return 'Not available';
+    }
+  }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     final theme = Theme.of(context);

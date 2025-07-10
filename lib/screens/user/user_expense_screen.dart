@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart';
@@ -20,6 +22,7 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   User? _currentUser;
+  String _selectedStatus = 'All';
 
   @override
   void initState() {
@@ -46,56 +49,20 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
 
       _currentUser = user;
 
-      // Load expenses - using dummy data for now
-      await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
+      // Load expenses from API with status filter
+      final response = await _apiService.getExpensesList(user.id, status: _selectedStatus);
       
-      // Create dummy expenses
-      final dummyExpenses = [
-        ExpenseResponse(
-          id: 1,
-          userId: user.id,
-          description: 'Fuel expense for test drive',
-          amount: 500.0,
-          date: '2024-01-15',
-          classification: 'Fuel',
-          paymentMode: 'Cash',
-          receiptNo: 'RCP001',
-          note: 'Fuel for Honda City test drive',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-        ),
-        ExpenseResponse(
-          id: 2,
-          userId: user.id,
-          description: 'Lunch during test drive',
-          amount: 200.0,
-          date: '2024-01-16',
-          classification: 'Food',
-          paymentMode: 'Card',
-          receiptNo: 'RCP002',
-          note: 'Lunch with customer during test drive',
-          createdAt: '2024-01-16T12:00:00Z',
-          updatedAt: '2024-01-16T12:00:00Z',
-        ),
-        ExpenseResponse(
-          id: 3,
-          userId: user.id,
-          description: 'Toll charges',
-          amount: 100.0,
-          date: '2024-01-17',
-          classification: 'Transport',
-          paymentMode: 'Cash',
-          receiptNo: 'RCP003',
-          note: 'Highway toll charges',
-          createdAt: '2024-01-17T09:15:00Z',
-          updatedAt: '2024-01-17T09:15:00Z',
-        ),
-      ];
-
-      setState(() {
-        _expenses = dummyExpenses;
-        _isLoading = false;
-      });
+      if (response.success) {
+        setState(() {
+          _expenses = response.data!;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.message ?? 'Failed to load expenses';
+          _isLoading = false;
+        });
+      }
 
     } catch (e) {
       setState(() {
@@ -106,6 +73,35 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
   }
 
   Future<void> _approveExpense(ExpenseResponse expense) async {
+    // Check permission before performing action
+    final canChangeExpenseStatus = _currentUser?.role?.permissions.canChangeExpenseStatus ?? false;
+    
+    if (!canChangeExpenseStatus) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('You don\'t have permission to approve expenses'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+
     try {
       // Show loading indicator
       showDialog(
@@ -116,35 +112,57 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         ),
       );
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Get current user for approver ID
+      final user = await _storageService.getUser();
+      if (user == null) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Call API to approve expense
+      final response = await _apiService.approveExpense(expense.id, user.id);
 
       // Close loading dialog
       if (mounted) {
         Navigator.pop(context);
       }
 
-      // Show success message
+      // Show result message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                Icon(
+                  response.success ? Icons.check_circle : Icons.error,
+                  color: Colors.white,
+                ),
                 const SizedBox(width: 8),
-                Text('Expense "${expense.description}" approved successfully'),
+                Expanded(
+                  child: Text(response.message),
+                ),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: response.success ? Colors.green : Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
 
-      // Refresh the list
-      _loadExpenses();
+      // Refresh the list if successful
+      if (response.success) {
+        _loadExpenses();
+      }
 
     } catch (e) {
       // Close loading dialog
@@ -174,7 +192,44 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
   }
 
   Future<void> _rejectExpense(ExpenseResponse expense) async {
+    // Check permission before performing action
+    final canChangeExpenseStatus = _currentUser?.role?.permissions.canChangeExpenseStatus ?? false;
+    
+    if (!canChangeExpenseStatus) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('You don\'t have permission to reject expenses'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+
     try {
+      // Show rejection reason dialog
+      final String? rejectReason = await _showRejectionDialog();
+      
+      if (rejectReason == null) {
+        // User cancelled the dialog
+        return;
+      }
+
       // Show loading indicator
       showDialog(
         context: context,
@@ -184,35 +239,57 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         ),
       );
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Get current user for rejector ID
+      final user = await _storageService.getUser();
+      if (user == null) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Call API to reject expense with rejection reason
+      final response = await _apiService.rejectExpense(expense.id, user.id, rejectDescription: rejectReason);
 
       // Close loading dialog
       if (mounted) {
         Navigator.pop(context);
       }
 
-      // Show success message
+      // Show result message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.cancel, color: Colors.white),
+                Icon(
+                  response.success ? Icons.cancel : Icons.error,
+                  color: Colors.white,
+                ),
                 const SizedBox(width: 8),
-                Text('Expense "${expense.description}" rejected'),
+                Expanded(
+                  child: Text(response.message),
+                ),
               ],
             ),
-            backgroundColor: Colors.orange,
+            backgroundColor: response.success ? Colors.orange : Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
 
-      // Refresh the list
-      _loadExpenses();
+      // Refresh the list if successful
+      if (response.success) {
+        _loadExpenses();
+      }
 
     } catch (e) {
       // Close loading dialog
@@ -239,6 +316,169 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         );
       }
     }
+  }
+
+  Future<String?> _showRejectionDialog() async {
+    final TextEditingController reasonController = TextEditingController();
+    final theme = Theme.of(context);
+    
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with icon and title
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.cancel_outlined,
+                        size: 32,
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Title
+                    Text(
+                      'Reject Expense',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Description
+                    Text(
+                      'Please provide a detailed reason for rejecting this expense. This information will be shared with the expense submitter.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Text field
+                    TextField(
+                      controller: reasonController,
+                      onChanged: (value) {
+                        setState(() {
+                          // This will rebuild the widget to update character count
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Enter rejection reason...',
+                        hintStyle: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.error,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.edit_note_outlined,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      maxLines: 4,
+                      maxLength: 500,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Character count
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${reasonController.text.length}/500',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: reasonController.text.length > 450 
+                              ? theme.colorScheme.error 
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            label: const Text('Cancel'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onSurfaceVariant,
+                              side: BorderSide(
+                                color: theme.colorScheme.outline.withOpacity(0.3),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              final reason = reasonController.text.trim();
+                              if (reason.isNotEmpty) {
+                                Navigator.of(context).pop(reason);
+                              }
+                            },
+                            icon: const Icon(Icons.cancel_rounded, size: 18),
+                            label: const Text('Reject'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: theme.colorScheme.error,
+                              foregroundColor: theme.colorScheme.onError,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showExpenseDetails(ExpenseResponse expense) {
@@ -343,73 +583,248 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                 children: [
                   _buildDetailRow('Date', expense.date, Icons.calendar_today_outlined),
                   _buildDetailRow('Payment Mode', expense.paymentMode, Icons.payment_outlined),
+                  _buildDetailRow('Status', expense.status, Icons.info_outlined),
                   if (expense.receiptNo != null)
                     _buildDetailRow('Receipt No', expense.receiptNo!, Icons.receipt_outlined),
                   if (expense.note != null)
                     _buildDetailRow('Note', expense.note!, Icons.note_outlined),
-                  _buildDetailRow('Created', _formatDate(expense.createdAt), Icons.access_time_outlined),
+                  if (expense.proofUrl != null)
+                    _buildDetailRow('Proof', 'Available', Icons.attach_file_outlined, onTap: () => _viewProof(expense.proofUrl!)),
+                  if (expense.approvedRejectDate != null)
+                    _buildDetailRow('Approved/Rejected Date', _formatDate(expense.approvedRejectDate!), Icons.access_time_outlined),
+                  if (expense.rejectDescription != null)
+                    _buildDetailRow('Rejection Reason', expense.rejectDescription!, Icons.cancel_outlined),
+                  if (expense.createdAt != null)
+                    _buildDetailRow('Created', _formatDate(expense.createdAt!), Icons.access_time_outlined),
+                  if (expense.approver != null)
+                    _buildDetailRow('Processed By', expense.approver!.name, Icons.person_outlined),
                 ],
               ),
             ),
             
             const SizedBox(height: 24),
             
-            // Action buttons
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _rejectExpense(expense);
-                      },
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Reject'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.error,
-                        side: BorderSide(color: theme.colorScheme.error.withOpacity(0.3)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // Action buttons - only show for pending expenses
+            if (expense.status.toLowerCase() == 'pending') ...[
+              // Check permissions for action buttons
+              Builder(
+                builder: (context) {
+                  final canChangeExpenseStatus = _currentUser?.role?.permissions.canChangeExpenseStatus ?? false;
+                  
+                  if (canChangeExpenseStatus) {
+                    // Show action buttons if user has permission
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _rejectExpense(expense);
+                              },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: const Text('Reject'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.error,
+                                side: BorderSide(color: theme.colorScheme.error.withOpacity(0.3)),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _approveExpense(expense);
+                              },
+                              icon: const Icon(Icons.check_rounded, size: 18),
+                              label: const Text('Approve'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _approveExpense(expense);
-                      },
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Approve'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    );
+                  } else {
+                    // Show permission message if user lacks permissions
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.grey.shade600,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'You don\'t have permission to perform actions on this expense',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                },
               ),
-            ),
+            ],
+            // Show status info for non-pending expenses
+            if (expense.status.toLowerCase() != 'pending')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(expense.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getStatusColor(expense.status).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        expense.status.toLowerCase() == 'approved' 
+                            ? Icons.check_circle_rounded 
+                            : Icons.cancel_rounded,
+                        color: _getStatusColor(expense.status),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              expense.status.toUpperCase(),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: _getStatusColor(expense.status),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (expense.approvedRejectDate != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Processed on ${_formatDate(expense.approvedRejectDate!)}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Show approver info for processed expenses
+            if (expense.approver != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: theme.colorScheme.surfaceVariant,
+                        backgroundImage: expense.approver!.avatarUrl != null
+                            ? NetworkImage(expense.approver!.avatarUrl!)
+                            : null,
+                        child: expense.approver!.avatarUrl == null
+                            ? Text(
+                                expense.approver!.name.isNotEmpty 
+                                    ? expense.approver!.name[0].toUpperCase()
+                                    : 'A',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Processed by',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              expense.approver!.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (expense.approver!.email.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                expense.approver!.email,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Padding(
+  Widget _buildDetailRow(String label, String value, IconData icon, {VoidCallback? onTap}) {
+    final theme = Theme.of(context);
+    
+    Widget content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(
             icon,
             size: 20,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -421,32 +836,54 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                     letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: onTap != null ? theme.colorScheme.primary : null,
+                    decoration: onTap != null ? TextDecoration.underline : null,
                   ),
                 ),
               ],
             ),
           ),
+          if (onTap != null)
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 16,
+              color: theme.colorScheme.primary,
+            ),
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   String _formatDate(String dateString) {
     try {
+      if (dateString.isEmpty) {
+        return 'Not available';
+      }
       final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
     } catch (e) {
-      return dateString;
+      print('Error parsing date: $dateString, Error: $e');
+      return dateString.isEmpty ? 'Not available' : dateString;
     }
   }
 
@@ -504,7 +941,77 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadExpenses,
-        child: _buildBody(),
+        child: Column(
+          children: [
+            // Filter chips
+            _buildFilterChips(),
+            // Expense list
+            Expanded(
+              child: _buildBody(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    final theme = Theme.of(context);
+    final statusOptions = ['All', 'Pending', 'Approved', 'Rejected'];
+    
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        child: Row(
+          children: statusOptions.map((status) {
+            final isSelected = _selectedStatus == status;
+            final statusColor = _getStatusColor(status.toLowerCase());
+            
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: isSelected,
+                label: Text(
+                  status,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected 
+                        ? theme.colorScheme.onPrimary 
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedStatus = status;
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+                  _loadExpenses();
+                },
+                backgroundColor: theme.colorScheme.surfaceVariant,
+                selectedColor: statusColor,
+                checkmarkColor: theme.colorScheme.onPrimary,
+                side: BorderSide(
+                  color: isSelected 
+                      ? statusColor 
+                      : theme.colorScheme.outline.withOpacity(0.3),
+                  width: 1,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                avatar: isSelected ? Icon(
+                  Icons.check_rounded,
+                  size: 16,
+                  color: theme.colorScheme.onPrimary,
+                ) : null,
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -640,7 +1147,7 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -678,82 +1185,160 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: _getClassificationColor(expense.classification).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    _getClassificationIcon(expense.classification),
-                    color: _getClassificationColor(expense.classification),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        expense.description,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                // Main expense info
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _getClassificationColor(expense.classification).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
+                      child: Icon(
+                        _getClassificationIcon(expense.classification),
+                        color: _getClassificationColor(expense.classification),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoChip(
-                            icon: Icons.calendar_today_outlined,
-                            label: _formatDate(expense.date),
-                            theme: theme,
+                          Text(
+                            expense.description,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(width: 8),
-                          _buildInfoChip(
-                            icon: Icons.payment_outlined,
-                            label: expense.paymentMode,
-                            theme: theme,
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              _buildInfoChip(
+                                icon: Icons.calendar_today_outlined,
+                                label: _formatDate(expense.date),
+                                theme: theme,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildInfoChip(
+                                icon: Icons.payment_outlined,
+                                label: expense.paymentMode,
+                                theme: theme,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '₹${expense.amount.toStringAsFixed(2)}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getClassificationColor(expense.classification).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        expense.classification,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: _getClassificationColor(expense.classification),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '₹${expense.amount.toStringAsFixed(2)}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(expense.status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            expense.status.toUpperCase(),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: _getStatusColor(expense.status),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // User info and proof indicator
+                Row(
+                  children: [
+                    // User avatar and name
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: theme.colorScheme.surfaceVariant,
+                          backgroundImage: expense.user.avatarUrl != null
+                              ? NetworkImage(expense.user.avatarUrl!)
+                              : null,
+                          child: expense.user.avatarUrl == null
+                              ? Text(
+                                  expense.user.name.isNotEmpty 
+                                      ? expense.user.name[0].toUpperCase()
+                                      : 'U',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          expense.user.name,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Proof indicator
+                    if (expense.proofUrl != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.attach_file_rounded,
+                              size: 12,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Proof',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -824,6 +1409,239 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
         return Icons.build_rounded;
       default:
         return Icons.receipt_rounded;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'all':
+        return const Color(0xFF2196F3);
+      case 'pending':
+        return const Color(0xFFFF9800);
+      case 'approved':
+        return const Color(0xFF4CAF50);
+      case 'rejected':
+        return const Color(0xFFF44336);
+      default:
+        return const Color(0xFF757575);
+    }
+  }
+
+  void _viewProof(String proofUrl) {
+    final theme = Theme.of(context);
+    final fullUrl = proofUrl;
+    final fileName = proofUrl.split('/').last;
+    final fileExtension = fileName.split('.').last.toLowerCase();
+    
+    // Determine file type and icon
+    IconData fileIcon;
+    String fileType;
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(fileExtension)) {
+      fileIcon = Icons.image_rounded;
+      fileType = 'Image';
+    } else if (['mp4', 'avi', 'mov', 'wmv', 'flv'].contains(fileExtension)) {
+      fileIcon = Icons.video_file_rounded;
+      fileType = 'Video';
+    } else if (['pdf'].contains(fileExtension)) {
+      fileIcon = Icons.picture_as_pdf_rounded;
+      fileType = 'PDF';
+    } else {
+      fileIcon = Icons.attach_file_rounded;
+      fileType = 'File';
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              fileIcon,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Text('View Proof'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // File type indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                fileType,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'File Name:',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              fileName,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              fileType == 'Image' || fileType == 'Video' 
+                ? 'This file will open in your browser for viewing.'
+                : 'This file will open in your default browser or appropriate app.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _openProofFile(fullUrl);
+            },
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: const Text('Open File'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openProofFile(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      final fileName = url.split('/').last;
+      final fileExtension = fileName.split('.').last.toLowerCase();
+      
+      // Show loading message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Opening proof file...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+      // Try different launch modes based on file type
+      bool launched = false;
+      
+      // For images and videos, try to open in browser first
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'avi', 'mov', 'wmv', 'flv'].contains(fileExtension)) {
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.inAppWebView,
+          );
+        } catch (e) {
+          // If in-app web view fails, try external browser
+          try {
+            launched = await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+          } catch (e2) {
+            // If external app fails, try default browser
+            launched = await launchUrl(
+              uri,
+              mode: LaunchMode.platformDefault,
+            );
+          }
+        }
+      } else {
+        // For other file types, try external application first
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+        } catch (e) {
+          // If external app fails, try browser
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.platformDefault,
+          );
+        }
+      }
+      
+      if (!launched) {
+        // Show error with option to copy URL
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Cannot open file: $fileName'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Copy URL',
+              textColor: Colors.white,
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('URL copied to clipboard'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error if there's an exception
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Error opening file: ${e.toString()}'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 } 

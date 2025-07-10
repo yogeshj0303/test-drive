@@ -3,6 +3,7 @@ import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
 import '../../models/user_model.dart';
+import '../../services/api_config.dart';
 
 class CancelTestDriveScreen extends StatefulWidget {
   const CancelTestDriveScreen({super.key});
@@ -97,16 +98,17 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
               padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
+                  // Car Image
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.shade100,
                     ),
-                    child: const Icon(
-                      Icons.directions_car_outlined,
-                      color: Colors.red,
-                      size: 24,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _buildCarImage(testDrive.car),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -123,6 +125,16 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
+                        if (testDrive.car?.modelNumber != null) ...[
+                          Text(
+                            testDrive.car!.modelNumber!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           testDrive.showroom?.name ?? 'Unknown',
                           style: TextStyle(
@@ -164,10 +176,15 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
             // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Car Images Gallery
+                    if (testDrive.car?.images != null && testDrive.car!.images!.isNotEmpty)
+                      _buildCarImagesGallery(testDrive.car!.images!),
+                    
+                    const SizedBox(height: 16),
                     // Main Details Section
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -589,58 +606,70 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(
-                                            Icons.directions_car_outlined,
-                                            color: Colors.red,
-                                            size: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                testDrive.car?.name ?? 'Unknown',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF1A1A1A),
-                                                ),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      testDrive.car?.name ?? 'Unknown',
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Color(0xFF1A1A1A),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                                                    ),
+                                                    child: Text(
+                                                      'REJECTED',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.red[700],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(height: 1),
+                                              const SizedBox(height: 4),
                                               Text(
-                                                testDrive.showroom?.name ?? 'Unknown',
+                                                '${testDrive.userName ?? 'Unknown'} • ${testDrive.date ?? 'Unknown'} • ${testDrive.time ?? 'Unknown'}',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color: Colors.grey[600],
                                                 ),
                                               ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.location_on,
+                                                    size: 12,
+                                                    color: Colors.grey[600],  
+                                                  ),
+                                                  const SizedBox(width: 2),
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${testDrive.pickupCity ?? 'Unknown'}, ${testDrive.pickupPincode ?? 'Unknown'}',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ],
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            'REJECTED',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.red[700],
-                                            ),
                                           ),
                                         ),
                                       ],
@@ -771,6 +800,167 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCarImage(TestDriveCar? car) {
+    if (car == null) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.directions_car,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Try to get the main image first
+    String? imageUrl = car.mainImage;
+    
+    // If no main image, try to get the first image from the images array
+    if ((imageUrl == null || imageUrl.isEmpty) && car.images != null && car.images!.isNotEmpty) {
+      imageUrl = car.images!.first.imagePath;
+    }
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.directions_car,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Construct the full URL if it's a relative path
+    String fullImageUrl = imageUrl;
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+      fullImageUrl = '${ApiConfig.baseUrl}/$imageUrl';
+    }
+
+    return Image.network(
+      fullImageUrl,
+      fit: BoxFit.fill,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.directions_car,
+            color: Colors.grey.shade400,
+            size: 32,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCarImagesGallery(List<CarImage> images) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Car Images',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            clipBehavior: Clip.none,
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              final image = images[index];
+              return Container(
+                width: 120,
+                margin: EdgeInsets.only(right: index < images.length - 1 ? 8 : 0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey.shade100,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _buildGalleryImage(image.imagePath),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGalleryImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.image,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Construct the full URL if it's a relative path
+    String fullImageUrl = imagePath;
+    if (!imagePath.startsWith('http://') && !imagePath.startsWith('https://')) {
+      fullImageUrl = '${ApiConfig.baseUrl}/$imagePath';
+    }
+
+    return Image.network(
+      fullImageUrl,
+      fit: BoxFit.fill,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.image,
+            color: Colors.grey.shade400,
+            size: 32,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
+            ),
+          ),
+        );
+      },
     );
   }
 } 

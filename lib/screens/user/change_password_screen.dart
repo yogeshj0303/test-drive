@@ -12,11 +12,9 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -26,7 +24,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -65,34 +62,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 _buildSectionHeader(context, 'Password Change'),
                 const SizedBox(height: AppTheme.spacingS),
                 Text(
-                  'Please enter your current password and choose a new password.',
+                  'Please enter your new password to update your account security.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingL),
-                _buildPasswordField(
-                  context,
-                  controller: _currentPasswordController,
-                  label: 'Current Password',
-                  obscureText: _obscureCurrentPassword,
-                  onToggleVisibility: () {
-                    setState(() {
-                      _obscureCurrentPassword = !_obscureCurrentPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your current password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingS),
                 _buildPasswordField(
                   context,
                   controller: _newPasswordController,
@@ -360,7 +336,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         // Call API to change password
         final response = await _apiService.changePassword(
           currentUser.id,
-          _currentPasswordController.text,
           _newPasswordController.text,
         );
 

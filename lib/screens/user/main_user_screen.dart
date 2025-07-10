@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'user_home_screen.dart';
-import 'showrooms_screen.dart';
-import 'search_screen.dart';
+// import 'showrooms_screen.dart'; // Commented out - no longer used in bottom navigation
+import 'user_expense_screen.dart';
 import 'user_profile_screen.dart';
 import 'test_drive_status_screen.dart';
 
@@ -30,10 +30,10 @@ class _MainUserScreenState extends State<MainUserScreen> {
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
-      if (index == 3) {
+      if (index == 2) { // Status tab selected, refresh test drive data
         // Status tab selected, refresh test drive data
         _statusKey.currentState?.refreshData();
-      } else if (index == 4) {
+      } else if (index == 3) { // Profile tab selected, refresh profile data
         // Profile tab selected, refresh profile data
         _profileKey.currentState?.refreshProfileData();
       }
@@ -50,8 +50,8 @@ class _MainUserScreenState extends State<MainUserScreen> {
         index: _currentIndex,
         children: [
           const UserHomeScreen(),
-          const ShowroomsScreen(),
-          const SearchScreen(),
+          // const ShowroomsScreen(), // Commented out - showroom is now shown in home screen
+          const UserExpenseScreen(),
           TestDriveStatusScreen(key: _statusKey, showBackButton: false),
           UserProfileScreen(key: _profileKey, showBackButton: false),
         ],
@@ -78,29 +78,29 @@ class _MainUserScreenState extends State<MainUserScreen> {
                   label: 'Home',
                   index: 0,
                 )),
+                // Expanded(child: _buildNavItem(
+                //   icon: Icons.store_outlined,
+                //   activeIcon: Icons.store_rounded,
+                //   label: 'Showrooms',
+                //   index: 1,
+                // )), // Commented out - showroom is now shown in home screen
                 Expanded(child: _buildNavItem(
-                  icon: Icons.store_outlined,
-                  activeIcon: Icons.store_rounded,
-                  label: 'Showrooms',
+                  icon: Icons.receipt_outlined,
+                  activeIcon: Icons.receipt_rounded,
+                  label: 'Expenses',
                   index: 1,
-                )),
-                Expanded(child: _buildNavItem(
-                  icon: Icons.search_outlined,
-                  activeIcon: Icons.search_rounded,
-                  label: 'Search',
-                  index: 2,
                 )),
                 Expanded(child: _buildNavItem(
                   icon: Icons.update_outlined,
                   activeIcon: Icons.update_rounded,
                   label: 'Status',
-                  index: 3,
+                  index: 2,
                 )),
                 Expanded(child: _buildNavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
                   label: 'Profile',
-                  index: 4,
+                  index: 3,
                 )),
               ],
             ),

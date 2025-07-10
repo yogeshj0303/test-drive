@@ -30,16 +30,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   // Filter state
   String? _selectedStatusFilter;
   
-  // Available status filters
-  final List<Map<String, dynamic>> _statusFilters = [
-    {'label': 'All', 'value': null, 'color': Colors.grey},
-    {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
-    {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
-    {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
-    {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
-    {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
-    {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
-  ];
+
 
   @override
   void initState() {
@@ -169,12 +160,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     }
   }
 
-  void _onFilterChanged(String? statusFilter) {
-    setState(() {
-      _selectedStatusFilter = statusFilter;
-      _applyFilters();
-    });
-  }
+
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -914,12 +900,12 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                             ElevatedButton(
                               onPressed: () {
                                 // Navigate to showrooms screen to browse available cars
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ShowroomsScreen(),
-                                  ),
-                                );
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (context) => const ShowroomsScreen(),
+                                //   ),
+                                // );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0095D9),
@@ -1077,93 +1063,68 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   }
 
   Widget _buildFilterChips() {
+    final theme = Theme.of(context);
+    final statusOptions = [
+      {'label': 'All', 'value': null, 'color': const Color(0xFF2196F3)},
+      {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
+      {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
+      {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
+      {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
+      {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
+      {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
+    ];
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        child: Row(
+          children: statusOptions.map((status) {
+            final isSelected = _selectedStatusFilter == status['value'];
+            final statusColor = status['color'] as Color;
+            
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: isSelected,
+                label: Text(
+                  status['label'] as String,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected 
+                        ? theme.colorScheme.onPrimary 
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedStatusFilter = status['value'] as String?;
+                    _applyFilters();
+                  });
+                },
+                backgroundColor: theme.colorScheme.surfaceVariant,
+                selectedColor: statusColor,
+                checkmarkColor: theme.colorScheme.onPrimary,
+                side: BorderSide(
+                  color: isSelected 
+                      ? statusColor 
+                      : theme.colorScheme.outline.withOpacity(0.3),
+                  width: 1,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                avatar: isSelected ? Icon(
+                  Icons.check_rounded,
+                  size: 16,
+                  color: theme.colorScheme.onPrimary,
+                ) : null,
+              ),
+            );
+          }).toList(),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Filter by Status',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey[800],
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            clipBehavior: Clip.none,
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _statusFilters.map((filter) {
-                final isSelected = _selectedStatusFilter == filter['value'];
-                final color = filter['color'] as Color;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? color : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isSelected ? color : Colors.grey[300]!,
-                      width: 1.5,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: color.withOpacity(0.18),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(24),
-                      onTap: () => _onFilterChanged(
-                        isSelected ? null : filter['value'] as String?,
-                      ),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                        child: Row(
-                          children: [
-                            if (isSelected)
-                              Icon(
-                                Icons.check,
-                                size: 18,
-                                color: Colors.white,
-                              ),
-                            if (isSelected) const SizedBox(width: 6),
-                            Text(
-                              filter['label'] as String,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : color,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                fontSize: 14.5,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -14,15 +14,15 @@ class ApiConfig {
   static const String carsByShowroomEndpoint = '/api/front-cars/by-showroom';
   static const String userProfileEndpoint = '/api/driver/profile'; // Base endpoint for user profile
   static const String updateUserProfileEndpoint = '/api/app-users/update'; // Endpoint for updating user profile
-  static const String testDriveStoreEndpoint = '/api/app-users/textdrives-store'; // Endpoint for creating test drive request
-  static const String userTestDrivesEndpoint = '/api/app-users/textdrives'; // Endpoint for fetching user test drives
-  static const String userPendingTestDrivesEndpoint = '/api/employee/all/textdrives/unassigned'; // Endpoint for fetching user pending test drives
-  static const String userCanceledTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user canceled test drives
-  static const String userCompletedTestDrivesEndpoint = '/api/app-users/textdrives/user'; // Endpoint for fetching user completed test drives
-  static const String userRescheduledTestDrivesEndpoint = '/api/employee/textdrives_with_status'; // Endpoint for fetching user rescheduled test drives
+  static const String testDriveStoreEndpoint = '/api/app-users/testdrives-store'; // Endpoint for creating test drive request
+  static const String userTestDrivesEndpoint = '/api/app-users/testdrives'; // Endpoint for fetching user test drives
+  static const String userPendingTestDrivesEndpoint = '/api/employee/all/testdrives/unassigned'; // Endpoint for fetching user pending test drives
+  static const String userCanceledTestDrivesEndpoint = '/api/app-users/testdrives/user'; // Endpoint for fetching user canceled test drives
+  static const String userCompletedTestDrivesEndpoint = '/api/app-users/testdrives/user'; // Endpoint for fetching user completed test drives
+  static const String userRescheduledTestDrivesEndpoint = '/api/employee/testdrives_with_status'; // Endpoint for fetching user rescheduled test drives
 
   static const String expenseEndpoint = '/api/expenses'; // Endpoint for submitting expenses
-  static const String testDriveStatusUpdateEndpoint = '/api/textdrives/driver/status-update'; // Endpoint for updating test drive status
+  static const String testDriveStatusUpdateEndpoint = '/api/testdrives/driver/status-update'; // Endpoint for updating test drive status
   static const String driverListEndpoint = '/api/textdrive/driverlist'; // Endpoint for fetching showroom drivers
   
   // API Headers

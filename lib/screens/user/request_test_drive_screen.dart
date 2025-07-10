@@ -3,7 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../services/api_service.dart';
 import '../../models/test_drive_model.dart';
+import '../../models/user_model.dart';
 import '../../services/storage_service.dart';
+import 'personal_info_screen.dart';
 
 class RequestTestDriveScreen extends StatefulWidget {
   final String? showroomName;
@@ -71,8 +73,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       _selectedTime = TimeOfDay.now();
     }
     
-    // Get current location
+    // Get current location and user data
     _getCurrentLocation();
+    _loadUserData();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -145,6 +148,98 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     });
   }
 
+  Future<void> _loadUserData() async {
+    try {
+      final user = await StorageService().getUser();
+      if (user != null) {
+        // Load user profile to get updated information
+        final profileResponse = await _apiService.getUserProfile(user.id);
+        if (profileResponse.success && profileResponse.data != null) {
+          final userProfile = profileResponse.data!;
+          
+          setState(() {
+            // Populate driving license if available
+            if (userProfile.drivingLicenseNo != null && userProfile.drivingLicenseNo!.isNotEmpty) {
+              _drivingLicenseController.text = userProfile.drivingLicenseNo!;
+            }
+            
+            // Populate Aadhar number if available
+            if (userProfile.aadharNo != null && userProfile.aadharNo!.isNotEmpty) {
+              _aadharNoController.text = userProfile.aadharNo!;
+            }
+          });
+          
+          // Show notification if required fields are missing
+          _checkMissingRequiredFields(userProfile);
+        }
+      }
+    } catch (e) {
+      // Silently handle errors to avoid disrupting the UI
+      print('Error loading user data: $e');
+    }
+  }
+
+  void _checkMissingRequiredFields(User userProfile) {
+    List<String> missingFields = [];
+    
+    if (userProfile.drivingLicenseNo == null || userProfile.drivingLicenseNo!.isEmpty) {
+      missingFields.add('Driving License Number');
+    }
+    
+    if (userProfile.aadharNo == null || userProfile.aadharNo!.isEmpty) {
+      missingFields.add('Aadhar Number');
+    }
+    
+    if (missingFields.isNotEmpty && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Missing Information',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Please fill in: ${missingFields.join(', ')}',
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF0095D9),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Update Profile',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PersonalInfoScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      });
+    }
+  }
+
   List<String> get _carOptions {
     if (widget.availableCars != null && widget.availableCars!.isNotEmpty) {
       return widget.availableCars!;
@@ -172,6 +267,17 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     _aadharNoController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh user data when returning to this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadUserData();
+      }
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -860,8 +966,45 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 controller: _drivingLicenseController,
                                 decoration: InputDecoration(
                                   labelText: 'Driving License Number',
-                                  hintText: 'Enter driving license number',
+                                  hintText: _drivingLicenseController.text.isEmpty 
+                                      ? 'Enter your driving license number' 
+                                      : 'Driving license number',
                                   prefixIcon: const Icon(Icons.card_membership_outlined, color: Color(0xFF0095D9)),
+                                  suffixIcon: _drivingLicenseController.text.isNotEmpty
+                                      ? Container(
+                                          margin: const EdgeInsets.all(8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                          ),
+                                          child: const Text(
+                                            'Auto-filled',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          margin: const EdgeInsets.all(8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                                          ),
+                                          child: const Text(
+                                            'Required',
+                                            style: TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -889,8 +1032,45 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 controller: _aadharNoController,
                                 decoration: InputDecoration(
                                   labelText: 'Aadhar Number',
-                                  hintText: 'Enter Aadhar number',
+                                  hintText: _aadharNoController.text.isEmpty 
+                                      ? 'Enter your 12-digit Aadhar number' 
+                                      : 'Aadhar number',
                                   prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9)),
+                                  suffixIcon: _aadharNoController.text.isNotEmpty
+                                      ? Container(
+                                          margin: const EdgeInsets.all(8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                          ),
+                                          child: const Text(
+                                            'Auto-filled',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          margin: const EdgeInsets.all(8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                                          ),
+                                          child: const Text(
+                                            'Required',
+                                            style: TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),

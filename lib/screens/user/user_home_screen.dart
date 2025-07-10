@@ -153,7 +153,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -187,7 +187,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 4),
           ),
         );
@@ -200,7 +200,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         title: const Text(
           'Logout',
@@ -442,7 +442,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           height: 18, // Reduced from 20
                           decoration: BoxDecoration(
                             color: const Color(0xFF0095D9),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -488,7 +488,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Row(
@@ -526,12 +526,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Reduced from 12, 8
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Colors.grey.withOpacity(0.1),
               width: 1,
@@ -666,7 +666,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 backgroundColor: const Color(0xFF0095D9),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: const Text('Retry'),
@@ -720,7 +720,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Container(
         height: 240, // Reduced from 300
@@ -731,8 +731,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               height: 100, // Reduced from 120
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
                 ),
               ),
               child: Stack(
@@ -740,8 +740,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   // Showroom image
                   ClipRRect(
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
                     child: showroom.showroomImage != null
                         ? Image.network(
@@ -814,8 +814,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     height: 100, // Reduced from 120
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -853,7 +853,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced from 10, 6
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -918,7 +918,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           padding: const EdgeInsets.all(3), // Reduced from 4
                           decoration: BoxDecoration(
                             color: const Color(0xFF0095D9).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.directions_car_rounded,
@@ -991,7 +991,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(
@@ -1028,7 +1028,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             color.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: color.withOpacity(0.2),
           width: 1,
@@ -1040,7 +1040,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           onTap: () {
             // TODO: Handle banner tap
           },
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

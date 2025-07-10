@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/user_model.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import 'main_user_screen.dart';
-import 'user_signup_screen.dart';
+
 import 'forgot_password_screen.dart';
 
 class UserLoginScreen extends StatefulWidget {
@@ -570,10 +569,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                               ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: _buildSignUpSection(accentColor: primaryBlue),
-                    ),
+                    // const SizedBox(height: 20),
+                    // Center(
+                    //   child: _buildSignUpSection(accentColor: primaryBlue),
+                    // ),
                   ],
                 ),
               ),
@@ -666,50 +665,50 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildSignUpSection({required Color accentColor}) {
-    const Color darkGray = Color(0xFF242223);
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "Don't have an account?",
-            style: TextStyle(
-              color: darkGray.withOpacity(0.7),
-              fontSize: 15,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(width: 4),
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserSignupScreen(),
-                ),
-              );
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: accentColor,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              'Sign Up',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildSignUpSection({required Color accentColor}) {
+  //   const Color darkGray = Color(0xFF242223);
+  //   return FittedBox(
+  //     fit: BoxFit.scaleDown,
+  //     child: Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Text(
+  //           "Don't have an account?",
+  //           style: TextStyle(
+  //             color: darkGray.withOpacity(0.7),
+  //             fontSize: 15,
+  //             letterSpacing: 0.3,
+  //           ),
+  //         ),
+  //         const SizedBox(width: 4),
+  //         TextButton(
+  //           onPressed: () {
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(
+  //                 builder: (context) => const UserSignupScreen(),
+  //               ),
+  //             );
+  //           },
+  //           style: TextButton.styleFrom(
+  //             foregroundColor: accentColor,
+  //             padding: const EdgeInsets.symmetric(horizontal: 4),
+  //             minimumSize: Size.zero,
+  //             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  //           ),
+  //           child: const Text(
+  //             'Sign Up',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 15,
+  //               letterSpacing: 0.3,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildFeatureList() {
     return Column(

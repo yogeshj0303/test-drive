@@ -102,8 +102,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => _ReviewFormContent(
-          carName: testDrive.car.name,
-          showroom: testDrive.showroom.name,
+          carName: testDrive.car?.name ?? 'Unknown',
+          showroom: testDrive.showroom?.name ?? 'Unknown',
           testDrive: testDrive,
         ),
       ),
@@ -118,8 +118,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
     // If a test drive is provided, show the review form directly
     if (widget.testDrive != null) {
       return _ReviewFormContent(
-        carName: widget.testDrive!.car.name,
-        showroom: widget.testDrive!.showroom.name,
+        carName: widget.testDrive!.car?.name ?? 'Unknown',
+        showroom: widget.testDrive!.showroom?.name ?? 'Unknown',
         testDrive: widget.testDrive,
       );
     }
@@ -266,7 +266,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              testDrive.car.name,
+                                              testDrive.car?.name ?? 'Unknown',
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -275,7 +275,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              testDrive.showroom.name,
+                                              testDrive.showroom?.name ?? 'Unknown',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: Colors.grey[600],
@@ -311,14 +311,14 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                                       Expanded(
                                         child: _buildInfoItem(
                                           'Date',
-                                          testDrive.date,
+                                          testDrive.date ?? 'Unknown',
                                           Icons.calendar_today_outlined,
                                         ),
                                       ),
                                       Expanded(
                                         child: _buildInfoItem(
                                           'Time',
-                                          testDrive.time,
+                                          testDrive.time ?? 'Unknown',
                                           Icons.access_time_rounded,
                                         ),
                                       ),

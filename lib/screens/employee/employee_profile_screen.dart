@@ -5,7 +5,7 @@ import 'personal_info_screen.dart';
 import 'about_screen.dart';
 import 'employee_login_screen.dart';
 import '../../services/employee_storage_service.dart';
-import '../../services/employee_api_service.dart';
+import '../../services/driver_api_service.dart';
 import '../../models/employee_model.dart';
 import '../../theme/app_theme.dart';
 
@@ -784,9 +784,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   }
 
   void _openDocument(EmployeeDocument document) async {
-    if (document.fileUrl != null && document.fileUrl!.isNotEmpty) {
+    if (document.fileUrl.isNotEmpty) {
       try {
-        final Uri url = Uri.parse(document.fileUrl!);
+        final Uri url = Uri.parse(document.fileUrl);
         
         // Show loading message
         ScaffoldMessenger.of(context).showSnackBar(

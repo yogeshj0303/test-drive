@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'update_status_screen.dart';
-import 'gate_pass_screen.dart';
-import '../../services/employee_api_service.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;               
+import 'package:varenyam/screens/Employee/gate_pass_screen.dart';
+import 'package:varenyam/screens/Employee/update_status_screen.dart';
+import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
+import '../../services/api_config.dart';
 import '../../models/test_drive_model.dart';
 
 class AssignedTestDrivesScreen extends StatefulWidget {
@@ -170,18 +171,20 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
 
   List<AssignedTestDrive> get _filteredTestDrives {
     return _testDrives.where((testDrive) {
-      final matchesSearch = testDrive.frontUser.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          testDrive.car.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch = (testDrive.userName?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+          (testDrive.car?.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
           testDrive.id.toString().contains(_searchQuery.toLowerCase());
       
       final matchesFilter = _selectedFilter == 'All' || 
-          _getStatusDisplayName(testDrive.status) == _selectedFilter;
+          _getStatusDisplayName(testDrive.status ?? '') == _selectedFilter;
       
       return matchesSearch && matchesFilter;
     }).toList();
   }
 
-  String _getStatusDisplayName(String status) {
+  String _getStatusDisplayName(String? status) {
+    if (status == null || status.isEmpty) return 'Unknown';
+    
     switch (status.toLowerCase()) {
       case 'approved':
         return 'Scheduled';
@@ -200,7 +203,9 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     }
   }
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String? status) {
+    if (status == null || status.isEmpty) return Colors.grey;
+    
     switch (status.toLowerCase()) {
       case 'approved':
         return const Color(0xFF3B82F6);
@@ -219,7 +224,9 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     }
   }
 
-  IconData _getStatusIcon(String status) {
+  IconData _getStatusIcon(String? status) {
+    if (status == null || status.isEmpty) return Icons.help;
+    
     switch (status.toLowerCase()) {
       case 'approved':
         return Icons.schedule;
@@ -734,7 +741,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              testDrive.frontUser.name,
+                              testDrive.userName ?? 'Unknown',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 12,
@@ -744,7 +751,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                               maxLines: 1,
                             ),
                             Text(
-                              testDrive.frontUser.mobile,
+                              testDrive.userMobile ?? 'No phone',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey[600],
@@ -781,7 +788,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                testDrive.car.name,
+                                testDrive.car?.name ?? 'Unknown Car',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
@@ -794,7 +801,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          testDrive.car.showroom.name,
+                          testDrive.car?.showroom?.name ?? 'Unknown Showroom',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[600],
@@ -821,7 +828,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${testDrive.date} at ${testDrive.time}',
+                  '${testDrive.date ?? 'No date'} at ${testDrive.time ?? 'No time'}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[700],
@@ -831,7 +838,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               ],
             ),
             
-            if (testDrive.note.isNotEmpty) ...[
+            if (testDrive.note?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -851,7 +858,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        testDrive.note,
+                        testDrive.note ?? '',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF92400E),
@@ -1043,64 +1050,535 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Customer Section
-                    _buildDetailSection(
-                      'Customer Information',
-                      Icons.person,
-                      [
-                        _buildDetailRow('Name', testDrive.frontUser.name),
-                        _buildDetailRow('Phone', testDrive.frontUser.mobile),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3080A5).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF3080A5),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Customer Information',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Customer Details Grid
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Name', testDrive.userName ?? 'Unknown', Icons.person_outline),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Phone', testDrive.userMobile ?? 'No phone', Icons.phone),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Right Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Email', testDrive.userEmail ?? 'No email', Icons.email),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Aadhar', testDrive.userAdhar ?? 'No aadhar', Icons.credit_card),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     
                     const SizedBox(height: 20),
                     
                     // Vehicle Section
-                    _buildDetailSection(
-                      'Vehicle Information',
-                      Icons.directions_car,
-                      [
-                        _buildDetailRow('Model', testDrive.car.name),
-                        _buildDetailRow('Showroom', testDrive.car.showroom.name),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3080A5).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.directions_car,
+                                  color: Color(0xFF3080A5),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Vehicle Information',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Vehicle Details Grid
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Model', testDrive.car?.name ?? 'Unknown', Icons.car_rental),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Showroom', testDrive.car?.showroom?.name ?? 'Unknown', Icons.store),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Year', testDrive.car?.yearOfManufacture.toString() ?? 'Unknown', Icons.calendar_today),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Color', testDrive.car?.color ?? 'Unknown', Icons.palette),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Right Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Fuel Type', testDrive.car?.fuelType ?? 'Unknown', Icons.local_gas_station),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Transmission', testDrive.car?.transmission ?? 'Unknown', Icons.settings),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Seating', '${testDrive.car?.seatingCapacity ?? 0} seats', Icons.airline_seat_recline_normal),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Body Type', testDrive.car?.bodyType ?? 'Unknown', Icons.style),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Car Images Section
+                    if (testDrive.car?.mainImage != null || (testDrive.car?.images != null && testDrive.car!.images!.isNotEmpty))
+                      _buildDetailSection(
+                        'Car Images',
+                        Icons.photo_library,
+                        [
+                          // Main Image
+                          if (testDrive.car?.mainImage != null) ...[
+                            Container(
+                              width: double.infinity,
+                              height: 200,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Image.network(
+                                '${ApiConfig.baseUrl}/${testDrive.car!.mainImage!}',
+                                fit: BoxFit.fill,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3080A5)),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.error_outline,
+                                        color: Colors.grey,
+                                        size: 40,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                          
+                          // Additional Images
+                          if (testDrive.car?.images != null && testDrive.car!.images!.isNotEmpty)
+                            Container(
+                              height: 120,
+                              child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: testDrive.car!.images!.length,
+                              itemBuilder: (context, index) {
+                                final image = testDrive.car!.images![index];
+                                final imageUrl = image.imagePath != null 
+                                    ? '${ApiConfig.baseUrl}/${image.imagePath!}'
+                                    : null;
+                                
+                                return Container(
+                                  width: 120,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: imageUrl != null
+                                                                             ? Image.network(
+                                           imageUrl,
+                                           fit: BoxFit.fill,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3080A5)),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.error_outline,
+                                                  color: Colors.grey,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : Container(
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.image_not_supported,
+                                              color: Colors.grey,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Pickup Information Section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3080A5).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFF3080A5),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Pickup Information',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Pickup Details
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildCompactDetailRow('Address', testDrive.pickupAddress ?? 'No address', Icons.home),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildCompactDetailRow('City', testDrive.pickupCity ?? 'No city', Icons.location_city),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildCompactDetailRow('Pincode', testDrive.pickupPincode ?? 'No pincode', Icons.pin_drop),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // License & Aadhar Section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3080A5).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.credit_card,
+                                  color: Color(0xFF3080A5),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'License & Aadhar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // License & Aadhar Details
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildCompactDetailRow('Driving License', testDrive.drivingLicense ?? 'No license', Icons.drive_eta),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildCompactDetailRow('Aadhar Number', testDrive.aadharNo ?? 'No aadhar', Icons.verified_user),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     
                     const SizedBox(height: 20),
                     
                     // Test Drive Section
-                    _buildDetailSection(
-                      'Test Drive Details',
-                      Icons.schedule,
-                      [
-                        _buildDetailRow('Date', testDrive.date),
-                        _buildDetailRow('Time', testDrive.time),
-                        _buildDetailRow('Status', _getStatusDisplayName(testDrive.status)),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3080A5).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.schedule,
+                                  color: Color(0xFF3080A5),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Test Drive Details',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Test Drive Details Grid
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Date', testDrive.date ?? 'No date', Icons.calendar_today),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Time', testDrive.time ?? 'No time', Icons.access_time),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Status', _getStatusDisplayName(testDrive.status), Icons.info_outline),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Right Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCompactDetailRow('Driver ID', testDrive.driverId ?? 'Not assigned', Icons.person_pin),
+                                    const SizedBox(height: 8),
+                                    _buildCompactDetailRow('Update Date', testDrive.driverUpdateDate ?? 'Not updated', Icons.update),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     
-                    if (testDrive.note.isNotEmpty) ...[
+                    if (testDrive.note?.isNotEmpty == true) ...[
                       const SizedBox(height: 20),
                       
                       // Notes Section
-                      _buildDetailSection(
-                        'Notes',
-                        Icons.note,
-                        [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF3080A5).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.note,
+                                    color: Color(0xFF3080A5),
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Notes',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Text(
-                              testDrive.note,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF92400E),
+                            const SizedBox(height: 16),
+                            
+                            // Notes Content
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                              ),
+                              child: Text(
+                                testDrive.note ?? '',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF92400E),
+                                  height: 1.4,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                     
@@ -1140,6 +1618,50 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCompactDetailRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3080A5).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            size: 14,
+            color: const Color(0xFF3080A5),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                  fontSize: 10,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Color(0xFF1E293B),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

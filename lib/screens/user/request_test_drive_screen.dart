@@ -284,8 +284,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           Navigator.pop(context);
         } else {
           // Show error with retry option for server errors
-          final isServerError = response.message?.contains('maintenance') == true || 
-                               response.message?.contains('Server') == true;
+          final isServerError = response.message.contains('maintenance') == true || 
+                               response.message.contains('Server') == true;
           
           if (isServerError) {
             _showServerErrorDialog(response.message ?? 'Server error occurred');

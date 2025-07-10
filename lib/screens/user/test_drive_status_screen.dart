@@ -186,7 +186,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   }
 
   void _handleAction(TestDriveListResponse request) {
-    switch (request.status.toLowerCase()) {
+    switch (request.status?.toLowerCase() ?? '') {
       case 'approved':
       case 'pending':
         Navigator.push(
@@ -208,7 +208,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   }
 
   String _getActionText(TestDriveListResponse request) {
-    switch (request.status.toLowerCase()) {
+    switch (request.status?.toLowerCase() ?? '') {
       case 'approved':
       case 'pending':
         return 'Cancel Test Drive';
@@ -222,7 +222,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   }
 
   Color _getActionColor(TestDriveListResponse request) {
-    switch (request.status.toLowerCase()) {
+    switch (request.status?.toLowerCase() ?? '') {
       case 'approved':
       case 'pending':
         return Colors.red;
@@ -264,14 +264,14 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),    
                     decoration: BoxDecoration(
-                      color: _getStatusColor(request.status).withOpacity(0.1),
+                      color: _getStatusColor(request.status ?? 'Unknown' ).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
-                      _getStatusIcon(request.status),
-                      color: _getStatusColor(request.status),
+                      _getStatusIcon(request.status ?? 'Unknown'),
+                      color: _getStatusColor(request.status ?? 'Unknown'),
                       size: 24,
                     ),
                   ),
@@ -281,7 +281,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          request.car.name,
+                          request.car?.name ?? 'Unknown',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -313,21 +313,21 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Date',
-                    request.date,
+                    request.date ?? 'Unknown',
                     Icons.calendar_today_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Time',
-                    request.time,
+                    request.time ?? 'Unknown',
                     Icons.access_time_rounded,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Status',
-                    _getStatusText(request.status),
-                    _getStatusIcon(request.status),
-                    valueColor: _getStatusColor(request.status),
+                    _getStatusText(request.status ?? 'Unknown'),
+                    _getStatusIcon(request.status ?? 'Unknown'),
+                    valueColor: _getStatusColor(request.status ?? 'Unknown'),
                   ),
                   const SizedBox(height: 20),
                   
@@ -336,73 +336,73 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Model',
-                    request.car.modelNumber,
+                    request.car?.modelNumber ?? 'Unknown',
                     Icons.directions_car_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Fuel Type',
-                    request.car.fuelType,
+                    request.car?.fuelType ?? 'Unknown',
                     Icons.local_gas_station_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Transmission',
-                    request.car.transmission,
+                    request.car?.transmission ?? 'Unknown',
                     Icons.settings_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Color',
-                    request.car.color,
+                    request.car?.color ?? 'Unknown'     ,
                     Icons.palette_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Seating Capacity',
-                    '${request.car.seatingCapacity} seats',
+                    '${request.car?.seatingCapacity ?? 'Unknown'} seats',
                     Icons.airline_seat_recline_normal_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Year',
-                    request.car.yearOfManufacture.toString(),
+                    request.car?.yearOfManufacture.toString() ?? 'Unknown',
                     Icons.event_outlined,
                   ),
-                  if (request.car.drivetrain != null) ...[
+                  if (request.car?.drivetrain != null) ...[
                     const SizedBox(height: 12),
                     _buildDetailItem(
                       'Drivetrain',
-                      request.car.drivetrain!,
+                      request.car?.drivetrain ?? 'Unknown',
                       Icons.settings_input_component_outlined,
                     ),
                   ],
-                  if (request.car.bodyType != null) ...[
+                  if (request.car?.bodyType != null) ...[
                     const SizedBox(height: 12),
                     _buildDetailItem(
                       'Body Type',
-                      request.car.bodyType!,
+                      request.car?.bodyType ?? 'Unknown',
                       Icons.style_outlined,
                     ),
                   ],
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Condition',
-                    request.car.condition,
+                    request.car?.condition ?? 'Unknown',
                     Icons.verified_outlined,
                   ),
-                  if (request.car.ratting != null) ...[
+                  if (request.car?.ratting != null) ...[
                     const SizedBox(height: 12),
                     _buildDetailItem(
                       'Rating',
-                      '${request.car.ratting}/5',
+                      '${request.car?.ratting}/5',
                       Icons.star_outlined,
                     ),
                   ],
                   const SizedBox(height: 20),
                   
                   // Car Images Section
-                  if (request.car.images.isNotEmpty) ...[
+                  if (request.car?.images?.isNotEmpty == true) ...[
                     _buildSectionHeader('Car Images'),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -410,9 +410,9 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                       child: ListView.builder(
                         clipBehavior: Clip.none,
                         scrollDirection: Axis.horizontal,
-                        itemCount: request.car.images.length,
+                        itemCount: request.car?.images?.length ?? 0,
                         itemBuilder: (context, index) {
-                          final image = request.car.images[index];
+                          final image = request.car?.images?[index];
                           return Container(
                             margin: const EdgeInsets.only(right: 12),
                             width: 320,
@@ -422,10 +422,10 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                'https://varenyam.acttconnect.com/${image.imagePath}',
+                              child: image?.imagePath != null ? Image.network(
+                                'https://varenyam.acttconnect.com/${image?.imagePath}',
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
+                                errorBuilder: (context, error, stackTrace) {      
                                   return Container(
                                     color: Colors.grey[200],
                                     child: const Icon(
@@ -445,7 +445,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                     ),
                                   );
                                 },
-                              ),
+                              ) : const SizedBox.shrink() ,
                             ),
                           );
                         },
@@ -455,7 +455,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                   ],
                   
                   // Car Description Section
-                  if (request.car.description != null && request.car.description!.isNotEmpty) ...[
+                    if (request.car?.description?.isNotEmpty == true) ...[
                     _buildSectionHeader('Car Description'),
                     const SizedBox(height: 12),
                     Container(
@@ -466,7 +466,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Text(
-                        _cleanHtmlDescription(request.car.description!),
+                        _cleanHtmlDescription(request.car?.description ?? 'Unknown'),
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF1A1A1A),
@@ -482,25 +482,25 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Name',
-                    request.showroom.name,
+                    request.showroom?.name ?? 'Unknown',
                     Icons.store_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Address',
-                    request.showroom.address,
+                    request.showroom?.address ?? 'Unknown',
                     Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'City',
-                    request.showroom.city,
+                    request.showroom?.city ?? 'Unknown',
                     Icons.location_city_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Pincode',
-                    request.showroom.pincode,
+                    request.showroom?.pincode ?? 'Unknown',
                     Icons.pin_drop_outlined,
                   ),
                   const SizedBox(height: 20),
@@ -510,20 +510,20 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Driving License',
-                    request.drivingLicense,
+                    request.drivingLicense ?? 'Unknown',
                     Icons.credit_card_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Aadhar Number',
-                    request.aadharNo,
+                    request.aadharNo ?? 'Unknown',
                     Icons.badge_outlined,
                   ),
-                  if (request.note.isNotEmpty) ...[
+                  if (request.note?.isNotEmpty == true) ...[
                     const SizedBox(height: 12),
                     _buildDetailItem(
                       'Notes',
-                      request.note,
+                      request.note ?? 'Unknown',
                       Icons.note_outlined,
                     ),
                   ],
@@ -795,13 +795,13 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                         Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: _getStatusColor(request.status)
+                                            color: _getStatusColor(request.status ?? 'Unknown')
                                                 .withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: Icon(
-                                            _getStatusIcon(request.status),
-                                            color: _getStatusColor(request.status),
+                                            _getStatusIcon(request.status ?? 'Unknown'),
+                                            color: _getStatusColor(request.status ?? 'Unknown'),
                                             size: 20,
                                           ),
                                         ),
@@ -811,7 +811,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                request.car.name,
+                                                request.car?.name ?? 'Unknown',
                                                 style: const TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w600,
@@ -820,7 +820,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                request.showroom.name,
+                                                request.showroom?.name ?? 'Unknown',
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   color: Colors.grey[600],
@@ -835,16 +835,16 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: _getStatusColor(request.status)
+                                            color: _getStatusColor(request.status ?? 'Unknown')
                                                 .withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Text(
-                                            _getStatusText(request.status),
+                                            _getStatusText(request.status ?? 'Unknown'),
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: _getStatusColor(request.status),
+                                              color: _getStatusColor(request.status ?? 'Unknown'),
                                             ),
                                           ),
                                         ),
@@ -856,14 +856,14 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Date',
-                                            request.date,
+                                            request.date ?? 'Unknown',
                                             Icons.calendar_today_outlined,
                                           ),
                                         ),
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Time',
-                                            request.time,
+                                            request.time ?? 'Unknown'     ,
                                             Icons.access_time_rounded,
                                           ),
                                         ),

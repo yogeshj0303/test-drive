@@ -3,8 +3,7 @@ class ApiConfig {
   static const String baseUrl = 'https://varenyam.acttconnect.com';
   
   // API Endpoints
-  static const String signupEndpoint = '/api/app-users/store';
-  static const String loginEndpoint = '/api/front-user/login';
+  static const String loginEndpoint = '/api/driver/login';
   static const String employeeLoginEndpoint = '/api/driver/login';
   static const String employeeProfileEndpoint = '/api/driver/profile'; // Endpoint for fetching employee profile
   static const String changePasswordEndpoint = '/api/front-user/change-password';
@@ -45,7 +44,6 @@ class ApiConfig {
   static const String unknownErrorMessage = 'An unknown error occurred.';
   
   // Success messages
-  static const String signupSuccessMessage = 'Account created successfully!';
   static const String loginSuccessMessage = 'Login successful!';
   
   // Validation messages

@@ -1,26 +1,24 @@
-import 'car_model.dart';
 import 'showroom_model.dart';
-import 'user_model.dart';
 
 class TestDriveCar {
   final int id;
-  final String name;
-  final String modelNumber;
+  final String? name;
+  final String? modelNumber;
   final int showroomId;
-  final String status;
-  final String mainImage;
+  final String? status;
+  final String? mainImage;
   final int yearOfManufacture;
-  final String color;
+  final String? color;
   final String? vin;
-  final String fuelType;
-  final String transmission;
+  final String? fuelType;
+  final String? transmission;
   final String? drivetrain;
   final int seatingCapacity;
   final String? engineCapacity;
   final String? horsepower;
   final String? torque;
   final String? bodyType;
-  final String condition;
+  final String? condition;
   final String? stockNumber;
   final String? registrationNumber;
   final String? description;
@@ -29,31 +27,31 @@ class TestDriveCar {
   final String? nextServiceDate;
   final String? createdBy;
   final String? updatedBy;
-  final String createdAt;
-  final String updatedAt;
-  final List<CarImage> images;
-  final Showroom showroom;
+  final String? createdAt;
+  final String? updatedAt;
+  final List<CarImage>? images;
+  final Showroom? showroom;
   final int? ratting;
 
   TestDriveCar({
     required this.id,
-    required this.name,
-    required this.modelNumber,
+    this.name,
+    this.modelNumber,
     required this.showroomId,
-    required this.status,
-    required this.mainImage,
+    this.status,
+    this.mainImage,
     required this.yearOfManufacture,
-    required this.color,
+    this.color,
     this.vin,
-    required this.fuelType,
-    required this.transmission,
+    this.fuelType,
+    this.transmission,
     this.drivetrain,
     required this.seatingCapacity,
     this.engineCapacity,
     this.horsepower,
     this.torque,
     this.bodyType,
-    required this.condition,
+    this.condition,
     this.stockNumber,
     this.registrationNumber,
     this.description,
@@ -62,10 +60,10 @@ class TestDriveCar {
     this.nextServiceDate,
     this.createdBy,
     this.updatedBy,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.images,
-    required this.showroom,
+    this.createdAt,
+    this.updatedAt,
+    this.images,
+    this.showroom,
     this.ratting,
   });
 
@@ -75,23 +73,23 @@ class TestDriveCar {
       
       return TestDriveCar(
         id: json['id'] as int? ?? 0,
-        name: json['name'] as String? ?? '',
-        modelNumber: json['model_number'] as String? ?? '',
+        name: json['name'] as String?,
+        modelNumber: json['model_number'] as String?,
         showroomId: json['showroom_id'] as int? ?? 0,
-        status: json['status'] as String? ?? '',
-        mainImage: json['main_image'] as String? ?? '',
+        status: json['status'] as String?,
+        mainImage: json['main_image'] as String?,
         yearOfManufacture: json['year_of_manufacture'] as int? ?? 0,
-        color: json['color'] as String? ?? '',
+        color: json['color'] as String?,
         vin: json['vin'] as String?,
-        fuelType: json['fuel_type'] as String? ?? '',
-        transmission: json['transmission'] as String? ?? '',
+        fuelType: json['fuel_type'] as String?,
+        transmission: json['transmission'] as String?,
         drivetrain: json['drivetrain'] as String?,
         seatingCapacity: json['seating_capacity'] as int? ?? 0,
         engineCapacity: json['engine_capacity']?.toString(),
         horsepower: json['horsepower']?.toString(),
         torque: json['torque']?.toString(),
         bodyType: json['body_type'] as String?,
-        condition: json['condition'] as String? ?? '',
+        condition: json['condition'] as String?,
         stockNumber: json['stock_number']?.toString(),
         registrationNumber: json['registration_number']?.toString(),
         description: json['description'] as String?,
@@ -100,29 +98,12 @@ class TestDriveCar {
         nextServiceDate: json['next_service_date'] as String?,
         createdBy: json['created_by']?.toString(),
         updatedBy: json['updated_by']?.toString(),
-        createdAt: json['created_at'] as String? ?? '',
-        updatedAt: json['updated_at'] as String? ?? '',
+        createdAt: json['created_at'] as String?,
+        updatedAt: json['updated_at'] as String?,
         images: (json['images'] as List<dynamic>?)
                 ?.map((imageJson) => CarImage.fromJson(imageJson as Map<String, dynamic>))
-                .toList() ??
-            [],
-        showroom: showroomJson != null 
-            ? Showroom.fromJson(showroomJson)
-            : Showroom(
-                id: 0,
-                authId: 0,
-                name: 'Unknown Showroom',
-                address: '',
-                city: '',
-                state: '',
-                district: '',
-                pincode: '',
-                showroomImage: '',
-                ratting: 0,
-                passwordWord: null,
-                createdAt: '',
-                updatedAt: '',
-              ),
+                .toList(),
+        showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
         ratting: json['ratting'] as int?,
       );
     } catch (e) {
@@ -136,16 +117,16 @@ class TestDriveCar {
 class CarImage {
   final int id;
   final int carId;
-  final String imagePath;
-  final String createdAt;
-  final String updatedAt;
+  final String? imagePath;
+  final String? createdAt;
+  final String? updatedAt;
 
   CarImage({
     required this.id,
     required this.carId,
-    required this.imagePath,
-    required this.createdAt,
-    required this.updatedAt,
+    this.imagePath,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory CarImage.fromJson(Map<String, dynamic> json) {
@@ -153,9 +134,9 @@ class CarImage {
       return CarImage(
         id: json['id'] as int? ?? 0,
         carId: json['car_id'] as int? ?? 0,
-        imagePath: json['image_path'] as String? ?? '',
-        createdAt: json['created_at'] as String? ?? '',
-        updatedAt: json['updated_at'] as String? ?? '',
+        imagePath: json['image_path'] as String?,
+        createdAt: json['created_at'] as String?,
+        updatedAt: json['updated_at'] as String?,
       );
     } catch (e) {
       print('Error parsing CarImage: $e');
@@ -287,94 +268,82 @@ class TestDriveResponse {
 
 class TestDriveListResponse {
   final int id;
-  final String createdAt;
-  final String updatedAt;
+  final String? createdAt;
+  final String? updatedAt;
   final int carId;
   final int frontUserId;
-  final String date;
-  final String time;
-  final String pickupAddress;
-  final String pickupCity;
-  final String pickupPincode;
-  final String drivingLicense;
-  final String aadharNo;
-  final String note;
-  final String status;
+  final String? date;
+  final String? time;
+  final String? pickupAddress;
+  final String? pickupCity;
+  final String? pickupPincode;
+  final String? drivingLicense;
+  final String? aadharNo;
+  final String? note;
+  final String? status;
   final String? showroomId;
   final String? rejectDescription;
   final String? approvedEmployeeId;
   final String? cancelDescription;
   final String? cancelDateTime;
-  final TestDriveCar car;
-  final Showroom showroom;
-  final User frontUser;
+  final TestDriveCar? car;
+  final Showroom? showroom;
+  final TestDriveUser? frontUser;
 
   TestDriveListResponse({
     required this.id,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     required this.carId,
     required this.frontUserId,
-    required this.date,
-    required this.time,
-    required this.pickupAddress,
-    required this.pickupCity,
-    required this.pickupPincode,
-    required this.drivingLicense,
-    required this.aadharNo,
-    required this.note,
-    required this.status,
+    this.date,
+    this.time,
+    this.pickupAddress,
+    this.pickupCity,
+    this.pickupPincode,
+    this.drivingLicense,
+    this.aadharNo,
+    this.note,
+    this.status,
     this.showroomId,
     this.rejectDescription,
     this.approvedEmployeeId,
     this.cancelDescription,
     this.cancelDateTime,
-    required this.car,
-    required this.showroom,
-    required this.frontUser,
+    this.car,
+    this.showroom,
+    this.frontUser,
   });
 
   factory TestDriveListResponse.fromJson(Map<String, dynamic> json) {
     try {
       final carJson = json['car'] as Map<String, dynamic>?;
       final frontUserJson = json['front_user'] as Map<String, dynamic>?;
-      
-      if (carJson == null) {
-        throw Exception('Car data is missing in the response');
-      }
-      
-      if (frontUserJson == null) {
-        throw Exception('Front user data is missing in the response');
-      }
-      
-      final showroomJson = carJson['showroom'] as Map<String, dynamic>?;
-      if (showroomJson == null) {
-        throw Exception('Showroom data is missing in the car object');
-      }
+      final showroomJson = carJson?['showroom'] as Map<String, dynamic>?;
       
       return TestDriveListResponse(
-        id: json['id'] as int,
-        createdAt: json['created_at'] as String,
-        updatedAt: json['updated_at'] as String,
-        carId: json['car_id'] as int,
-        frontUserId: json['front_user_id'] as int,
-        date: json['date'] as String,
-        time: json['time'] as String,
-        pickupAddress: json['pickup_address'] as String,
-        pickupCity: json['pickup_city'] as String,
-        pickupPincode: json['pickup_pincode'] as String,
-        drivingLicense: json['driving_license'] as String,
-        aadharNo: json['aadhar_no'] as String,
-        note: json['note'] as String,
-        status: json['status'] as String,
+        id: json['id'] as int? ?? 0,
+        createdAt: json['created_at'] as String?,
+        updatedAt: json['updated_at'] as String?,
+        carId: json['car_id'] as int? ?? 0,
+        frontUserId: json['front_user_id'] as int? ?? 0,
+        date: json['date'] as String?,
+        time: json['time'] as String?,
+        pickupAddress: json['pickup_address'] as String?,
+        pickupCity: json['pickup_city'] as String?,
+        pickupPincode: json['pickup_pincode'] as String?,
+        drivingLicense: json['driving_license'] as String?,
+        aadharNo: json['aadhar_no'] as String?,
+        note: json['note'] as String?,
+        status: json['status'] as String?,
         showroomId: json['showroom_id']?.toString(),
         rejectDescription: json['reject_description'] as String?,
         approvedEmployeeId: json['approved_employee_id']?.toString(),
         cancelDescription: json['cancel_description'] as String?,
         cancelDateTime: json['cancel_date_time'] as String?,
-        car: TestDriveCar.fromJson(carJson),
-        showroom: Showroom.fromJson(showroomJson),
-        frontUser: User.fromJson(frontUserJson),
+        car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
+        showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
+        frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
       );
     } catch (e) {
       print('Error parsing TestDriveListResponse: $e');
@@ -409,115 +378,146 @@ class AssignedTestDriveResponse {
 
 class AssignedTestDrive {
   final int id;
-  final String createdAt;
-  final String updatedAt;
+  final String? createdAt;
+  final String? updatedAt;
   final int carId;
   final int frontUserId;
-  final String date;
-  final String time;
-  final String pickupAddress;
-  final String pickupCity;
-  final String pickupPincode;
-  final String drivingLicense;
-  final String aadharNo;
-  final String note;
-  final String status;
+  final String? date;
+  final String? time;
+  final String? pickupAddress;
+  final String? pickupCity;
+  final String? pickupPincode;
+  final String? drivingLicense;
+  final String? aadharNo;
+  final String? note;
+  final String? status;
   final String? showroomId;
   final String? rejectDescription;
   final int? approvedEmployeeId;
   final String? cancelDescription;
   final String? cancelDateTime;
-  final TestDriveCar car;
-  final TestDriveUser frontUser;
+  final String? driverId;
+  final String? driverUpdateDate;
+  final String? approverOrRejectBy;
+  final String? approvedOrRejectDate;
+  final String? userName;
+  final String? userMobile;
+  final String? userEmail;
+  final String? userAdhar;
+  final TestDriveCar? car;
+  final TestDriveUser? frontUser;
+  final TestDriveUser? requestbyEmplyee;
 
   AssignedTestDrive({
     required this.id,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     required this.carId,
     required this.frontUserId,
-    required this.date,
-    required this.time,
-    required this.pickupAddress,
-    required this.pickupCity,
-    required this.pickupPincode,
-    required this.drivingLicense,
-    required this.aadharNo,
-    required this.note,
-    required this.status,
+    this.date,
+    this.time,
+    this.pickupAddress,
+    this.pickupCity,
+    this.pickupPincode,
+    this.drivingLicense,
+    this.aadharNo,
+    this.note,
+    this.status,
     this.showroomId,
     this.rejectDescription,
     this.approvedEmployeeId,
     this.cancelDescription,
     this.cancelDateTime,
-    required this.car,
-    required this.frontUser,
+    this.driverId,
+    this.driverUpdateDate,
+    this.approverOrRejectBy,
+    this.approvedOrRejectDate,
+    this.userName,
+    this.userMobile,
+    this.userEmail,
+    this.userAdhar,
+    this.car,
+    this.frontUser,
+    this.requestbyEmplyee,
   });
 
   factory AssignedTestDrive.fromJson(Map<String, dynamic> json) {
+    final carJson = json['car'] as Map<String, dynamic>?;
+    final frontUserJson = json['front_user'] as Map<String, dynamic>?;
+    final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
+    
     return AssignedTestDrive(
       id: json['id'] as int? ?? 0,
-      createdAt: json['created_at'] as String? ?? '',
-      updatedAt: json['updated_at'] as String? ?? '',
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
       carId: json['car_id'] as int? ?? 0,
       frontUserId: json['front_user_id'] as int? ?? 0,
-      date: json['date'] as String? ?? '',
-      time: json['time'] as String? ?? '',
-      pickupAddress: json['pickup_address'] as String? ?? '',
-      pickupCity: json['pickup_city'] as String? ?? '',
-      pickupPincode: json['pickup_pincode'] as String? ?? '',
-      drivingLicense: json['driving_license'] as String? ?? '',
-      aadharNo: json['aadhar_no'] as String? ?? '',
-      note: json['note'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      date: json['date'] as String?,
+      time: json['time'] as String?,
+      pickupAddress: json['pickup_address'] as String?,
+      pickupCity: json['pickup_city'] as String?,
+      pickupPincode: json['pickup_pincode'] as String?,
+      drivingLicense: json['driving_license'] as String?,
+      aadharNo: json['aadhar_no'] as String?,
+      note: json['note'] as String?,
+      status: json['status'] as String?,
       showroomId: json['showroom_id']?.toString(),
       rejectDescription: json['reject_description'] as String?,
       approvedEmployeeId: json['approved_employee_id'] as int?,
       cancelDescription: json['cancel_description'] as String?,
       cancelDateTime: json['cancel_date_time'] as String?,
-      car: TestDriveCar.fromJson(json['car'] as Map<String, dynamic>),
-      frontUser: TestDriveUser.fromJson(json['front_user'] as Map<String, dynamic>),
+      driverId: json['driver_id']?.toString(),
+      driverUpdateDate: json['driver_update_date'] as String?,
+      approverOrRejectBy: json['approver_or_reject_by']?.toString(),
+      approvedOrRejectDate: json['approved_or_reject_date'] as String?,
+      userName: json['user_name'] as String?,
+      userMobile: json['user_mobile'] as String?,
+      userEmail: json['user_email'] as String?,
+      userAdhar: json['user_adhar'] as String?,
+      car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
+      frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
+      requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
     );
   }
 }
 
 class TestDriveUser {
   final int id;
-  final String name;
-  final String email;
-  final String mobile;
-  final String createdAt;
-  final String updatedAt;
-  final String city;
-  final String state;
-  final String district;
-  final String pincode;
+  final String? name;
+  final String? email;
+  final String? mobile;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? city;
+  final String? state;
+  final String? district;
+  final String? pincode;
 
   TestDriveUser({
     required this.id,
-    required this.name,
-    required this.email,
-    required this.mobile,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.city,
-    required this.state,
-    required this.district,
-    required this.pincode,
+    this.name,
+    this.email,
+    this.mobile,
+    this.createdAt,
+    this.updatedAt,
+    this.city,
+    this.state,
+    this.district,
+    this.pincode,
   });
 
   factory TestDriveUser.fromJson(Map<String, dynamic> json) {
     return TestDriveUser(
       id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      mobile: json['mobile'] as String? ?? '',
-      createdAt: json['created_at'] as String? ?? '',
-      updatedAt: json['updated_at'] as String? ?? '',
-      city: json['city'] as String? ?? '',
-      state: json['state'] as String? ?? '',
-      district: json['district'] as String? ?? '',
-      pincode: json['pincode'] as String? ?? '',
+      name: json['name'] as String?,
+      email: json['email'] as String?,
+      mobile: json['mobile'] as String?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      district: json['district'] as String?,
+      pincode: json['pincode'] as String?,
     );
   }
 } 

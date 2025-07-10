@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_theme.dart';
 import '../../services/employee_storage_service.dart';
-import '../../services/employee_api_service.dart';
 import '../../models/employee_model.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -93,7 +92,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -387,7 +386,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             filled: true,
-            fillColor: enabled ? theme.colorScheme.surface : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            fillColor: enabled ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),

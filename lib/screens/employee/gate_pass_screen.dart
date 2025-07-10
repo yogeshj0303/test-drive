@@ -227,7 +227,7 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.testDrive.date,
+                        widget.testDrive.date ?? 'No date',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -266,7 +266,7 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.testDrive.time,
+                        widget.testDrive.time ?? 'No time',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -328,9 +328,9 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildDetailRow('Name', widget.testDrive.frontUser.name),
-          _buildDetailRow('Phone', widget.testDrive.frontUser.mobile),
-          _buildDetailRow('Email', widget.testDrive.frontUser.email ?? 'Not provided'),
+          _buildDetailRow('Name', widget.testDrive.frontUser?.name ?? 'Unknown'),
+          _buildDetailRow('Phone', widget.testDrive.frontUser?.mobile ?? 'No phone'),
+          _buildDetailRow('Email', widget.testDrive.frontUser?.email ?? 'Not provided'),
         ],
       ),
     );
@@ -380,9 +380,9 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildDetailRow('Model', widget.testDrive.car.name),
-          _buildDetailRow('Showroom', widget.testDrive.car.showroom.name),
-          _buildDetailRow('Location', '${widget.testDrive.car.showroom.city}, ${widget.testDrive.car.showroom.state}'),
+          _buildDetailRow('Model', widget.testDrive.car?.name ?? 'Unknown'),
+          _buildDetailRow('Showroom', widget.testDrive.car?.showroom?.name ?? 'Unknown'),
+          _buildDetailRow('Location', '${widget.testDrive.car?.showroom?.city ?? 'Unknown'}, ${widget.testDrive.car?.showroom?.state ?? 'Unknown'}'),
         ],
       ),
     );
@@ -432,11 +432,11 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildDetailRow('Date', widget.testDrive.date),
-          _buildDetailRow('Time', widget.testDrive.time),
+          _buildDetailRow('Date', widget.testDrive.date ?? 'No date'),
+          _buildDetailRow('Time', widget.testDrive.time ?? 'No time'),
           _buildDetailRow('Status', _getStatusDisplayName(widget.testDrive.status)),
-          if (widget.testDrive.note.isNotEmpty)
-            _buildDetailRow('Notes', widget.testDrive.note),
+          if (widget.testDrive.note?.isNotEmpty == true)
+            _buildDetailRow('Notes', widget.testDrive.note ?? ''),
         ],
       ),
     );
@@ -569,7 +569,9 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
     );
   }
 
-  String _getStatusDisplayName(String status) {
+  String _getStatusDisplayName(String? status) {
+    if (status == null || status.isEmpty) return 'Unknown';
+    
     switch (status.toLowerCase()) {
       case 'approved':
         return 'Scheduled';

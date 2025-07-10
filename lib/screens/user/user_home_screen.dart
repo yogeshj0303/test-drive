@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'rescheduled_test_drives_screen.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart';
 import '../../services/api_config.dart';
@@ -6,15 +7,12 @@ import '../../models/showroom_model.dart';
 import '../../main.dart';
 import 'cancel_test_drive_screen.dart';
 import 'cars_screen.dart';
-import 'request_test_drive_screen.dart';
-import 'test_drive_status_screen.dart';
-import 'review_form_screen.dart';
 import 'notification_screen.dart';
 import 'user_profile_screen.dart';
 import 'search_screen.dart';
 import 'showrooms_screen.dart';
 import 'pending_test_drives_screen.dart';
-import 'completed_test_drives_screen.dart';
+import 'approved_test_drives_screen.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -418,14 +416,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         },
                       },
                       {
-                        'title': 'Completed Test Drive',
-                        'icon': Icons.check_circle_outline,
-                        'color': Colors.green,
+                        'title': 'Rescheduled Test Drive',
+                        'icon': Icons.schedule,
+                        'color': Colors.orange,
                         'onTap': () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CompletedTestDrivesScreen(),
+                              builder: (context) => const RescheduledTestDrivesScreen(),
                             ),
                           );
                         },
@@ -444,19 +442,16 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         },
                       },
                       {
-                        'title': 'Write Review',
-                        'icon': Icons.rate_review_rounded,
-                        'color': Colors.purple,
+                        'title': 'Approved Test Drive',
+                        'icon': Icons.check_circle_outline,
+                        'color': Colors.green,
                         'onTap': () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ReviewFormScreen( ),
+                              builder: (context) => const ApprovedTestDrivesScreen(),
                             ),
-                          ).then((_) {
-                            // Refresh profile data when returning from review form
-                            UserProfileScreen.forceRefreshProfileData();
-                          });
+                          );
                         },
                       },
                     ];

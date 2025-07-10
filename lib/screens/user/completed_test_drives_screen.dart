@@ -345,7 +345,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              request.car.name,
+                              request.car?.name ?? 'Unknown',
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -354,7 +354,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
                             ),
                             const SizedBox(height: 1),
                             Text(
-                              request.showroom.name,
+                              request.showroom?.name ?? 'Unknown',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
@@ -478,7 +478,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      request.car.name,
+                      request.car?.name ?? 'Unknown',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -486,10 +486,10 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
               ),
               const SizedBox(height: 16),
               _buildDetailRow('Request ID', request.id.toString()),
-              _buildDetailRow('Date', request.date),
-              _buildDetailRow('Time', request.time),
+              _buildDetailRow('Date', request.date ?? 'Unknown'),
+              _buildDetailRow('Time', request.time ?? 'Unknown'),
               _buildDetailRow('Pickup Address', '${request.pickupAddress}, ${request.pickupCity}, ${request.pickupPincode}'),
-              _buildDetailRow('Showroom', request.showroom.name),
+              _buildDetailRow('Showroom', request.showroom?.name ?? 'Unknown'),
               _buildDetailRow('Status', 'Completed', isStatus: true),
               const Spacer(),
               // Write Review Button

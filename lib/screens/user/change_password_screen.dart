@@ -280,7 +280,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withOpacity(0.5),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:varenyam/screens/Employee/add_expense_screen.dart';
 import 'employee_home_screen.dart';
 import 'assigned_test_drives_screen.dart';
-import 'add_expense_screen.dart';
-import 'employee_profile_screen.dart';
+import 'package:varenyam/screens/employee/employee_profile_screen.dart';
 
 class EmployeeMainScreen extends StatefulWidget {
   const EmployeeMainScreen({super.key});

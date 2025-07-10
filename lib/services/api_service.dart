@@ -14,39 +14,7 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  Future<ApiResponse<User>> signup(SignupRequest request) async {
-    try {
-      debugPrint('Attempting signup for: \\${request.email}');
-      
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.signupEndpoint)).replace(queryParameters: request.toJson().map((k, v) => MapEntry(k, v.toString())));
-      final response = await http.post(
-        uri,
-        headers: {'Accept': 'application/json'},
-      );
 
-      debugPrint('Signup response status: \\${response.statusCode}');
-      debugPrint('Signup response data: \\${response.body}');
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final user = User.fromJson(responseData);
-        debugPrint('Signup successful for user: \\${user.name}');
-        return ApiResponse.success(user, message: ApiConfig.signupSuccessMessage);
-      } else {
-        final errorMessage = _extractErrorMessage(response.body);
-        return ApiResponse.error(errorMessage ?? 'Signup failed');
-      }
-    } on SocketException {
-      debugPrint('Signup network error: No internet connection');
-      return ApiResponse.error(ApiConfig.networkErrorMessage);
-    } on FormatException {
-      debugPrint('Signup format error: Invalid response format');
-      return ApiResponse.error('Invalid response format from server');
-    } catch (e) {
-      debugPrint('Signup unexpected error: \\${e.toString()}');
-      return ApiResponse.error('An unexpected error occurred: \\${e.toString()}');
-    }
-  }
 
   Future<ApiResponse<LoginResponse>> login(String emailOrMobile, String password) async {
     try {
@@ -57,7 +25,7 @@ class ApiService {
         uri,
         headers: ApiConfig.defaultHeaders,
         body: jsonEncode({
-          'email_or_mobile': emailOrMobile,
+          'email': emailOrMobile,
           'password': password,
         }),
       );

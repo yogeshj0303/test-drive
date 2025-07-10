@@ -1,77 +1,173 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
+import '../../models/showroom_model.dart';
 
-class PendingTestDrivesScreen extends StatefulWidget {
-  const PendingTestDrivesScreen({super.key});
+class ApprovedTestDrivesScreen extends StatefulWidget {
+  const ApprovedTestDrivesScreen({super.key});
 
   @override
-  State<PendingTestDrivesScreen> createState() => _PendingTestDrivesScreenState();
+  State<ApprovedTestDrivesScreen> createState() => _ApprovedTestDrivesScreenState();
 }
 
-class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
-  final ApiService _apiService = ApiService();
-  final StorageService _storageService = StorageService();
-
-  List<TestDriveListResponse> _pendingTestDrives = [];
+class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
+  List<TestDriveListResponse> _approvedTestDrives = [];
   bool _isLoading = true;
-  String? _errorMessage;
   bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPendingTestDrives();
+    _loadDummyData();
   }
 
-  Future<void> _loadPendingTestDrives() async {
+  Future<void> _loadDummyData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
-    try {
-      final user = await _storageService.getUser();
-      if (user == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Please log in again to view your test drives.';
-        });
-        return;
-      }
-      final response = await _apiService.getUserPendingTestDrives(user.id);
-      if (response.success) {
-        setState(() {
-          _pendingTestDrives = response.data ?? [];
-          _isLoading = false;
-        });
-      } else {
-        // Check if the error message indicates no data found
-        final errorMessage = response.message.toLowerCase();
-        if (errorMessage.contains('no pending test drives') || 
-            errorMessage.contains('not found') ||
-            errorMessage.contains('no data') ||
-            errorMessage.contains('empty')) {
-          // Treat as empty state rather than error
-          setState(() {
-            _pendingTestDrives = [];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = response.message.isNotEmpty 
-                ? response.message 
-                : 'Unable to load pending test drives. Please try again.';
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection error. Please check your internet connection and try again.';
-        _isLoading = false;
-      });
-    }
+
+    // Simulate API delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Dummy data for approved test drives
+    final dummyData = [
+      TestDriveListResponse(
+        id: 1,
+        carId: 1,
+        frontUserId: 1,
+        date: '2024-01-15',
+        time: '10:00 AM',
+        pickupAddress: '123 Main Street, Apartment 4B',
+        pickupCity: 'Mumbai',
+        pickupPincode: '400001',
+        note: 'Please arrive 10 minutes early for documentation',
+        car: TestDriveCar(
+          id: 1,
+          showroomId: 1,
+          yearOfManufacture: 2024,
+          seatingCapacity: 5,
+          name: 'Honda City',
+          modelNumber: '2024',
+          mainImage: null,
+        ),
+        showroom: Showroom(
+          id: 1,
+          authId: 1,
+          name: 'Honda Showroom - Andheri',
+          address: 'Andheri West',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          pincode: '400001',
+          ratting: 4,
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        ),
+      ),
+      TestDriveListResponse(
+        id: 2,
+        carId: 2,
+        frontUserId: 1,
+        date: '2024-01-18',
+        time: '2:30 PM',
+        pickupAddress: '456 Park Avenue, Floor 2',
+        pickupCity: 'Delhi',
+        pickupPincode: '110001',
+        note: 'Driver will contact you 30 minutes before pickup',
+        car: TestDriveCar(
+          id: 2,
+          showroomId: 2,
+          yearOfManufacture: 2024,
+          seatingCapacity: 5,
+          name: 'Maruti Swift',
+          modelNumber: '2024',
+          mainImage: null,
+        ),
+        showroom: Showroom(
+          id: 2,
+          authId: 2,
+          name: 'Maruti Suzuki - Connaught Place',
+          address: 'Connaught Place',
+          city: 'Delhi',
+          state: 'Delhi',
+          district: 'New Delhi',
+          pincode: '110001',
+          ratting: 4,
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        ),
+      ),
+      TestDriveListResponse(
+        id: 3,
+        carId: 3,
+        frontUserId: 1,
+        date: '2024-01-20',
+        time: '11:00 AM',
+        pickupAddress: '789 Lake Road, Villa 12',
+        pickupCity: 'Bangalore',
+        pickupPincode: '560001',
+        note: 'Test drive duration: 45 minutes',
+        car: TestDriveCar(
+          id: 3,
+          showroomId: 3,
+          yearOfManufacture: 2024,
+          seatingCapacity: 5,
+          name: 'Hyundai i20',
+          modelNumber: '2024',
+          mainImage: null,
+        ),
+        showroom: Showroom(
+          id: 3,
+          authId: 3,
+          name: 'Hyundai Motors - Koramangala',
+          address: 'Koramangala',
+          city: 'Bangalore',
+          state: 'Karnataka',
+          district: 'Bangalore',
+          pincode: '560001',
+          ratting: 4,
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        ),
+      ),
+      TestDriveListResponse(
+        id: 4,
+        carId: 4,
+        frontUserId: 1,
+        date: '2024-01-22',
+        time: '3:00 PM',
+        pickupAddress: '321 Garden Street, Flat 8C',
+        pickupCity: 'Chennai',
+        pickupPincode: '600001',
+        note: 'Please bring valid ID proof',
+        car: TestDriveCar(
+          id: 4,
+          showroomId: 4,
+          yearOfManufacture: 2024,
+          seatingCapacity: 7,
+          name: 'Toyota Innova',
+          modelNumber: '2024',
+          mainImage: null,
+        ),
+        showroom: Showroom(
+          id: 4,
+          authId: 4,
+          name: 'Toyota Showroom - T Nagar',
+          address: 'T Nagar',
+          city: 'Chennai',
+          state: 'Tamil Nadu',
+          district: 'Chennai',
+          pincode: '600001',
+          ratting: 4,
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        ),
+      ),
+    ];
+
+    setState(() {
+      _approvedTestDrives = dummyData;
+      _isLoading = false;
+    });
   }
 
   Future<void> _refreshData() async {
@@ -79,7 +175,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     setState(() {
       _isRefreshing = true;
     });
-    await _loadPendingTestDrives();
+    await _loadDummyData();
     setState(() {
       _isRefreshing = false;
     });
@@ -91,7 +187,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text(
-          'Pending Test Drives',
+          'Approved Test Drives',
           style: TextStyle(
             color: Color(0xFF1A1A1A),
             fontSize: 16,
@@ -131,14 +227,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       ),
       body: _isLoading
           ? _buildLoadingWidget()
-          : _errorMessage != null
-              ? _buildErrorWidget()
-              : RefreshIndicator(
-                  onRefresh: _refreshData,
-                  child: _pendingTestDrives.isEmpty
-                      ? _buildEmptyStateWidget()
-                      : _buildTestDrivesList(),
-                ),
+          : RefreshIndicator(
+              onRefresh: _refreshData,
+              child: _approvedTestDrives.isEmpty
+                  ? _buildEmptyStateWidget()
+                  : _buildTestDrivesList(),
+            ),
     );
   }
 
@@ -163,12 +257,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             child: Column(
               children: [
                 const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                   strokeWidth: 2.5,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Loading your test drives...',
+                  'Loading your approved test drives...',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
@@ -183,66 +277,6 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Icon(
-                Icons.error_outline,
-                color: Colors.red.shade400,
-                size: 48,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Oops! Something went wrong',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade800,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _errorMessage!,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-                height: 1.3,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _loadPendingTestDrives,
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Try Again'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyStateWidget() {
     return Center(
       child: Padding(
@@ -253,19 +287,19 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: Colors.green.shade200),
               ),
               child: Icon(
-                Icons.pending_actions_outlined,
-                color: Colors.orange.shade400,
+                Icons.check_circle_outline,
+                color: Colors.green.shade400,
                 size: 48,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'No Pending Test Drives',
+              'No Approved Test Drives',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -275,7 +309,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You don\'t have any pending test drive requests at the moment.',
+              'You don\'t have any approved test drives at the moment.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -289,7 +323,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
@@ -306,9 +340,9 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   Widget _buildTestDrivesList() {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _pendingTestDrives.length,
+      itemCount: _approvedTestDrives.length,
       itemBuilder: (context, index) {
-        final request = _pendingTestDrives[index];
+        final request = _approvedTestDrives[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -335,12 +369,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.pending_actions_outlined,
-                        color: Colors.orange.shade600,
+                        Icons.check_circle_outline,
+                        color: Colors.green.shade600,
                         size: 20,
                       ),
                     ),
@@ -366,6 +400,14 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                 size: 14,
                                 color: Colors.grey.shade600,
                               ),
+                              const SizedBox(width: 4),
+                              Text(
+                                request.date ?? 'Unknown',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
                               const SizedBox(width: 12),
                               Icon(
                                 Icons.access_time,
@@ -388,7 +430,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                               Icon(
                                 Icons.location_on,
                                 size: 14,
-                                color: Colors.grey.shade600,  
+                                color: Colors.grey.shade600,
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -410,14 +452,14 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.shade200),
+                        border: Border.all(color: Colors.green.shade200),
                       ),
                       child: Text(
-                        'Pending',
+                        'Approved',
                         style: TextStyle(
-                          color: Colors.orange.shade700,
+                          color: Colors.green.shade700,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -464,12 +506,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
+                      color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      Icons.pending_actions_outlined,
-                      color: Colors.orange.shade600,
+                      Icons.check_circle_outline,
+                      color: Colors.green.shade600,
                       size: 24,
                     ),
                   ),
@@ -490,14 +532,14 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange.shade200),
+                            border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Text(
-                            'Pending',
+                            'Approved',
                             style: TextStyle(
-                              color: Colors.orange.shade700,
+                              color: Colors.green.shade700,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -517,11 +559,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDetailSection(
-                      'Request Information',
+                      'Test Drive Information',
                       [
                         _buildDetailRow('Request ID', '#${request.id}'),
                         _buildDetailRow('Date', request.date ?? 'Unknown'),
                         _buildDetailRow('Time', request.time ?? 'Unknown'),
+                        _buildDetailRow('Status', 'Approved'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -539,6 +582,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                       [
                         _buildDetailRow('Name', request.showroom?.name ?? 'Unknown'),
                         _buildDetailRow('Location', '${request.showroom?.city ?? 'Unknown'}, ${request.showroom?.state ?? 'Unknown'}'),
+                        _buildDetailRow('Rating', '${request.showroom?.ratting ?? 'N/A'} ⭐'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -546,11 +590,11 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                       _buildDetailSection(
                         'Additional Notes',
                         [
-                          _buildDetailRow('Note', request.note ?? ''    ),
+                          _buildDetailRow('Note', request.note ?? ''),
                         ],
                       ),
                     const SizedBox(height: 24),
-                    // Action Buttons Section
+                    // Action Buttons
                     _buildActionButtonsSection(request),
                     const SizedBox(height: 24),
                   ],
@@ -563,9 +607,62 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  void _showCancelDialog(TestDriveListResponse request) {
-    final TextEditingController reasonController = TextEditingController();
-    
+  Widget _buildActionButtonsSection(TestDriveListResponse request) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Actions',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Contact Showroom Button
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: OutlinedButton.icon(
+            onPressed: () => _showContactDialog(request),
+            icon: const Icon(Icons.phone, size: 18),
+            label: const Text('Contact Showroom'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green,
+              side: BorderSide(color: Colors.green.shade400),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        // Reschedule Button
+        Container(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _showRescheduleDialog(request),
+            icon: const Icon(Icons.schedule, size: 18),
+            label: const Text('Reschedule Test Drive'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.orange,
+              side: BorderSide(color: Colors.orange.shade400),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+
+  void _showContactDialog(TestDriveListResponse request) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -575,13 +672,13 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
         title: Row(
           children: [
             Icon(
-              Icons.cancel_outlined,
-              color: Colors.red.shade600,
+              Icons.phone,
+              color: Colors.green.shade600,
               size: 24,
             ),
             const SizedBox(width: 8),
             const Text(
-              'Cancel Test Drive',
+              'Contact Showroom',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -594,75 +691,295 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Are you sure you want to cancel your test drive for ${request.car?.name ?? 'Unknown' }?',
+              'Showroom: ${request.showroom?.name ?? 'Unknown'}',
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.black87,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Reason for cancellation (optional):',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: reasonController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Enter reason for cancellation...',
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade500,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red.shade400),
-                ),
-                contentPadding: const EdgeInsets.all(12),
-              ),
-            ),
+            _buildContactOption('Call Showroom', '+91 98765 43210', Icons.call, Colors.green),
+            const SizedBox(height: 12),
+            _buildContactOption('WhatsApp', '+91 98765 43210', Icons.message, Colors.green),
+            const SizedBox(height: 12),
+            _buildContactOption('Email', 'info@showroom.com', Icons.email, Colors.blue),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Keep Test Drive',
+              'Close',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _cancelTestDrive(request, reasonController.text.trim());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Cancel Test Drive'),
-          ),
         ],
       ),
     );
   }
 
-  Future<void> _cancelTestDrive(TestDriveListResponse request, String reason) async {
+  Widget _buildContactOption(String title, String contact, IconData icon, Color color) {
+    return InkWell(
+      onTap: () => _handleContactAction(title, contact),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    contact,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRescheduleDialog(TestDriveListResponse request) {
+    final TextEditingController reasonController = TextEditingController();
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                color: Colors.orange.shade600,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Reschedule Test Drive',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select new date and time for ${request.car?.name ?? 'Unknown'}:',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Date Selection
+              InkWell(
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now().add(const Duration(days: 1)),
+                    lastDate: DateTime.now().add(const Duration(days: 30)),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedDate = picked;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: Colors.orange.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Date: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Time Selection
+              InkWell(
+                onTap: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: selectedTime,
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedTime = picked;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        color: Colors.orange.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Time: ${selectedTime.format(context)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Reason for rescheduling (optional):',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter reason for rescheduling...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.orange.shade400),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _rescheduleTestDrive(request, selectedDate, selectedTime, reasonController.text.trim());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Reschedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  void _handleContactAction(String action, String contact) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              action == 'Call Showroom' ? Icons.call : 
+              action == 'WhatsApp' ? Icons.message : Icons.email,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text('Opening $action...'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, TimeOfDay newTime, String reason) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -674,12 +991,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
         content: Row(
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
               strokeWidth: 2,
             ),
             const SizedBox(width: 16),
             Text(
-              'Canceling test drive...',
+              'Rescheduling test drive...',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade700,
@@ -691,71 +1008,39 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
 
     try {
-      final cancelDescription = reason.isNotEmpty 
-          ? reason 
-          : 'User canceled the test drive request';
-      
-      final response = await _apiService.cancelTestDrive(
-        request.id, 
-        cancelDescription
-      );
+      // Simulate API call delay
+      await Future.delayed(const Duration(seconds: 2));
 
       // Close loading dialog
       Navigator.pop(context);
 
-      if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Text('Test drive canceled successfully'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+      // Close detail modal
+      Navigator.pop(context);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text('Test drive rescheduled successfully'),
+            ],
           ),
-        );
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
 
-        // Refresh the list to remove the canceled test drive
-        _loadPendingTestDrives();
-      } else {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(response.message.isNotEmpty 
-                    ? response.message 
-                    : 'Failed to cancel test drive'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
+      // Refresh the list
+      _loadDummyData();
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
@@ -771,7 +1056,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text('Connection error. Please try again.'),
+              const Text('Failed to reschedule test drive'),
             ],
           ),
           backgroundColor: Colors.red,
@@ -843,534 +1128,5 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildActionButtonsSection(TestDriveListResponse request) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Actions',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Approve Button
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ElevatedButton.icon(
-            onPressed: () => _showApproveDialog(request),
-            icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: const Text('Approve Test Drive'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 2,
-            ),
-          ),
-        ),
-        // Reschedule Button
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: OutlinedButton.icon(
-            onPressed: () => _showRescheduleDialog(request),
-            icon: const Icon(Icons.schedule, size: 18),
-            label: const Text('Reschedule Test Drive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.blue,
-              side: BorderSide(color: Colors.blue.shade400),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-        // Cancel Button
-        Container(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _showCancelDialog(request),
-            icon: const Icon(Icons.cancel_outlined, size: 18),
-            label: const Text('Cancel Test Drive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: BorderSide(color: Colors.red.shade400),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showApproveDialog(TestDriveListResponse request) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: Colors.green.shade600,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Approve Test Drive',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to approve the test drive for ${request.car?.name ?? 'Unknown'}?',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.green.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This will confirm the test drive and notify the showroom.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _approveTestDrive(request);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Approve'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRescheduleDialog(TestDriveListResponse request) {
-    final TextEditingController reasonController = TextEditingController();
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
-    
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                color: Colors.blue.shade600,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Reschedule Test Drive',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select new date and time for ${request.car?.name ?? 'Unknown'}:',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Date Selection
-              InkWell(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate,
-                    firstDate: DateTime.now().add(const Duration(days: 1)),
-                    lastDate: DateTime.now().add(const Duration(days: 30)),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      selectedDate = picked;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        color: Colors.blue.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Date: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Time Selection
-              InkWell(
-                onTap: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      selectedTime = picked;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        color: Colors.blue.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Time: ${selectedTime.format(context)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Reason for rescheduling (optional):',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: reasonController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Enter reason for rescheduling...',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.blue.shade400),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rescheduleTestDrive(request, selectedDate, selectedTime, reasonController.text.trim());
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Reschedule'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _approveTestDrive(TestDriveListResponse request) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Row(
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-              strokeWidth: 2,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'Approving test drive...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Close loading dialog
-      Navigator.pop(context);
-
-      // Close detail modal
-      Navigator.pop(context);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Test drive approved successfully'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-
-      // Refresh the list
-      _loadPendingTestDrives();
-    } catch (e) {
-      // Close loading dialog
-      Navigator.pop(context);
-      
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Failed to approve test drive'),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, TimeOfDay newTime, String reason) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Row(
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-              strokeWidth: 2,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'Rescheduling test drive...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Close loading dialog
-      Navigator.pop(context);
-
-      // Close detail modal
-      Navigator.pop(context);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Test drive rescheduled successfully'),
-            ],
-          ),
-          backgroundColor: Colors.blue,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-
-      // Refresh the list
-      _loadPendingTestDrives();
-    } catch (e) {
-      // Close loading dialog
-      Navigator.pop(context);
-      
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text('Failed to reschedule test drive'),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
   }
 } 

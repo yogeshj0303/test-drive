@@ -220,7 +220,7 @@ class EmployeeApiService {
     try {
       debugPrint('Fetching assigned test drives for driver ID: $driverId');
       
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/driver/testdrives?driver_id=$driverId');
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/driver/assigned/testdrives/list?driver_id=$driverId');
       
       final response = await http.post(
         uri,

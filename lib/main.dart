@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/employee/location_tracking_screen.dart';
-import 'screens/user/cars_screen.dart';
-import 'screens/user/user_home_screen.dart';
 import 'screens/user/user_login_screen.dart';
 import 'screens/employee/employee_login_screen.dart';
 import 'screens/splash_screen.dart';
@@ -409,7 +406,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 16),
                 _buildAuthOption(
                   context,
-                  title: 'Continue as User',
+                  title: 'Continue as Employee',
                   subtitle: 'Access your dashboard',
                   icon: Icons.person_outline_rounded,
                   onTap: () => Navigator.push(
@@ -421,7 +418,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 12),
                 _buildAuthOption(
                   context,
-                  title: 'Continue as Employee',
+                  title: 'Continue as Driver',
                   subtitle: 'Access workspace',
                   icon: Icons.business_outlined,
                   onTap: () => Navigator.push(

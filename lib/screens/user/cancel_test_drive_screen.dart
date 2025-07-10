@@ -115,7 +115,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          testDrive.car.name,
+                          testDrive.car?.name ?? 'Unknown',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -124,7 +124,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          testDrive.showroom.name,
+                          testDrive.showroom?.name ?? 'Unknown',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -181,15 +181,15 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       ),
                       child: Column(
                         children: [
-                          _buildModernDetailRow('Date', testDrive.date, Icons.calendar_today_outlined),
+                          _buildModernDetailRow('Date', testDrive.date ?? 'Unknown', Icons.calendar_today_outlined),
                           const SizedBox(height: 16),
-                          _buildModernDetailRow('Time', testDrive.time, Icons.access_time_rounded),
+                          _buildModernDetailRow('Time', testDrive.time ?? 'Unknown', Icons.access_time_rounded),
                           const SizedBox(height: 16),
-                          _buildModernDetailRow('Pickup Address', testDrive.pickupAddress, Icons.location_on_outlined),
+                          _buildModernDetailRow('Pickup Address', testDrive.pickupAddress ?? 'Unknown', Icons.location_on_outlined),
                           const SizedBox(height: 16),
-                          _buildModernDetailRow('Pickup City', testDrive.pickupCity, Icons.location_city_outlined),
+                          _buildModernDetailRow('Pickup City', testDrive.pickupCity ?? 'Unknown', Icons.location_city_outlined),
                           const SizedBox(height: 16),
-                          _buildModernDetailRow('Status', testDrive.status.toUpperCase(), Icons.info_outline),
+                          _buildModernDetailRow('Status', testDrive.status?.toUpperCase() ?? 'Unknown', Icons.info_outline),
                           if (testDrive.cancelDateTime != null && testDrive.cancelDateTime!.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             _buildModernDetailRow('Canceled On', testDrive.cancelDateTime!, Icons.cancel_outlined),
@@ -247,7 +247,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     ],
                     
                     // Note Section
-                    if (testDrive.note.isNotEmpty) ...[
+                    if (testDrive.note?.isNotEmpty == true) ...[
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -282,7 +282,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              testDrive.note,
+                              testDrive.note ?? '',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.blue[700],
@@ -540,7 +540,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                testDrive.car.name,
+                                                testDrive.car?.name ?? 'Unknown',
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
@@ -549,7 +549,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                               ),
                                               const SizedBox(height: 1),
                                               Text(
-                                                testDrive.showroom.name,
+                                                testDrive.showroom?.name ?? 'Unknown',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color: Colors.grey[600],
@@ -584,27 +584,27 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Date',
-                                            testDrive.date,
+                                            testDrive.date ?? 'Unknown',
                                             Icons.calendar_today_outlined,
                                           ),
                                         ),
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Time',
-                                            testDrive.time,
+                                            testDrive.time ?? 'Unknown',
                                             Icons.access_time_rounded,
                                           ),
                                         ),
                                         Expanded(
                                           child: _buildInfoItem(
                                             'Location',
-                                            testDrive.pickupCity,
+                                            testDrive.pickupCity ?? 'Unknown',
                                             Icons.location_on_outlined,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    if (testDrive.note.isNotEmpty) ...[
+                                    if (testDrive.note?.isNotEmpty == true) ...[
                                       const SizedBox(height: 8),
                                       Container(
                                         padding: const EdgeInsets.all(6),
@@ -622,7 +622,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                                             const SizedBox(width: 3),
                                             Expanded(
                                               child: Text(
-                                                testDrive.note,
+                                                testDrive.note ?? ''    ,
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.grey[700],

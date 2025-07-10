@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/test_drive_model.dart';
-import '../../services/employee_api_service.dart';
+import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 
 class UpdateStatusScreen extends StatefulWidget {
@@ -147,9 +147,9 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
       if (widget.testDrive!.status == 'approved' || widget.testDrive!.status == 'in_progress') {
         _selectedStatus = 'completed'; // Default to completed for assigned drives
       } else {
-        _selectedStatus = widget.testDrive!.status;
+        _selectedStatus = widget.testDrive!.status ?? '';
       }
-      _notesController.text = widget.testDrive!.note;
+      _notesController.text = widget.testDrive!.note ?? '';
     }
   }
 
@@ -315,14 +315,14 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildModernInfoRow('Customer', widget.testDrive!.frontUser.name, Icons.person),
-                    _buildModernInfoRow('Vehicle', widget.testDrive!.car.name, Icons.directions_car),
+                    _buildModernInfoRow('Customer', widget.testDrive!.frontUser?.name ?? 'Unknown', Icons.person),
+                    _buildModernInfoRow('Vehicle', widget.testDrive!.car?.name ?? 'Unknown', Icons.directions_car),
                     _buildModernInfoRow('Date & Time', '${widget.testDrive!.date} at ${widget.testDrive!.time}', Icons.calendar_today),
-                    _buildModernInfoRow('Current Status', _getStatusDisplayName(widget.testDrive!.status), _getStatusIcon(widget.testDrive!.status), 
-                      color: _getStatusColor(widget.testDrive!.status)),
-                    _buildModernInfoRow('Location', widget.testDrive!.car.showroom.name, Icons.location_on),
-                    if (widget.testDrive!.note.isNotEmpty)
-                      _buildModernInfoRow('Notes', widget.testDrive!.note, Icons.note),
+                    _buildModernInfoRow('Current Status', _getStatusDisplayName(widget.testDrive!.status ?? ''), _getStatusIcon(widget.testDrive!.status ?? ''), 
+                        color: _getStatusColor(widget.testDrive!.status ?? '')),
+                    _buildModernInfoRow('Location', widget.testDrive!.car?.showroom?.name ?? 'Unknown', Icons.location_on),
+                    if (widget.testDrive!.note?.isNotEmpty == true)
+                      _buildModernInfoRow('Notes', widget.testDrive!.note ?? '', Icons.note),
                   ],
                 ),
               ),

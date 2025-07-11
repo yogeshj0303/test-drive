@@ -472,17 +472,28 @@ class EmployeeApiService {
     String userType = 'drivers',
   }) async {
     try {
+      debugPrint('Fetching recent activities for user ID: $userId, user type: $userType');
+      
       final uri = Uri.parse(
         '${ApiConfig.baseUrl}/api/activities?user_id=$userId&user_type=$userType',
       );
+      
+      debugPrint('Activities API URL: $uri');
+      
       final response = await http.get(
         uri,
         headers: ApiConfig.defaultHeaders,
       ).timeout(const Duration(seconds: 30));
 
+      debugPrint('Activities response status: ${response.statusCode}');
+      debugPrint('Activities response data: ${response.body}');
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         final activityLogResponse = ActivityLogResponse.fromJson(responseData);
+        
+        debugPrint('Parsed ${activityLogResponse.data.length} activities');
+        
         if (activityLogResponse.success) {
           return EmployeeApiResponse.success(activityLogResponse, message: activityLogResponse.message);
         } else {

@@ -87,6 +87,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           _isLoading = false;
           _errorMessage = null;
           _isInitialized = true;
+          _selectedFilter = 'All'; // Reset filter to 'All' when reloading
         });
       } else {
         setState(() {
@@ -248,7 +249,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     
     switch (status.toLowerCase()) {
       case 'approved':
-        return 'Scheduled';
+        return 'Approved';
       case 'in_progress':
       case 'in progress':
         return 'Scheduled'; // Treat in_progress as scheduled since we removed the option
@@ -694,6 +695,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       padding: const EdgeInsets.only(right: 6),
       child: FilterChip(
         clipBehavior: Clip.none,
+        showCheckmark: false,
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -745,6 +747,22 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     
     bool isCompleted = _getStatusDisplayName(testDrive.status) == 'Completed';
     bool isCancelled = _getStatusDisplayName(testDrive.status) == 'Cancelled';
+    
+    // Check if the test drive date matches today's date
+    bool isToday = false;
+    if (testDrive.date != null && testDrive.date!.isNotEmpty) {
+      try {
+        final testDriveDate = DateTime.parse(testDrive.date!);
+        final today = DateTime.now();
+        // Compare only the date part (year, month, day) without time
+        final todayDate = DateTime(today.year, today.month, today.day);
+        final testDriveDateOnly = DateTime(testDriveDate.year, testDriveDate.month, testDriveDate.day);
+        isToday = testDriveDateOnly.isAtSameMomentAs(todayDate);
+      } catch (e) {
+        // If date parsing fails, assume it's not today
+        isToday = false;
+      }
+    }
     
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1036,7 +1054,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                       ),
                   ],
                 ),
-                if (!isCompleted) ...[
+                if (!isCompleted && !isCancelled && isToday) ...[
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,

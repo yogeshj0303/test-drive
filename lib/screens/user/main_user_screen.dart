@@ -4,6 +4,7 @@ import 'user_home_screen.dart';
 import 'user_expense_screen.dart';
 import 'user_profile_screen.dart';
 import 'test_drive_status_screen.dart';
+import 'user_activities_screen.dart';
 
 class MainUserScreen extends StatefulWidget {
   const MainUserScreen({super.key});
@@ -33,7 +34,10 @@ class _MainUserScreenState extends State<MainUserScreen> {
       if (index == 2) { // Status tab selected, refresh test drive data
         // Status tab selected, refresh test drive data
         _statusKey.currentState?.refreshData();
-      } else if (index == 3) { // Profile tab selected, refresh profile data
+      } else if (index == 3) { // Activities tab selected, refresh activities data
+        // Activities tab selected, refresh activities data
+        // Note: Activities screen will refresh automatically when navigated to
+      } else if (index == 4) { // Profile tab selected, refresh profile data
         // Profile tab selected, refresh profile data
         _profileKey.currentState?.refreshProfileData();
       }
@@ -53,6 +57,7 @@ class _MainUserScreenState extends State<MainUserScreen> {
           // const ShowroomsScreen(), // Commented out - showroom is now shown in home screen
           const UserExpenseScreen(showBackButton: false),
           TestDriveStatusScreen(key: _statusKey, showBackButton: false),
+          const UserActivitiesScreen(showBackButton: false),
           UserProfileScreen(key: _profileKey, showBackButton: false),
         ],
       ),
@@ -97,10 +102,16 @@ class _MainUserScreenState extends State<MainUserScreen> {
                   index: 2,
                 )),
                 Expanded(child: _buildNavItem(
+                  icon: Icons.history_outlined,
+                  activeIcon: Icons.history_rounded,
+                  label: 'Activities',
+                  index: 3,
+                )),
+                Expanded(child: _buildNavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
                   label: 'Profile',
-                  index: 3,
+                  index: 4,
                 )),
               ],
             ),

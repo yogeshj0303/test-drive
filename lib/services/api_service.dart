@@ -6,8 +6,8 @@ import '../models/user_model.dart';
 import '../models/showroom_model.dart';
 import '../models/car_model.dart';
 import '../models/test_drive_model.dart';
-
 import '../models/expense_model.dart';
+import '../models/activity_log_model.dart';
 import 'api_config.dart';
 import 'storage_service.dart';
 
@@ -1258,6 +1258,57 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Reject expense unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<ActivityLogResponse>> getRecentActivities({
+    required int userId,
+    String userType = 'users',
+  }) async {
+    try {
+      debugPrint('Fetching recent activities for user ID: $userId, user type: $userType');
+      
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/activities?user_id=$userId&user_type=$userType',
+      );
+      
+      debugPrint('Activities API URL: $uri');
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('Activities response status: ${response.statusCode}');
+      debugPrint('Activities response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final activityLogResponse = ActivityLogResponse.fromJson(responseData);
+        
+        debugPrint('Parsed ${activityLogResponse.data.length} activities');
+        
+        if (activityLogResponse.success) {
+          return ApiResponse.success(activityLogResponse, message: activityLogResponse.message);
+        } else {
+          return ApiResponse.error(activityLogResponse.message);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch recent activities');
+      }
+    } on SocketException {
+      debugPrint('Activities network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Activities format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } on TimeoutException {
+      debugPrint('Activities timeout error: Request timeout');
+      return ApiResponse.error('Request timeout. Please try again.');
+    } catch (e) {
+      debugPrint('Activities unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

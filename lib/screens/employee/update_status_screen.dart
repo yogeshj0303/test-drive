@@ -218,14 +218,10 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
 
   Future<void> _updateStatus() async {
     if (_formKey.currentState!.validate()) {
-      // Validate date and time for rescheduling
+      // Validate date for rescheduling
       if (_selectedStatus == 'rescheduled') {
         if (_selectedDate == null) {
           _showErrorSnackBar('Please select a new date for rescheduling');
-          return;
-        }
-        if (_selectedTime == null) {
-          _showErrorSnackBar('Please select a new time for rescheduling');
           return;
         }
       }
@@ -244,15 +240,8 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         EmployeeApiResponse<Map<String, dynamic>> response;
         
         if (_selectedStatus == 'rescheduled') {
-          // Format the new date and time
-          final newDateTime = DateTime(
-            _selectedDate!.year,
-            _selectedDate!.month,
-            _selectedDate!.day,
-            _selectedTime!.hour,
-            _selectedTime!.minute,
-          );
-          final formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(newDateTime);
+          // Format only the date (API expects only date, not datetime)
+          final formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
           
           response = await EmployeeApiService().rescheduleTestDrive(
             testDriveId: widget.testDrive!.id,

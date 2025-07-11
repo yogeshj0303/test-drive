@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'rescheduled_test_drives_screen.dart';
 import '../../services/storage_service.dart';
-import '../../services/api_service.dart';
+import '../../services/api_service.dart' as api;
 import '../../services/api_config.dart';
 import '../../models/showroom_model.dart';
 import '../../main.dart';
@@ -13,6 +13,8 @@ import 'search_screen.dart';
 import 'showrooms_screen.dart';
 import 'pending_test_drives_screen.dart';
 import 'approved_test_drives_screen.dart';
+import 'user_activities_screen.dart';
+import '../../models/activity_log_model.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -25,18 +27,24 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   final StorageService _storageService = StorageService();
-  final ApiService _apiService = ApiService();
+  final api.ApiService _apiService = api.ApiService();
   
   List<Showroom> _showrooms = [];
   Map<int, int> _carCounts = {}; // Store car counts for each showroom
   bool _isLoadingShowrooms = true;
   String? _showroomsErrorMessage;
+  
+  // Recent activities variables
+  List<ActivityLog> _recentActivities = [];
+  bool _isLoadingActivities = true;
+  String? _activityError;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _fetchShowrooms();
+    _loadRecentActivities();
   }
   @override
   void dispose() {
@@ -113,6 +121,51 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         // If car count fetch fails, set to 0
         setState(() {
           _carCounts[showroom.id] = 0;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRecentActivities() async {
+    setState(() {
+      _isLoadingActivities = true;
+      _activityError = null;
+    });
+    
+    try {
+      final currentUser = await _storageService.getUser();
+      if (currentUser == null) {
+        setState(() {
+          _activityError = 'User not found. Please login again.';
+          _isLoadingActivities = false;
+        });
+        return;
+      }
+
+      debugPrint('Loading recent activities for user ID: ${currentUser.id}');
+      final response = await _apiService.getRecentActivities(
+        userId: currentUser.id,
+        userType: 'users',
+      );
+      
+      if (mounted) {
+        setState(() {
+          _isLoadingActivities = false;
+          if (response.success) {
+            _recentActivities = response.data?.data ?? [];
+            debugPrint('Loaded ${_recentActivities.length} activities');
+          } else {
+            _activityError = response.message;
+            debugPrint('Failed to load activities: ${response.message}');
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Exception loading activities: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingActivities = false;
+          _activityError = 'Failed to load activities';
         });
       }
     }
@@ -414,6 +467,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
               ),
               const SizedBox(height: 16), // Reduced from 24
+              
+              // Recent Activities Section
+              _buildSectionHeader(
+                'Recent Activity',
+                'Your recent system activities',
+                onViewAll: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserActivitiesScreen(showBackButton: true),
+                    ),
+                  );
+                },
+              ),
+              _buildRecentActivity(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -1131,5 +1200,278 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildRecentActivity() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (_isLoadingActivities)
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF0095D9)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Loading activities...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (_activityError != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red[400],
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Unable to load activities: $_activityError',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (!_isLoadingActivities && _activityError == null)
+            _recentActivities.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.inbox_outlined,
+                          color: Colors.grey[400],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'No recent activities',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Column(
+                  children: _recentActivities.take(3).map((activity) {
+                    return _buildProfessionalActivityItem(
+                      activity,
+                      activity != _recentActivities.take(3).last,
+                    );
+                  }).toList(),
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfessionalActivityItem(ActivityLog activity, bool showDivider) {
+    final color = _getActivityColor(activity);
+    final icon = _getActivityIcon(activity);
+    
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Activity Icon
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: color.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 14,
+                ),
+              ),
+              
+              const SizedBox(width: 12),
+              
+              // Activity Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Activity Title and Time in same row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _formatActivityTitle(activity.operation),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[900],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatActivityTime(activity.createdAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 3),
+                    
+                    // Activity Description
+                    Text(
+                      activity.operationDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w400,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Divider
+        if (showDivider)
+          Container(
+            margin: const EdgeInsets.only(left: 40),
+            height: 1,
+            color: Colors.grey.withOpacity(0.08),
+          ),
+      ],
+    );
+  }
+
+  String _formatActivityTitle(String operation) {
+    switch (operation.toLowerCase()) {
+      case 'testdrive status update':
+        return 'Test Drive Status Updated';
+      case 'request for testdrive':
+        return 'Test Drive Request';
+      case 'expense submitted':
+        return 'Expense Submitted';
+      case 'expense approved':
+        return 'Expense Approved';
+      case 'expense rejected':
+        return 'Expense Rejected';
+      default:
+        return operation.split(' ').map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        }).join(' ');
+    }
+  }
+
+  String _formatActivityTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    if (dateTime.year == now.year) {
+      return '${months[dateTime.month - 1]} ${dateTime.day}';
+    } else {
+      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+    }
+  }
+
+  IconData _getActivityIcon(ActivityLog activity) {
+    if (activity.tableName == 'expenses') return Icons.receipt_outlined;
+    if (activity.operation.toLowerCase().contains('canceled') || 
+        activity.operationDescription.toLowerCase().contains('canceled')) return Icons.cancel_outlined;
+    if (activity.operation.toLowerCase().contains('completed') || 
+        activity.operationDescription.toLowerCase().contains('completed')) return Icons.check_circle_outline;
+    if (activity.operation.toLowerCase().contains('rescheduled') || 
+        activity.operationDescription.toLowerCase().contains('rescheduled')) return Icons.schedule_outlined;
+    if (activity.operation.toLowerCase().contains('request for testdrive') || 
+        activity.operationDescription.toLowerCase().contains('testdrive request')) return Icons.directions_car_outlined;
+    if (activity.operation.toLowerCase().contains('status update')) return Icons.update_outlined;
+    return Icons.info_outline;
+  }
+
+  Color _getActivityColor(ActivityLog activity) {
+    if (activity.tableName == 'expenses') return Colors.blue;
+    if (activity.operation.toLowerCase().contains('canceled') || 
+        activity.operationDescription.toLowerCase().contains('canceled')) return Colors.red;
+    if (activity.operation.toLowerCase().contains('completed') || 
+        activity.operationDescription.toLowerCase().contains('completed')) return Colors.green;
+    if (activity.operation.toLowerCase().contains('rescheduled') || 
+        activity.operationDescription.toLowerCase().contains('rescheduled')) return Colors.orange;
+    if (activity.operation.toLowerCase().contains('request for testdrive') || 
+        activity.operationDescription.toLowerCase().contains('testdrive request')) return Colors.purple;
+    if (activity.operation.toLowerCase().contains('status update')) return Colors.indigo;
+    return Colors.grey;
   }
 }

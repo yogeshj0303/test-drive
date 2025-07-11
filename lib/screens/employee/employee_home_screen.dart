@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:varenyam/screens/Employee/employee_notification_screen.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/driver_api_service.dart';
@@ -8,6 +9,7 @@ import '../../models/activity_log_model.dart';
 import 'package:varenyam/screens/Employee/assigned_test_drives_screen.dart';
 import 'package:varenyam/screens/Employee/add_expense_screen.dart';
 import 'package:varenyam/screens/Employee/location_tracking_screen.dart';
+import 'package:varenyam/screens/Employee/employee_activities_screen.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   const EmployeeHomeScreen({super.key});
@@ -123,18 +125,25 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
       _activityError = null;
     });
     try {
-      final response = await EmployeeApiService().getRecentActivities(userId: userId);
+      debugPrint('Loading recent activities for user ID: $userId');
+      final response = await EmployeeApiService().getRecentActivities(
+        userId: userId,
+        userType: 'users', // Changed from default 'drivers' to 'users'
+      );
       if (mounted) {
         setState(() {
           _isLoadingActivities = false;
           if (response.success) {
             _recentActivities = response.data?.data ?? [];
+            debugPrint('Loaded ${_recentActivities.length} activities');
           } else {
             _activityError = response.message;
+            debugPrint('Failed to load activities: ${response.message}');
           }
         });
       }
     } catch (e) {
+      debugPrint('Exception loading activities: $e');
       if (mounted) {
         setState(() {
           _isLoadingActivities = false;
@@ -179,13 +188,13 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(primaryBlue),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       _buildQuickStats(primaryBlue, secondaryBlue),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 10),
                       _buildQuickActions(primaryBlue),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       _buildRecentActivity(primaryBlue),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -199,15 +208,15 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
 
   Widget _buildHeader(Color primaryBlue) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: primaryBlue,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.25),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
             spreadRadius: 1,
           ),
         ],
@@ -215,20 +224,20 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: const Icon(Icons.directions_car, size: 20, color: Colors.white),
+            child: const Icon(Icons.directions_car, size: 18, color: Colors.white),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           const Expanded(
             child: Text(
               'Varenyam',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 20,
+                fontSize: 18,
                 letterSpacing: 0.5,
                 color: Colors.white,
               ),
@@ -245,12 +254,12 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
               );
             },
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.notifications_outlined, size: 20, color: Colors.white),
+              child: const Icon(Icons.notifications_outlined, size: 18, color: Colors.white),
             ),
           ),
         ],
@@ -261,7 +270,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
   Widget _buildWelcomeSection(Color primaryBlue, Color darkGray) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -273,12 +282,12 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           ],
           stops: const [0.0, 0.6, 1.0],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.25),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
             spreadRadius: 1,
           ),
         ],
@@ -286,10 +295,10 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: Colors.white.withOpacity(0.3),
                 width: 1,
@@ -297,11 +306,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
             ),
             child: const Icon(
               Icons.work_outline,
-              size: 20,
+              size: 18,
               color: Colors.white,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +319,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                   'Welcome back, ${_currentEmployee?.name ?? 'Employee'}!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
@@ -320,17 +329,17 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                   'Ready to manage today\'s test drives?',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
                 if (_currentEmployee != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     'Showroom ID: ${_currentEmployee!.showroomId} | Status: ${_currentEmployee!.status}',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -359,17 +368,45 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Performance Overview',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Performance Overview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[900],
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Your test drive performance metrics',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
         SizedBox(
-          height: 100,
+          height: 95,
           child: Row(
             children: [
               Expanded(
@@ -381,7 +418,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                   '${_performanceData?.pendingTestdrives ?? 0} pending'
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _buildStatusCard(
                   'Pending', 
@@ -391,7 +428,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                   'Need attention'
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _buildStatusCard(
                   'This Month', 
@@ -410,10 +447,10 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
 
   Widget _buildMetricCard(String title, String current, String target, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: color.withOpacity(0.1),
           width: 1,
@@ -421,7 +458,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.06),
-            blurRadius: 6,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -432,22 +469,100 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                child: Icon(icon, color: color, size: 14),
+                child: Icon(icon, color: color, size: 12),
               ),
               const Spacer(),
               Text(
                 current,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: color,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '2 pending',
+            style: TextStyle(
+              fontSize: 8,
+              color: Colors.grey[600],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(String title, String value, Color color, IconData icon, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.06),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(icon, color: color, size: 12),
+              ),
+              const Spacer(),
+              _isLoadingPerformance 
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                  )
+                : Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
             ],
           ),
           const SizedBox(height: 6),
@@ -463,86 +578,9 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           ),
           const SizedBox(height: 2),
           Text(
-            '2 pending',
-            style: TextStyle(
-              fontSize: 9,
-              color: Colors.grey[600],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusCard(String title, String value, Color color, IconData icon, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: color.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, color: color, size: 14),
-              ),
-              const Spacer(),
-              _isLoadingPerformance 
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  )
-                : Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
-                  ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
             subtitle,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: Colors.grey[600],
             ),
             maxLines: 1,
@@ -557,22 +595,50 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Quick Actions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[900],
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Essential tools for daily operations',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.1,
+          crossAxisSpacing: 6,
+          mainAxisSpacing: 6,
+          childAspectRatio: 1.8,
           children: [
             GestureDetector(
               onTap: () {
@@ -612,11 +678,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const EmployeeNotificationScreen(),
+                    builder: (context) => const EmployeeActivitiesScreen(showBackButton: true),
                   ),
                 );
               },
-              child: _buildActionCard('Notifications', Icons.notifications_outlined, 'View notifications', Colors.orange),
+              child: _buildActionCard('All Activities', Icons.history_outlined, 'View all activities', Colors.indigo),
             ),
           ],
         ),
@@ -626,15 +692,15 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
 
   Widget _buildActionCard(String title, IconData icon, String subtitle, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -643,29 +709,29 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 16),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Expanded(
             child: Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 9,
                 color: Colors.grey[600],
               ),
               maxLines: 2,
@@ -677,129 +743,328 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
     );
   }
 
-  Widget _buildRecentActivity(Color primaryBlue) {
+    Widget _buildRecentActivity(Color primaryBlue) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Recent Activity',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (_isLoadingActivities)
-          Center(child: CircularProgressIndicator()),
-        if (_activityError != null)
-          Center(child: Text(_activityError!, style: TextStyle(color: Colors.red))),
-        if (!_isLoadingActivities && _activityError == null)
-          _recentActivities.isEmpty
-              ? Center(child: Text('No recent activities'))
-              : Container(
-                  padding: const EdgeInsets.all(16),
+        // Header Section (Outside the card)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: _recentActivities.take(5).map((activity) {
-                      return Column(
-                        children: [
-                          _buildActivityItem(
-                            activity.operation,
-                            activity.operationDescription,
-                            _formatActivityTime(activity.createdAt),
-                            _getActivityIcon(activity),
-                            _getActivityColor(activity),
-                          ),
-                          if (activity != _recentActivities.take(5).last)
-                            const Divider(height: 20),
-                        ],
-                      );
-                    }).toList(),
+                    color: primaryBlue,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recent Activity',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[900],
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Your recent system activities',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Content Card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              if (_isLoadingActivities)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Loading activities...',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (_activityError != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[400],
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Unable to load activities: ${_activityError!}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (!_isLoadingActivities && _activityError == null)
+                _recentActivities.isEmpty
+                  ? Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inbox_outlined,
+                              color: Colors.grey[400],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'No recent activities',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: _recentActivities.take(3).map((activity) {
+                        return _buildProfessionalActivityItem(
+                          activity,
+                          activity != _recentActivities.take(3).last,
+                        );
+                      }).toList(),
+                    ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildActivityItem(String title, String subtitle, String time, IconData icon, Color color) {
-    return Row(
+  Widget _buildProfessionalActivityItem(ActivityLog activity, bool showDivider) {
+    final color = _getActivityColor(activity);
+    final icon = _getActivityIcon(activity);
+    
+    return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, color: color, size: 14),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              // Activity Icon
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: color.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 11,
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 14,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
+              
+              const SizedBox(width: 12),
+              
+              // Activity Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Activity Title and Time in same row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _formatActivityTitle(activity.operation),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[900],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatActivityTime(activity.createdAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 3),
+                    
+                    // Activity Description
+                    Text(
+                      activity.operationDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w400,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    const SizedBox(height: 4),
+                    
+                    // User Name (if available)
+                  ],
+                ),
+              ),
+              
+              // Status Indicator
             ],
           ),
         ),
-        Text(
-          time,
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 10,
+        
+        // Divider
+        if (showDivider)
+          Container(
+            margin: const EdgeInsets.only(left: 40),
+            height: 1,
+            color: Colors.grey.withOpacity(0.08),
           ),
-        ),
       ],
     );
+  }
+
+  String _formatActivityTitle(String operation) {
+    switch (operation.toLowerCase()) {
+      case 'testdrive status update':
+        return 'Test Drive Status Updated';
+      case 'request for testdrive':
+        return 'Test Drive Request';
+      case 'expense submitted':
+        return 'Expense Submitted';
+      case 'expense approved':
+        return 'Expense Approved';
+      case 'expense rejected':
+        return 'Expense Rejected';
+      default:
+        // Capitalize first letter of each word
+        return operation.split(' ').map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        }).join(' ');
+    }
   }
 
   String _formatActivityTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
+    
     if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hours ago';
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    
+    // Format for older dates
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    if (dateTime.year == now.year) {
+      return '${months[dateTime.month - 1]} ${dateTime.day}';
+    } else {
+      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+    }
   }
 
   IconData _getActivityIcon(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Icons.receipt_outlined;
-    if (activity.operation.toLowerCase().contains('canceled')) return Icons.cancel_outlined;
-    if (activity.operation.toLowerCase().contains('completed')) return Icons.check_circle_outline;
+    if (activity.operation.toLowerCase().contains('canceled') || 
+        activity.operationDescription.toLowerCase().contains('canceled')) return Icons.cancel_outlined;
+    if (activity.operation.toLowerCase().contains('completed') || 
+        activity.operationDescription.toLowerCase().contains('completed')) return Icons.check_circle_outline;
+    if (activity.operation.toLowerCase().contains('rescheduled') || 
+        activity.operationDescription.toLowerCase().contains('rescheduled')) return Icons.schedule_outlined;
+    if (activity.operation.toLowerCase().contains('request for testdrive') || 
+        activity.operationDescription.toLowerCase().contains('testdrive request')) return Icons.directions_car_outlined;
+    if (activity.operation.toLowerCase().contains('status update')) return Icons.update_outlined;
     return Icons.info_outline;
   }
 
   Color _getActivityColor(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Colors.blue;
-    if (activity.operation.toLowerCase().contains('canceled')) return Colors.red;
-    if (activity.operation.toLowerCase().contains('completed')) return Colors.green;
+    if (activity.operation.toLowerCase().contains('canceled') || 
+        activity.operationDescription.toLowerCase().contains('canceled')) return Colors.red;
+    if (activity.operation.toLowerCase().contains('completed') || 
+        activity.operationDescription.toLowerCase().contains('completed')) return Colors.green;
+    if (activity.operation.toLowerCase().contains('rescheduled') || 
+        activity.operationDescription.toLowerCase().contains('rescheduled')) return Colors.orange;
+    if (activity.operation.toLowerCase().contains('request for testdrive') || 
+        activity.operationDescription.toLowerCase().contains('testdrive request')) return Colors.purple;
+    if (activity.operation.toLowerCase().contains('status update')) return Colors.indigo;
     return Colors.grey;
   }
 

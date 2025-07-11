@@ -209,7 +209,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                 CircularProgressIndicator(
                   color: theme.colorScheme.primary,
                 ),
-                const SizedBox(height: AppTheme.spacingS),
+                const SizedBox(height: 8),
                 Text(
                   'Loading profile...',
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -227,23 +227,23 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
       return Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(AppTheme.spacingM),
+            padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.error_outline,
-                  size: 48,
+                  size: 40,
                   color: theme.colorScheme.error,
                 ),
-                const SizedBox(height: AppTheme.spacingS),
+                const SizedBox(height: 8),
                 Text(
                   'Error Loading Profile',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppTheme.spacingXS),
+                const SizedBox(height: 4),
                 Text(
                   _errorMessage!,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -251,7 +251,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: AppTheme.spacingM),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
@@ -292,7 +292,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    height: size.height * 0.28,
+                    height: size.height * 0.22,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -323,9 +323,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                     ),
                   ),
                   Positioned(
-                    left: AppTheme.spacingM,
-                    right: AppTheme.spacingM,
-                    top: size.height * 0.08,
+                    left: 16,
+                    right: 16,
+                    top: size.height * 0.06,
                     child: _buildProfileHeader(context),
                   ),
                 ],
@@ -335,9 +335,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
               child: Padding(
                 padding: EdgeInsets.only(
                   top: size.height * 0.12,
-                  left: AppTheme.spacingM,
-                  right: AppTheme.spacingM,
-                  bottom: AppTheme.spacingM,
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
                 ),
                 child: SlideTransition(
                   position: _slideAnimation,
@@ -347,46 +347,20 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_errorMessage != null) _buildErrorMessage(_errorMessage!),
-                        // Container(
-                        //   margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
-                        //   child: Row(
-                        //     children: [
-                        //       Container(
-                        //         width: 4,
-                        //         height: 20,
-                        //         decoration: BoxDecoration(
-                        //           color: theme.colorScheme.primary,
-                        //           borderRadius: BorderRadius.circular(2),
-                        //         ),
-                        //       ),
-                        //       const SizedBox(width: AppTheme.spacingXS),
-                        //       Text(
-                        //         'Performance',
-                        //         style: theme.textTheme.titleMedium?.copyWith(
-                        //           fontWeight: FontWeight.w600,
-                        //           letterSpacing: 0.2,
-                        //           height: 1.2,
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
-                        // _buildStatsSection(context),
-                        // const SizedBox(height: AppTheme.spacingL),
                         if (_employee?.documents.isNotEmpty == true) ...[
                           Container(
-                            margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                            margin: const EdgeInsets.only(bottom: 8),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 4,
-                                  height: 20,
+                                  width: 3,
+                                  height: 16,
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
-                                const SizedBox(width: AppTheme.spacingXS),
+                                const SizedBox(width: 6),
                                 Text(
                                   'Documents',
                                   style: theme.textTheme.titleMedium?.copyWith(
@@ -399,21 +373,21 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                             ),
                           ),
                           _buildDocumentsSection(context),
-                          const SizedBox(height: AppTheme.spacingL),
+                          const SizedBox(height: 16),
                         ],
                         Container(
-                          margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                          margin: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
                               Container(
-                                width: 4,
-                                height: 20,
+                                width: 3,
+                                height: 16,
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.primary,
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
-                              const SizedBox(width: AppTheme.spacingXS),
+                              const SizedBox(width: 6),
                               Text(
                                 'Settings',
                                 style: theme.textTheme.titleMedium?.copyWith(
@@ -426,7 +400,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                           ),
                         ),
                         _buildSettingsSection(context),
-                        const SizedBox(height: AppTheme.spacingL),
+                        const SizedBox(height: 16),
                         _buildLogoutButton(context),
                       ],
                     ),
@@ -444,22 +418,22 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     final theme = Theme.of(context);
 
     return Container(
-      constraints: const BoxConstraints(maxWidth: 300),
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+      constraints: const BoxConstraints(maxWidth: 280),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
             spreadRadius: -1,
           ),
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            blurRadius: 8,
+            offset: const Offset(0, -4),
             spreadRadius: -1,
           ),
         ],
@@ -468,7 +442,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
         color: Colors.transparent,
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingL),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -479,15 +453,15 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: ClipOval(
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                     ),
@@ -495,16 +469,16 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                       ? Image.network(
                           _employee!.avatarUrl!,
                           fit: BoxFit.cover,
-                          width: 100,
-                          height: 100,
+                          width: 80,
+                          height: 80,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              width: 100,
-                              height: 100,
+                              width: 80,
+                              height: 80,
                               color: theme.colorScheme.primary,
                               child: Icon(
                                 Icons.person,
-                                size: 50,
+                                size: 40,
                                 color: theme.colorScheme.onPrimary,
                               ),
                             );
@@ -512,12 +486,12 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
-                              width: 100,
-                              height: 100,
+                              width: 80,
+                              height: 80,
                               color: theme.colorScheme.primary,
                               child: Icon(
                                 Icons.person,
-                                size: 50,
+                                size: 40,
                                 color: theme.colorScheme.onPrimary,
                               ),
                             );
@@ -525,40 +499,40 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                         )
                       : Icon(
                           Icons.person,
-                          size: 50,
+                          size: 40,
                           color: theme.colorScheme.onPrimary,
                         ),
                   ),
                 ),
               ),
-              const SizedBox(height: AppTheme.spacingM),
+              const SizedBox(height: 12),
               Text(
                 _employee?.name ?? 'Employee Profile',
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppTheme.spacingXS),
+              const SizedBox(height: 4),
               Text(
                 _employee?.email ?? 'Manage your account settings',
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.2,
+                  letterSpacing: 0.1,
                 ),
                 textAlign: TextAlign.center,
               ),
               if (_employee?.mobileNo != null) ...[
-                const SizedBox(height: AppTheme.spacingS),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingS,
-                    vertical: AppTheme.spacingXS,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: theme.colorScheme.primaryContainer,
                       width: 1,
@@ -569,10 +543,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                     children: [
                       Icon(
                         Icons.phone_outlined,
-                        size: 14,
+                        size: 12,
                         color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: AppTheme.spacingXS),
+                      const SizedBox(width: 4),
                       Text(
                         _employee!.mobileNo,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -687,11 +661,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 8,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -709,24 +683,24 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _openDocument(document),
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(AppTheme.spacingS),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getDocumentIcon(document.documentName),
                   color: theme.colorScheme.primary,
-                  size: 20,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: AppTheme.spacingM),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,7 +711,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: AppTheme.spacingXS),
+                    const SizedBox(height: 2),
                     Text(
                       'Added on ${_formatDate(document.createdAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -749,7 +723,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
               ),
               Icon(
                 Icons.open_in_new_rounded,
-                size: 16,
+                size: 14,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
@@ -826,17 +800,17 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 44,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppTheme.errorColor, AppTheme.errorColor.withOpacity(0.8)],
         ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppTheme.errorColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -844,7 +818,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _showLogoutDialog(),
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          borderRadius: BorderRadius.circular(12),
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -852,9 +826,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                 const Icon(
                   Icons.logout_rounded,
                   color: Colors.white,
-                  size: 18,
+                  size: 16,
                 ),
-                const SizedBox(width: AppTheme.spacingS),
+                const SizedBox(width: 6),
                 Text(
                   'Logout',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -901,6 +875,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -988,7 +963,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           theme.colorScheme.primary,
           () => _navigateToPersonalInfo(),
         ),
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: 8),
         _buildSettingTile(
           'Change Password',
           'Update your account password',
@@ -996,7 +971,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           AppTheme.warningColor,
           () => _navigateToChangePassword(),
         ),
-        const SizedBox(height: AppTheme.spacingS),
+        const SizedBox(height: 8),
         _buildSettingTile(
           'About',
           'App version and information',
@@ -1014,11 +989,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 8,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -1027,20 +1002,20 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(AppTheme.spacingM),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingS),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: color, size: 18),
+                  child: Icon(icon, color: color, size: 16),
                 ),
-                const SizedBox(width: AppTheme.spacingM),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1051,7 +1026,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: AppTheme.spacingXS),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -1063,7 +1038,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 14,
+                  size: 12,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -1087,8 +1062,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.orange[50],
         borderRadius: BorderRadius.circular(8),
@@ -1099,9 +1074,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           Icon(
             Icons.warning_amber_rounded,
             color: Colors.orange[600],
-            size: 20,
+            size: 18,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               message,

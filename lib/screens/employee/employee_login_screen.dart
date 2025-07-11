@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:varenyam/main.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../models/employee_model.dart';
@@ -158,15 +159,54 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     return AnnotatedRegion(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        body: Container(
-          color: Colors.white,
-          child: SafeArea(
-            child: Center(
-              child: isSmallScreen
-                  ? _buildMobileLayout(size, primaryBlue)
-                  : _buildDesktopLayout(size, primaryBlue),
+        body: Stack(
+          children: [
+            Container(
+              color: Colors.white,
+              child: SafeArea(
+                child: Center(
+                  child: isSmallScreen
+                      ? _buildMobileLayout(size, primaryBlue)
+                      : _buildDesktopLayout(size, primaryBlue),
+                ),
+              ),
             ),
-          ),
+            // Back button positioned at top left
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 30,
+              left: 18,
+              child: Container(
+                height: 32,
+                width: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const AuthScreen(),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.arrow_back_ios_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -207,7 +247,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: size.height * 0.06, // Further reduced from 0.08
+                        height: size.height * 0.12, // Increased from 0.06 for better visibility
                         child: _buildLogo(),
                       ),
                       SizedBox(height: size.height * 0.015), // Further reduced from 0.02
@@ -315,7 +355,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      height: size.height * 0.06, // Further reduced from 0.08
+                      height: size.height * 0.12, // Increased from 0.06 for better visibility
                       child: _buildLogo(),
                     ),
                     SizedBox(height: size.height * 0.012), // Further reduced from 0.015
@@ -382,15 +422,15 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     return Hero(
       tag: 'employee_logo',
       child: Container(
-        padding: const EdgeInsets.all(10), // Further reduced from 12
+        padding: const EdgeInsets.all(16), // Increased from 10 for better logo visibility
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).primaryColor.withOpacity(0.15),
-              blurRadius: 16, // Further reduced from 20
-              spreadRadius: 1.5, // Further reduced from 2
+              blurRadius: 20, // Increased from 16 for better shadow effect
+              spreadRadius: 2, // Increased from 1.5 for better shadow effect
             ),
           ],
         ),
@@ -446,7 +486,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                   Expanded(
                     child: Text(
                       'Welcome Back',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: darkGray,
                         letterSpacing: 0.5,
@@ -468,7 +508,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                 padding: const EdgeInsets.only(left: 10), // Further reduced from 13
                 child: Text(
                   'Sign in to your employee account',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: darkGray.withOpacity(0.8),
                     letterSpacing: 0.3,
                     height: 1.3, // Further reduced from 1.4

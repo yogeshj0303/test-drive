@@ -47,18 +47,35 @@ class ActivityLog {
   });
 
   factory ActivityLog.fromJson(Map<String, dynamic> json) {
-    return ActivityLog(
-      id: json['id'] ?? 0,
-      tableName: json['table_name'] ?? '',
-      userType: json['user_type'] ?? '',
-      userId: json['user_id'] ?? 0,
-      tableId: json['table_id'] ?? 0,
-      operation: json['operation'] ?? '',
-      operationDescription: json['operation_description'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      userName: json['user_name'] ?? '',
-      tableData: json['table_data'],
-    );
+    try {
+      return ActivityLog(
+        id: json['id'] ?? 0,
+        tableName: json['table_name'] ?? '',
+        userType: json['user_type'] ?? '',
+        userId: json['user_id'] ?? 0,
+        tableId: json['table_id'] ?? 0,
+        operation: json['operation'] ?? '',
+        operationDescription: json['operation_description'] ?? '',
+        createdAt: DateTime.parse(json['created_at']),
+        updatedAt: DateTime.parse(json['updated_at']),
+        userName: json['user_name'] ?? '',
+        tableData: json['table_data'] as Map<String, dynamic>?, // Explicitly cast to Map<String, dynamic>?
+      );
+    } catch (e) {
+      // Return a default activity log if parsing fails
+      return ActivityLog(
+        id: json['id'] ?? 0,
+        tableName: json['table_name'] ?? '',
+        userType: json['user_type'] ?? '',
+        userId: json['user_id'] ?? 0,
+        tableId: json['table_id'] ?? 0,
+        operation: json['operation'] ?? 'Unknown Operation',
+        operationDescription: json['operation_description'] ?? 'Unable to parse activity description',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userName: json['user_name'] ?? 'Unknown User',
+        tableData: null,
+      );
+    }
   }
 } 

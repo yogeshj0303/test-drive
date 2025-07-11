@@ -523,24 +523,24 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
               ),
             ),
             
-            // Header with expense info
+            // Compact header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: _getClassificationColor(expense.classification).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       _getClassificationIcon(expense.classification),
                       color: _getClassificationColor(expense.classification),
-                      size: 24,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,32 +553,29 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
-                          '₹${expense.amount.toStringAsFixed(2)}',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
+                          '₹${expense.amount.toStringAsFixed(2)} • ${expense.classification}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getClassificationColor(expense.classification).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: _getStatusColor(expense.status).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      expense.classification,
+                      expense.status.toUpperCase(),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: _getClassificationColor(expense.classification),
+                        color: _getStatusColor(expense.status),
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 10,
                       ),
                     ),
                   ),
@@ -586,45 +583,87 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
               ),
             ),
             
-            // Expense details
+            // Compact details grid
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildDetailRow('Date', expense.date, Icons.calendar_today_outlined),
-                  _buildDetailRow('Payment Mode', expense.paymentMode, Icons.payment_outlined),
-                  _buildDetailRow('Status', expense.status, Icons.info_outlined),
-                  if (expense.receiptNo != null)
-                    _buildDetailRow('Receipt No', expense.receiptNo!, Icons.receipt_outlined),
-                  if (expense.note != null)
-                    _buildDetailRow('Note', expense.note!, Icons.note_outlined),
-                  if (expense.proofUrl != null)
-                    _buildDetailRow('Proof', 'Available', Icons.attach_file_outlined, onTap: () => _viewProof(expense.proofUrl!)),
-                  if (expense.approvedRejectDate != null)
-                    _buildDetailRow('Approved/Rejected Date', _formatDate(expense.approvedRejectDate!), Icons.access_time_outlined),
-                  if (expense.rejectDescription != null)
-                    _buildDetailRow('Rejection Reason', expense.rejectDescription!, Icons.cancel_outlined),
-                  if (expense.createdAt != null)
-                    _buildDetailRow('Created', _formatDate(expense.createdAt!), Icons.access_time_outlined),
-                  if (expense.approver != null)
-                    _buildDetailRow('Processed By', expense.approver!.name, Icons.person_outlined),
+                  // First row: Date and Payment Mode
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildCompactDetail('Date', _formatDate(expense.date), Icons.calendar_today_outlined),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildCompactDetail('Payment', expense.paymentMode, Icons.payment_outlined),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Second row: Receipt and Proof (if available)
+                  if (expense.receiptNo != null || expense.proofUrl != null)
+                    Row(
+                      children: [
+                        if (expense.receiptNo != null) ...[
+                          Expanded(
+                            child: _buildCompactDetail('Receipt', expense.receiptNo!, Icons.receipt_outlined),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        if (expense.proofUrl != null)
+                          Expanded(
+                            child: _buildCompactDetail('Proof', 'View', Icons.attach_file_outlined, onTap: () => _viewProof(expense.proofUrl!)),
+                          ),
+                      ],
+                    ),
+                  
+                  // Third row: Note (if available)
+                  if (expense.note != null) ...[
+                    const SizedBox(height: 8),
+                    _buildCompactDetail('Note', expense.note!, Icons.note_outlined),
+                  ],
+                  
+                  // Fourth row: Rejection reason (if available)
+                  if (expense.rejectDescription != null) ...[
+                    const SizedBox(height: 8),
+                    _buildCompactDetail('Rejection', expense.rejectDescription!, Icons.cancel_outlined),
+                  ],
+                  
+                  // Fifth row: Processing info (if available)
+                  if (expense.approvedRejectDate != null || expense.approver != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if (expense.approvedRejectDate != null) ...[
+                          Expanded(
+                            child: _buildCompactDetail('Processed', _formatDate(expense.approvedRejectDate!), Icons.access_time_outlined),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        if (expense.approver != null)
+                          Expanded(
+                            child: _buildCompactDetail('By', expense.approver!.name, Icons.person_outlined),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
             // Action buttons - only show for pending expenses
             if (expense.status.toLowerCase() == 'pending') ...[
-              // Check permissions for action buttons
               Builder(
                 builder: (context) {
                   final canChangeExpenseStatus = _currentUser?.role?.permissions.canChangeExpenseStatus ?? false;
                   
                   if (canChangeExpenseStatus) {
-                    // Show action buttons if user has permission
                     return Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: Row(
                         children: [
                           Expanded(
@@ -633,30 +672,30 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                                 Navigator.pop(context);
                                 _rejectExpense(expense);
                               },
-                              icon: const Icon(Icons.close_rounded, size: 18),
+                              icon: const Icon(Icons.close_rounded, size: 16),
                               label: const Text('Reject'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: theme.colorScheme.error,
                                 side: BorderSide(color: theme.colorScheme.error.withOpacity(0.3)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: FilledButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
                                 _approveExpense(expense);
                               },
-                              icon: const Icon(Icons.check_rounded, size: 18),
+                              icon: const Icon(Icons.check_rounded, size: 16),
                               label: const Text('Approve'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: theme.colorScheme.primary,
                                 foregroundColor: theme.colorScheme.onPrimary,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
                             ),
                           ),
@@ -664,15 +703,14 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                       ),
                     );
                   } else {
-                    // Show permission message if user lacks permissions
                     return Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
                         child: Row(
@@ -680,14 +718,14 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                             Icon(
                               Icons.info_outline,
                               color: Colors.grey.shade600,
-                              size: 20,
+                              size: 16,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'You don\'t have permission to perform actions on this expense',
+                                'No permission to perform actions',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   color: Colors.grey.shade600,
                                 ),
                               ),
@@ -700,124 +738,6 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
                 },
               ),
             ],
-            // Show status info for non-pending expenses
-            if (expense.status.toLowerCase() != 'pending')
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(expense.status).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _getStatusColor(expense.status).withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        expense.status.toLowerCase() == 'approved' 
-                            ? Icons.check_circle_rounded 
-                            : Icons.cancel_rounded,
-                        color: _getStatusColor(expense.status),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              expense.status.toUpperCase(),
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: _getStatusColor(expense.status),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (expense.approvedRejectDate != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Processed on ${_formatDate(expense.approvedRejectDate!)}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            // Show approver info for processed expenses
-            if (expense.approver != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: theme.colorScheme.surfaceVariant,
-                        backgroundImage: expense.approver!.avatarUrl != null
-                            ? NetworkImage(expense.approver!.avatarUrl!)
-                            : null,
-                        child: expense.approver!.avatarUrl == null
-                            ? Text(
-                                expense.approver!.name.isNotEmpty 
-                                    ? expense.approver!.name[0].toUpperCase()
-                                    : 'A',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Processed by',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              expense.approver!.name,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (expense.approver!.email.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                expense.approver!.email,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -867,6 +787,71 @@ class _UserExpenseScreenState extends State<UserExpenseScreen> {
             Icon(
               Icons.open_in_new_rounded,
               size: 16,
+              color: theme.colorScheme.primary,
+            ),
+        ],
+      ),
+    );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: content,
+      );
+    }
+
+    return content;
+  }
+
+  Widget _buildCompactDetail(String label, String value, IconData icon, {VoidCallback? onTap}) {
+    final theme = Theme.of(context);
+    
+    Widget content = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: onTap != null ? theme.colorScheme.primary : null,
+                    decoration: onTap != null ? TextDecoration.underline : null,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (onTap != null)
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 14,
               color: theme.colorScheme.primary,
             ),
         ],

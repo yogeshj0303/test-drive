@@ -3,8 +3,6 @@ import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import 'main_user_screen.dart';
 
-import 'forgot_password_screen.dart';
-
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
 
@@ -510,31 +508,6 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                         }
                         return null;
                       },
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ForgotPasswordScreen(),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: primaryBlue,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        ),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(

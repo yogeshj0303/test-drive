@@ -24,6 +24,7 @@ class UserProfileScreen extends StatefulWidget {
   static User? _cachedUser;
   static int _cachedTestDriveCount = 0;
   static int _cachedCompletedTestDriveCount = 0;
+  static Showroom? _cachedShowroom;
   static DateTime? _lastCacheTime;
   static const Duration _cacheValidDuration = Duration(minutes: 5);
   static List<Function()> _refreshCallbacks = [];
@@ -33,6 +34,7 @@ class UserProfileScreen extends StatefulWidget {
     _cachedUser = null;
     _cachedTestDriveCount = 0;
     _cachedCompletedTestDriveCount = 0;
+    _cachedShowroom = null;
     _lastCacheTime = null;
   }
 
@@ -40,14 +42,16 @@ class UserProfileScreen extends StatefulWidget {
   static User? get cachedUser => _cachedUser;
   static int get cachedTestDriveCount => _cachedTestDriveCount;
   static int get cachedCompletedTestDriveCount => _cachedCompletedTestDriveCount;
+  static Showroom? get cachedShowroom => _cachedShowroom;
   static DateTime? get lastCacheTime => _lastCacheTime;
   static Duration get cacheValidDuration => _cacheValidDuration;
 
   // Method to update cache
-  static void updateCache(User user, int testDriveCount, int completedTestDriveCount) {
+  static void updateCache(User user, int testDriveCount, int completedTestDriveCount, [Showroom? showroom]) {
     _cachedUser = user;
     _cachedTestDriveCount = testDriveCount;
     _cachedCompletedTestDriveCount = completedTestDriveCount;
+    _cachedShowroom = showroom;
     _lastCacheTime = DateTime.now();
     
     // Notify all active profile screens to refresh
@@ -83,12 +87,58 @@ class UserProfileScreen extends StatefulWidget {
         
         // Update cache with new counts
         if (_cachedUser != null) {
-          updateCache(_cachedUser!, testDriveCount, completedTestDriveCount);
+          updateCache(_cachedUser!, testDriveCount, completedTestDriveCount, _cachedShowroom);
         }
       }
       
     } catch (e) {
       print('Error forcing profile refresh: $e');
+    }
+  }
+
+  // Static method to force refresh showroom data
+  static Future<void> forceRefreshShowroomData() async {
+    try {
+      if (_cachedUser != null) {
+        final apiService = ApiService();
+        Showroom? showroom;
+        
+        try {
+          final showroomResponse = await apiService.getShowroomById(_cachedUser!.showroomId);
+          if (showroomResponse.success && showroomResponse.data != null) {
+            showroom = showroomResponse.data;
+          } else {
+            // Fallback: get all showrooms and find the matching one
+            final allShowroomsResponse = await apiService.getShowrooms();
+            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
+              showroom = allShowroomsResponse.data!.firstWhere(
+                (s) => s.id == _cachedUser!.showroomId,
+                orElse: () => Showroom(
+                  id: 0,
+                  authId: 0,
+                  name: '',
+                  address: '',
+                  city: '',
+                  state: '',
+                  district: '',
+                  pincode: '',
+                  ratting: 0,
+                  createdAt: '',
+                  updatedAt: '',
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          print('Error fetching showroom details: $e');
+        }
+        
+        if (showroom != null) {
+          updateCache(_cachedUser!, _cachedTestDriveCount, _cachedCompletedTestDriveCount, showroom);
+        }
+      }
+    } catch (e) {
+      print('Error forcing showroom refresh: $e');
     }
   }
 
@@ -131,6 +181,10 @@ class UserProfileScreenState extends State<UserProfileScreen>
       curve: Curves.easeOutCubic,
     ));
     _animationController.forward();
+    
+    // Register refresh callback
+    UserProfileScreen.registerRefreshCallback(_refreshProfileData);
+    
     _loadUserProfile();
   }
 
@@ -161,10 +215,17 @@ class UserProfileScreenState extends State<UserProfileScreen>
       if (timeSinceLastCache < UserProfileScreen.cacheValidDuration) {
         setState(() {
           _user = UserProfileScreen.cachedUser;
+          _showroom = UserProfileScreen.cachedShowroom;
           _testDriveCount = UserProfileScreen.cachedTestDriveCount;
           _completedTestDriveCount = UserProfileScreen.cachedCompletedTestDriveCount;
           _isLoading = false;
         });
+        
+        // If showroom data is missing from cache, try to fetch it separately
+        if (_showroom == null && UserProfileScreen.cachedUser != null) {
+          _fetchShowroomData(UserProfileScreen.cachedUser!.showroomId);
+        }
+        
         return;
       }
     }
@@ -231,7 +292,8 @@ class UserProfileScreenState extends State<UserProfileScreen>
           UserProfileScreen.updateCache(
             profileResponse.data!,
             testDriveCount,
-            completedTestDriveCount
+            completedTestDriveCount,
+            showroom
           );
           
           setState(() {
@@ -269,6 +331,60 @@ class UserProfileScreenState extends State<UserProfileScreen>
     await _loadUserProfile();
   }
 
+  // Method to fetch showroom data separately
+  Future<void> _fetchShowroomData(int showroomId) async {
+    try {
+      Showroom? showroom;
+      try {
+        final showroomResponse = await _apiService.getShowroomById(showroomId);
+        if (showroomResponse.success && showroomResponse.data != null) {
+          showroom = showroomResponse.data;
+        } else {
+          // Fallback: get all showrooms and find the matching one
+          final allShowroomsResponse = await _apiService.getShowrooms();
+          if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
+            showroom = allShowroomsResponse.data!.firstWhere(
+              (s) => s.id == showroomId,
+              orElse: () => Showroom(
+                id: 0,
+                authId: 0,
+                name: '',
+                address: '',
+                city: '',
+                state: '',
+                district: '',
+                pincode: '',
+                ratting: 0,
+                createdAt: '',
+                updatedAt: '',
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        print('Error fetching showroom details: $e');
+      }
+      
+      if (showroom != null && mounted) {
+        setState(() {
+          _showroom = showroom;
+        });
+        
+        // Update cache with showroom data
+        if (UserProfileScreen.cachedUser != null) {
+          UserProfileScreen.updateCache(
+            UserProfileScreen.cachedUser!,
+            UserProfileScreen.cachedTestDriveCount,
+            UserProfileScreen.cachedCompletedTestDriveCount,
+            showroom,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error fetching showroom data: $e');
+    }
+  }
+
   // Method to refresh profile data without clearing cache (for real-time updates)
   Future<void> _refreshProfileData() async {
     try {
@@ -291,6 +407,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
             UserProfileScreen.cachedUser!,
             testDriveCount,
             completedTestDriveCount,
+            UserProfileScreen.cachedShowroom,
           );
         }
         
@@ -313,6 +430,10 @@ class UserProfileScreenState extends State<UserProfileScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
+    
+    // Unregister refresh callback
+    UserProfileScreen.unregisterRefreshCallback(_refreshProfileData);
+    
     super.dispose();
   }
 
@@ -781,27 +902,18 @@ class UserProfileScreenState extends State<UserProfileScreen>
   }
 
   String _getLocationDisplay() {
-    print('Debug: _showroom = $_showroom');
     if (_showroom == null) {
-      print('Debug: Showroom is null, returning "Not specified"');
       return 'Not specified';
     }
     
-    print('Debug: Showroom city = "${_showroom!.city}", state = "${_showroom!.state}"');
-    
     // Use the showroom's locationDisplay method if available, otherwise format manually
     if (_showroom!.city.isNotEmpty && _showroom!.state.isNotEmpty) {
-      final location = '${_showroom!.city}, ${_showroom!.state}';
-      print('Debug: Returning location: $location');
-      return location;
+      return '${_showroom!.city}, ${_showroom!.state}';
     } else if (_showroom!.city.isNotEmpty) {
-      print('Debug: Returning city only: ${_showroom!.city}');
       return _showroom!.city;
     } else if (_showroom!.state.isNotEmpty) {
-      print('Debug: Returning state only: ${_showroom!.state}');
       return _showroom!.state;
     } else {
-      print('Debug: Both city and state are empty, returning "Not specified"');
       return 'Not specified';
     }
   }
@@ -1248,5 +1360,12 @@ class UserProfileScreenState extends State<UserProfileScreen>
   // Expose this method for parent to call
   void refreshProfileData() {
     _refreshProfileData();
+  }
+
+  // Expose this method for parent to call
+  void refreshShowroomData() {
+    if (UserProfileScreen.cachedUser != null) {
+      _fetchShowroomData(UserProfileScreen.cachedUser!.showroomId);
+    }
   }
 }

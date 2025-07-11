@@ -474,43 +474,43 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     required List<Widget> children,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3080A5).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                   child: Icon(
                     icon,
                     color: const Color(0xFF3080A5),
-                    size: 14,
+                    size: 12,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             ...children,
           ],
         ),
@@ -529,7 +529,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     String? prefixText,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
@@ -538,32 +538,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           labelText: label,
           hintText: hint,
           prefixText: prefixText,
-          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 18),
+          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 16),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3080A5), width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Colors.red.shade300),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
         ),
         validator: validator,
       ),
@@ -578,60 +578,60 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     required Function(String?) onChanged,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       child: DropdownButtonFormField<String>(
         value: value,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 18),
+          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 16),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3080A5), width: 1.5),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 12),
         ),
         items: items.map((item) {
           return DropdownMenuItem(
             value: item,
-            child: Text(item, style: const TextStyle(fontSize: 13)),
+            child: Text(item, style: const TextStyle(fontSize: 12)),
           );
         }).toList(),
         onChanged: onChanged,
-        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF3080A5)),
+        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF3080A5), size: 16),
         dropdownColor: Colors.white,
-        style: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 13),
+        style: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 12),
       ),
     );
   }
 
   Widget _buildDateField() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       child: InkWell(
         onTap: _selectDate,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             color: Colors.grey.shade50,
           ),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 18),
-              const SizedBox(width: 6),
+              Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 16),
+              const SizedBox(width: 4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +639,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     Text(
                       'Date',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         color: Colors.grey.shade600,
                         fontWeight: FontWeight.w500,
                       ),
@@ -648,7 +648,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     Text(
                       '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Color(0xFF1A1A1A),
                         fontWeight: FontWeight.w500,
                       ),
@@ -656,7 +656,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ],
                 ),
               ),
-              Icon(Icons.keyboard_arrow_right, color: Colors.grey.shade600, size: 18),
+              Icon(Icons.keyboard_arrow_right, color: Colors.grey.shade600, size: 16),
             ],
           ),
         ),
@@ -666,39 +666,39 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   Widget _buildMediaUploadSection() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Receipt/Proof',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: Colors.grey.shade700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           
           if (_selectedImage != null || _selectedVideo != null) ...[
             // Media Preview
             Container(
               width: double.infinity,
-              height: 150,
+              height: 120,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
                 color: Colors.grey.shade50,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
                 child: Stack(
                   children: [
                     if (_selectedImage != null)
                       Image.file(
                         _selectedImage!,
                         width: double.infinity,
-                        height: 150,
+                        height: 120,
                         fit: BoxFit.cover,
                       )
                     else if (_selectedVideo != null && _isVideoInitialized)
@@ -710,8 +710,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     
                     // Remove button
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: 4,
+                      right: 4,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.6),
@@ -722,12 +722,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           icon: const Icon(
                             Icons.close,
                             color: Colors.white,
-                            size: 16,
+                            size: 14,
                           ),
-                          padding: const EdgeInsets.all(3),
+                          padding: const EdgeInsets.all(2),
                           constraints: const BoxConstraints(
-                            minWidth: 28,
-                            minHeight: 28,
+                            minWidth: 24,
+                            minHeight: 24,
                           ),
                         ),
                       ),
@@ -756,7 +756,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                   ? Icons.pause
                                   : Icons.play_arrow,
                               color: Colors.white,
-                              size: 24,
+                              size: 20,
                             ),
                           ),
                         ),
@@ -765,83 +765,82 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
           ],
           
           // Upload buttons with improved design
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
               color: Colors.grey.shade50,
             ),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Upload Media',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade700,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _pickImage,
-                        icon: const Icon(Icons.image, size: 14),
+                        icon: const Icon(Icons.image, size: 12),
                         label: const Text(
                           'Photo',
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 9),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3080A5),
                           side: BorderSide(color: const Color(0xFF3080A5)),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _pickVideo,
-                        icon: const Icon(Icons.videocam, size: 14),
+                        icon: const Icon(Icons.videocam, size: 12),
                         label: const Text(
                           'Video',
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 9),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3080A5),
                           side: BorderSide(color: const Color(0xFF3080A5)),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   'Tap to choose from camera or gallery',
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: 8,
                     color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   'Max: 10MB for photos, 50MB for videos',
                   style: TextStyle(
-                    fontSize: 8,
+                    fontSize: 7,
                     color: Colors.grey.shade500,
                     fontStyle: FontStyle.italic,
                   ),
@@ -859,11 +858,29 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        automaticallyImplyLeading: widget.showBackButton,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF3080A5),
+                    size: 18,
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           'Add Expense',
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 18,
+            fontSize: 16,
           ),
         ),
         backgroundColor: Colors.white,
@@ -880,7 +897,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Form(
             key: _formKey,
             child: Column(
@@ -888,23 +905,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               children: [
                 // Header
                 Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'New Expense Entry',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey.shade800,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
                         'Fill in the details below to submit your expense',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -1005,16 +1022,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Action Buttons
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        height: 42,
+                        height: 36,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           border: Border.all(color: const Color(0xFF3080A5)),
                         ),
                         child: TextButton(
@@ -1022,25 +1039,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           style: TextButton.styleFrom(
                             foregroundColor: const Color(0xFF3080A5),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           child: const Text(
                             'Reset Form',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Container(
-                        height: 42,
+                        height: 36,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           gradient: const LinearGradient(
                             colors: [Color(0xFF3080A5), Color(0xFF1E5A7A)],
                             begin: Alignment.centerLeft,
@@ -1049,8 +1066,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFF3080A5).withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
                             ),
                           ],
                         ),
@@ -1061,13 +1078,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             foregroundColor: Colors.white,
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
+                                  height: 14,
+                                  width: 14,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -1076,7 +1093,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               : const Text(
                                   'Submit Expense',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

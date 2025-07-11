@@ -9,7 +9,12 @@ import '../../services/api_config.dart';
 import '../../models/test_drive_model.dart';
 
 class AssignedTestDrivesScreen extends StatefulWidget {
-  const AssignedTestDrivesScreen({super.key});
+  final bool showBackButton;
+  
+  const AssignedTestDrivesScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
   State<AssignedTestDrivesScreen> createState() => AssignedTestDrivesScreenState();
@@ -97,6 +102,64 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     }
   }
 
+  Future<void> _loadTestDrivesByStatus(String status) async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Get employee data to get the driver ID
+      final employee = await EmployeeStorageService.getEmployeeData();
+      if (employee == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Employee data not found. Please login again.';
+        });
+        return;
+      }
+
+      // Convert display name to API status
+      final apiStatus = _getApiStatusFromDisplayName(status);
+      
+      final response = await _apiService.getTestDrivesByStatus(employee.id, apiStatus);
+      
+      if (response.success && response.data != null) {
+        setState(() {
+          _testDrives = response.data!.data;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          _testDrives = []; // Clear the list
+          _isLoading = false;
+          _errorMessage = response.message ?? 'Failed to load test drives by status';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An error occurred: ${e.toString()}';
+      });
+    }
+  }
+
+  String _getApiStatusFromDisplayName(String displayName) {
+    switch (displayName.toLowerCase()) {
+      case 'approved':
+        return 'approved'; // Approved maps directly to approved
+      case 'completed':
+        return 'completed';
+      case 'cancelled':
+        return 'cancelled';
+      case 'rescheduled':
+        return 'rescheduled';
+      default:
+        return displayName.toLowerCase();
+    }
+  }
+
   Future<void> _refreshData() async {
     setState(() {
       _isRefreshing = true;
@@ -175,10 +238,8 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           (testDrive.car?.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
           testDrive.id.toString().contains(_searchQuery.toLowerCase());
       
-      final matchesFilter = _selectedFilter == 'All' || 
-          _getStatusDisplayName(testDrive.status ?? '') == _selectedFilter;
-      
-      return matchesSearch && matchesFilter;
+      // No need for filter matching since we're using API filtering
+      return matchesSearch;
     }).toList();
   }
 
@@ -194,10 +255,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       case 'completed':
         return 'Completed';
       case 'cancelled':
-      case 'canceled':
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';
+      case 'rescheduled':
+        return 'Rescheduled';
       default:
         return status;
     }
@@ -215,10 +277,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       case 'completed':
         return const Color(0xFF10B981);
       case 'cancelled':
-      case 'canceled':
         return const Color(0xFFEF4444);
       case 'rejected':
         return const Color(0xFFDC2626);
+      case 'rescheduled':
+        return const Color(0xFF9C27B0); // Purple color for rescheduled
       default:
         return Colors.grey;
     }
@@ -236,10 +299,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       case 'completed':
         return Icons.check_circle;
       case 'cancelled':
-      case 'canceled':
         return Icons.cancel;
       case 'rejected':
         return Icons.block;
+      case 'rescheduled':
+        return Icons.schedule; // Use schedule icon for rescheduled
       default:
         return Icons.help;
     }
@@ -250,11 +314,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        automaticallyImplyLeading: widget.showBackButton,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF3080A5),
+                    size: 18,
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           'Assigned Test Drives',
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 18,
+            fontSize: 16,
           ),
         ),
         backgroundColor: Colors.white,
@@ -276,7 +358,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
             children: [
               // Header Section with Stats
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -291,25 +373,25 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: const Color(0xFF3080A5).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Stack(
                         children: [
                           const Icon(
                             Icons.directions_car,
                             color: Color(0xFF3080A5),
-                            size: 20,
+                            size: 18,
                           ),
                           if (_isRefreshing)
                             Positioned(
                               right: -2,
                               top: -2,
                               child: Container(
-                                width: 12,
-                                height: 12,
+                                width: 10,
+                                height: 10,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
@@ -330,7 +412,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +422,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                 ? 'Loading...' 
                                 : '${_filteredTestDrives.length} Test Drives',
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF1E293B),
                             ),
@@ -352,7 +434,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                     ? 'Refreshing data...'
                                     : 'Manage your assigned test drives',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: Colors.grey[600],
                             ),
                           ),
@@ -367,30 +449,32 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               if (_errorMessage != null)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: Colors.red[200]!),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red[700], size: 20),
-                      const SizedBox(width: 8),
+                      Icon(Icons.error_outline, color: Colors.red[700], size: 18),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           _errorMessage!,
                           style: TextStyle(
                             color: Colors.red[700],
-                            fontSize: 13,
+                            fontSize: 12,
                           ),
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.refresh, color: Colors.red[700], size: 20),
+                        icon: Icon(Icons.refresh, color: Colors.red[700], size: 18),
                         onPressed: _loadAssignedTestDrives,
                         tooltip: 'Retry',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
@@ -399,13 +483,13 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               // Search and Filter Section
               if (!_isLoading)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
                       // Search Bar
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -419,16 +503,16 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Search test drives...',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
                             suffixIcon: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.all(4),
+                              margin: const EdgeInsets.all(3),
                               decoration: BoxDecoration(
                                 color: _isListening 
                                     ? const Color(0xFF3080A5).withOpacity(0.1)
                                     : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Stack(
                                 alignment: Alignment.center,
@@ -440,21 +524,23 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                         _isListening ? Icons.mic : Icons.mic_none_rounded,
                                         key: ValueKey<bool>(_isListening),
                                         color: _isListening ? const Color(0xFF3080A5) : Colors.grey[400],
-                                        size: 22,
+                                        size: 20,
                                       ),
                                     ),
                                     onPressed: _startListening,
                                     tooltip: _isListening 
                                         ? 'Stop listening' 
                                         : 'Tap to start voice search\n💡 Tip: Say "John Smith" instead of "J"\n💡 Tip: Say "BMW X5" instead of "B"',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
                                   ),
                                   if (_isListening)
                                     Positioned(
-                                      right: 8,
-                                      top: 8,
+                                      right: 6,
+                                      top: 6,
                                       child: Container(
-                                        width: 8,
-                                        height: 8,
+                                        width: 6,
+                                        height: 6,
                                         decoration: BoxDecoration(
                                           color: Colors.red,
                                           shape: BoxShape.circle,
@@ -469,12 +555,12 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                               ),
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
                             fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
                           onChanged: (value) {
                             setState(() {
@@ -483,7 +569,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       // Filter Chips
                       SingleChildScrollView(
                         clipBehavior: Clip.none,
@@ -491,9 +577,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                         child: Row(
                           children: [
                             _buildFilterChip('All', Icons.list_alt),
-                            _buildFilterChip('Scheduled', Icons.schedule),
+                            _buildFilterChip('Approved', Icons.schedule),
                             _buildFilterChip('Completed', Icons.check_circle),
                             _buildFilterChip('Cancelled', Icons.cancel),
+                            _buildFilterChip('Rescheduled', Icons.schedule),
                           ],
                         ),
                       ),
@@ -511,11 +598,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             CircularProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3080A5)),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 12),
                             Text(
                               'Loading assigned test drives...',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: Color(0xFF6B7280),
                               ),
                             ),
@@ -528,52 +615,56 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(20),
+                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   clipBehavior: Clip.none,
                                   child: Icon(
                                     Icons.directions_car_outlined,
-                                    size: 40,
+                                    size: 32,
                                     color: Colors.grey[400],
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 8),
                                 Text(
                                   _errorMessage != null 
                                       ? 'Failed to load test drives'
-                                      : 'No test drives found',
+                                      : _selectedFilter == 'All'
+                                          ? 'No test drives found'
+                                          : 'No $_selectedFilter test drives',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.grey[600],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
                                   _errorMessage != null
                                       ? 'Please check your connection and try again'
-                                      : 'Try adjusting your search or filters',
+                                      : _selectedFilter == 'All'
+                                          ? 'Try adjusting your search or filters'
+                                          : 'No test drives found with $_selectedFilter status',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     color: Colors.grey[500],
                                   ),
                                 ),
                                 if (_errorMessage != null) ...[
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
                                   ElevatedButton.icon(
                                     onPressed: _loadAssignedTestDrives,
-                                    icon: const Icon(Icons.refresh, size: 16),
-                                    label: const Text('Retry'),
+                                    icon: const Icon(Icons.refresh, size: 14),
+                                    label: const Text('Retry', style: TextStyle(fontSize: 12)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF3080A5),
                                       foregroundColor: Colors.white,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
                                   ),
@@ -582,7 +673,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: _filteredTestDrives.length,
                             itemBuilder: (context, index) {
                               final testDrive = _filteredTestDrives[index];
@@ -600,7 +691,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
   Widget _buildFilterChip(String label, IconData icon) {
     final isSelected = _selectedFilter == label;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 6),
       child: FilterChip(
         clipBehavior: Clip.none,
         label: Row(
@@ -608,11 +699,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           children: [
             Icon(
               icon,
-              size: 14,
+              size: 12,
               color: isSelected ? Colors.white : const Color(0xFF3080A5),
             ),
-            const SizedBox(width: 4),
-            Text(label, style: const TextStyle(fontSize: 12)),
+            const SizedBox(width: 3),
+            Text(label, style: const TextStyle(fontSize: 11)),
           ],
         ),
         selected: isSelected,
@@ -620,6 +711,13 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           setState(() {
             _selectedFilter = label;
           });
+          
+          // Load test drives based on selected filter
+          if (label == 'All') {
+            _loadAssignedTestDrives();
+          } else {
+            _loadTestDrivesByStatus(label);
+          }
         },
         backgroundColor: Colors.white,
         selectedColor: const Color(0xFF3080A5),
@@ -632,10 +730,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           color: isSelected ? const Color(0xFF3080A5) : Colors.grey[300]!,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
         elevation: isSelected ? 2 : 0,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       ),
     );
   }
@@ -649,10 +747,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     bool isCancelled = _getStatusDisplayName(testDrive.status) == 'Cancelled';
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -663,7 +761,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       ),
       clipBehavior: Clip.none,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -672,38 +770,38 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3080A5).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     testDrive.id.toString(),
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Color(0xFF3080A5),
                     ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: statusColor.withOpacity(0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusIcon, size: 12, color: statusColor),
-                      const SizedBox(width: 4),
+                      Icon(statusIcon, size: 10, color: statusColor),
+                      const SizedBox(width: 3),
                       Text(
                         statusText,
                         style: TextStyle(
                           color: statusColor,
                           fontWeight: FontWeight.w600,
-                          fontSize: 11,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -712,7 +810,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               ],
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             
             // Customer and Vehicle Info Row
             Row(
@@ -723,19 +821,19 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                   child: Row(
                     children: [
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           color: const Color(0xFF3080A5).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
                           Icons.person,
                           color: Color(0xFF3080A5),
-                          size: 16,
+                          size: 14,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,7 +842,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                               testDrive.userName ?? 'Unknown',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: Color(0xFF1E293B),
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -753,7 +851,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             Text(
                               testDrive.userMobile ?? 'No phone',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 color: Colors.grey[600],
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -770,10 +868,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                 Expanded(
                   flex: 3,
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -783,15 +881,15 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             Icon(
                               Icons.directions_car,
                               color: const Color(0xFF3080A5),
-                              size: 14,
+                              size: 12,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Expanded(
                               child: Text(
                                 testDrive.car?.name ?? 'Unknown Car',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: Color(0xFF1E293B),
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -799,11 +897,11 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           testDrive.car?.showroom?.name ?? 'Unknown Showroom',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: Colors.grey[600],
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -816,21 +914,21 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               ],
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             
             // Date and Time
             Row(
               children: [
                 Icon(
                   Icons.calendar_today,
-                  size: 14,
+                  size: 12,
                   color: Colors.grey[600],
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   '${testDrive.date ?? 'No date'} at ${testDrive.time ?? 'No time'}',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.grey[700],
                     fontWeight: FontWeight.w500,
                   ),
@@ -839,12 +937,12 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
             ),
             
             if (testDrive.note?.isNotEmpty == true) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
                 ),
                 child: Row(
@@ -852,15 +950,15 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                   children: [
                     Icon(
                       Icons.note,
-                      size: 12,
+                      size: 10,
                       color: const Color(0xFFF59E0B),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         testDrive.note ?? '',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: Color(0xFF92400E),
                         ),
                       ),
@@ -870,7 +968,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
               ),
             ],
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             
             // Action Buttons
             Column(
@@ -880,47 +978,50 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _viewDetails(testDrive),
-                        icon: const Icon(Icons.visibility, size: 16),
-                        label: const Text('View Details', style: TextStyle(fontSize: 12)),
+                        icon: const Icon(Icons.visibility, size: 14),
+                        label: const Text('View Details', style: TextStyle(fontSize: 11)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3080A5),
                           side: const BorderSide(color: Color(0xFF3080A5)),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 6),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     if (!isCompleted && !isCancelled)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _updateStatus(testDrive),
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Update Status', style: TextStyle(fontSize: 12)),
+                          icon: const Icon(Icons.edit, size: 14),
+                          label: const Text('Update Status', style: TextStyle(fontSize: 11)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF3080A5),
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 6),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                         ),
                       ),
                     if (isCompleted || isCancelled)
                       Expanded(
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isCompleted ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFEF4444).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
+                        child: OutlinedButton(
+                          onPressed: null, // Disabled button
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isCompleted ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            side: BorderSide(
                               color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                               width: 1.5,
+                            ),
+                            backgroundColor: isCompleted ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFEF4444).withOpacity(0.1),
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           child: Text(
@@ -928,7 +1029,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             style: TextStyle(
                               color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 11,
                             ),
                           ),
                         ),
@@ -936,20 +1037,20 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                   ],
                 ),
                 if (!isCompleted) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () => _viewGatePass(testDrive),
-                      icon: const Icon(Icons.qr_code, size: 16),
-                      label: const Text('View Gate Pass', style: TextStyle(fontSize: 12)),
+                      icon: const Icon(Icons.qr_code, size: 14),
+                      label: const Text('View Gate Pass', style: TextStyle(fontSize: 11)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
@@ -981,7 +1082,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
           children: [
             // Handle bar
             Container(
-              margin: const EdgeInsets.only(top: 12),
+              margin: const EdgeInsets.only(top: 8),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
@@ -992,22 +1093,22 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
             
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3080A5).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
                       Icons.directions_car,
                       color: Color(0xFF3080A5),
-                      size: 20,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1016,14 +1117,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           'Test Drive Details',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 18,
+                            fontSize: 16,
                             color: Color(0xFF1E293B),
                           ),
                         ),
                         Text(
                           'ID: ${testDrive.id}',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -1035,8 +1136,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                     icon: Icon(
                       Icons.close,
                       color: Colors.grey[600],
-                      size: 20,
+                      size: 18,
                     ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
@@ -1045,16 +1148,16 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
             // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Customer Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Column(
@@ -1064,29 +1167,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.person,
                                   color: Color(0xFF3080A5),
-                                  size: 18,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 'Customer Information',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           
                           // Customer Details Grid
                           Row(
@@ -1098,19 +1201,19 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Name', testDrive.userName ?? 'Unknown', Icons.person_outline),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Phone', testDrive.userMobile ?? 'No phone', Icons.phone),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               // Right Column
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Email', testDrive.userEmail ?? 'No email', Icons.email),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Aadhar', testDrive.userAdhar ?? 'No aadhar', Icons.credit_card),
                                   ],
                                 ),
@@ -1121,14 +1224,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // Vehicle Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Column(
@@ -1138,29 +1241,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.directions_car,
                                   color: Color(0xFF3080A5),
-                                  size: 18,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 'Vehicle Information',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           
                           // Vehicle Details Grid
                           Row(
@@ -1172,27 +1275,27 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Model', testDrive.car?.name ?? 'Unknown', Icons.car_rental),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Showroom', testDrive.car?.showroom?.name ?? 'Unknown', Icons.store),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Year', testDrive.car?.yearOfManufacture.toString() ?? 'Unknown', Icons.calendar_today),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Color', testDrive.car?.color ?? 'Unknown', Icons.palette),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               // Right Column
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Fuel Type', testDrive.car?.fuelType ?? 'Unknown', Icons.local_gas_station),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Transmission', testDrive.car?.transmission ?? 'Unknown', Icons.settings),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Seating', '${testDrive.car?.seatingCapacity ?? 0} seats', Icons.airline_seat_recline_normal),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Body Type', testDrive.car?.bodyType ?? 'Unknown', Icons.style),
                                   ],
                                 ),
@@ -1203,7 +1306,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // Car Images Section
                     if (testDrive.car?.mainImage != null || (testDrive.car?.images != null && testDrive.car!.images!.isNotEmpty))
@@ -1215,10 +1318,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           if (testDrive.car?.mainImage != null) ...[
                             Container(
                               width: double.infinity,
-                              height: 200,
-                              margin: const EdgeInsets.only(bottom: 12),
+                              height: 160,
+                              margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: Colors.grey[300]!),
                               ),
                               clipBehavior: Clip.antiAlias,
@@ -1244,7 +1347,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                       child: Icon(
                                         Icons.error_outline,
                                         color: Colors.grey,
-                                        size: 40,
+                                        size: 32,
                                       ),
                                     ),
                                   );
@@ -1256,7 +1359,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           // Additional Images
                           if (testDrive.car?.images != null && testDrive.car!.images!.isNotEmpty)
                             Container(
-                              height: 120,
+                              height: 100,
                               child: ListView.builder(
                               scrollDirection: Axis.horizontal,
                               itemCount: testDrive.car!.images!.length,
@@ -1267,10 +1370,10 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                     : null;
                                 
                                 return Container(
-                                  width: 120,
-                                  margin: const EdgeInsets.only(right: 8),
+                                  width: 100,
+                                  margin: const EdgeInsets.only(right: 6),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: Colors.grey[300]!),
                                   ),
                                   clipBehavior: Clip.antiAlias,
@@ -1297,7 +1400,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                                 child: Icon(
                                                   Icons.error_outline,
                                                   color: Colors.grey,
-                                                  size: 40,
+                                                  size: 32,
                                                 ),
                                               ),
                                             );
@@ -1309,7 +1412,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                             child: Icon(
                                               Icons.image_not_supported,
                                               color: Colors.grey,
-                                              size: 40,
+                                              size: 32,
                                             ),
                                           ),
                                         ),
@@ -1320,14 +1423,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                         ],
                       ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // Pickup Information Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Column(
@@ -1337,42 +1440,42 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.location_on,
                                   color: Color(0xFF3080A5),
-                                  size: 18,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 'Pickup Information',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           
                           // Pickup Details
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildCompactDetailRow('Address', testDrive.pickupAddress ?? 'No address', Icons.home),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Row(
                                 children: [
                                   Expanded(
                                     child: _buildCompactDetailRow('City', testDrive.pickupCity ?? 'No city', Icons.location_city),
                                   ),
-                                  const SizedBox(width: 16),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: _buildCompactDetailRow('Pincode', testDrive.pickupPincode ?? 'No pincode', Icons.pin_drop),
                                   ),
@@ -1384,14 +1487,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // License & Aadhar Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Column(
@@ -1401,29 +1504,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.credit_card,
                                   color: Color(0xFF3080A5),
-                                  size: 18,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 'License & Aadhar',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           
                           // License & Aadhar Details
                           Row(
@@ -1431,7 +1534,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                               Expanded(
                                 child: _buildCompactDetailRow('Driving License', testDrive.drivingLicense ?? 'No license', Icons.drive_eta),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: _buildCompactDetailRow('Aadhar Number', testDrive.aadharNo ?? 'No aadhar', Icons.verified_user),
                               ),
@@ -1441,14 +1544,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // Test Drive Section
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Column(
@@ -1458,29 +1561,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Icon(
                                   Icons.schedule,
                                   color: Color(0xFF3080A5),
-                                  size: 18,
+                                  size: 16,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 'Test Drive Details',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           
                           // Test Drive Details Grid
                           Row(
@@ -1492,21 +1595,21 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Date', testDrive.date ?? 'No date', Icons.calendar_today),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Time', testDrive.time ?? 'No time', Icons.access_time),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Status', _getStatusDisplayName(testDrive.status), Icons.info_outline),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               // Right Column
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildCompactDetailRow('Driver ID', testDrive.driverId ?? 'Not assigned', Icons.person_pin),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     _buildCompactDetailRow('Update Date', testDrive.driverUpdateDate ?? 'Not updated', Icons.update),
                                   ],
                                 ),
@@ -1518,14 +1621,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                     ),
                     
                     if (testDrive.note?.isNotEmpty == true) ...[
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       
                       // Notes Section
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.grey[200]!),
                         ),
                         child: Column(
@@ -1535,43 +1638,43 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF3080A5).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Icon(
                                     Icons.note,
                                     color: Color(0xFF3080A5),
-                                    size: 18,
+                                    size: 16,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 const Text(
                                   'Notes',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     color: Color(0xFF1E293B),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             
                             // Notes Content
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF3C7),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
                               ),
                               child: Text(
                                 testDrive.note ?? '',
                                 style: const TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   color: Color(0xFF92400E),
                                   height: 1.4,
                                 ),
@@ -1583,7 +1686,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                     ],
                     
                     // Bottom padding for safe area
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -1625,18 +1728,18 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: const Color(0xFF3080A5).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Icon(
             icon,
-            size: 14,
+            size: 12,
             color: const Color(0xFF3080A5),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1646,14 +1749,14 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: Colors.grey[600],
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
               ),
               Text(
                 value,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Color(0xFF1E293B),
                 ),
                 overflow: TextOverflow.ellipsis,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../models/test_drive_model.dart';
+import '../../models/employee_model.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 
@@ -15,6 +17,7 @@ class UpdateStatusScreen extends StatefulWidget {
 class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
   bool _isLoading = false;
   AssignedTestDrive? _selectedTestDrive;
+  final GlobalKey<_UpdateStatusFormState> _formKey = GlobalKey<_UpdateStatusFormState>();
 
   @override
   void initState() {
@@ -85,13 +88,14 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Update Status',
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 18,
+            color: Colors.black87,
           ),
         ),
         backgroundColor: Colors.white,
@@ -99,10 +103,29 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
         elevation: 0,
         centerTitle: true,
         toolbarHeight: 56,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
+        shape: const Border(
+          bottom: BorderSide(
+            color: Color(0xFFE0E0E0),
+            width: 1,
+          ),
         ),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, size: 18),
+            onPressed: () => Navigator.of(context).pop(),
+            style: IconButton.styleFrom(
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+        ),
+        actions: [
+        ],
       ),
       body: SafeArea(
         child: _buildUpdateForm(),
@@ -110,10 +133,20 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
     );
   }
 
+  void _resetForm() {
+    // Reset the form state
+    _formKey.currentState?.resetForm();
+    setState(() {
+      _selectedTestDrive = widget.selectedTestDrive;
+    });
+  }
+
   Widget _buildUpdateForm() {
     return UpdateStatusForm(
+      key: _formKey,
       testDrive: _selectedTestDrive,
       onCancel: () => Navigator.of(context).pop(),
+      onReset: _resetForm,
     );
   }
 }
@@ -121,8 +154,9 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
 class UpdateStatusForm extends StatefulWidget {
   final AssignedTestDrive? testDrive;
   final VoidCallback onCancel;
+  final VoidCallback? onReset;
   
-  const UpdateStatusForm({super.key, this.testDrive, required this.onCancel});
+  const UpdateStatusForm({super.key, this.testDrive, required this.onCancel, this.onReset});
 
   @override
   State<UpdateStatusForm> createState() => _UpdateStatusFormState();
@@ -133,10 +167,13 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
   final _notesController = TextEditingController();
   String _selectedStatus = 'completed';
   bool _isLoading = false;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
 
   final List<Map<String, dynamic>> _statusOptions = [
     {'value': 'completed', 'label': 'Completed', 'color': Colors.green, 'icon': Icons.check_circle_outline},
     {'value': 'canceled', 'label': 'Cancelled', 'color': Colors.red, 'icon': Icons.cancel_outlined},
+    {'value': 'rescheduled', 'label': 'Reschedule', 'color': const Color(0xFF9C27B0), 'icon': Icons.schedule},
   ];
 
   @override
@@ -153,14 +190,46 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
     }
   }
 
+  bool _canUpdateStatus() {
+    if (widget.testDrive == null) return false;
+    
+    final status = widget.testDrive!.status?.toLowerCase() ?? '';
+    // Only allow updates if status is not canceled or completed
+    return status != 'canceled' && status != 'cancelled' && status != 'completed';
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
   }
 
+  void resetForm() {
+    setState(() {
+      _selectedStatus = 'completed';
+      _notesController.clear();
+      _selectedDate = null;
+      _selectedTime = null;
+    });
+    
+    // Call the parent reset callback if provided
+    widget.onReset?.call();
+  }
+
   Future<void> _updateStatus() async {
     if (_formKey.currentState!.validate()) {
+      // Validate date and time for rescheduling
+      if (_selectedStatus == 'rescheduled') {
+        if (_selectedDate == null) {
+          _showErrorSnackBar('Please select a new date for rescheduling');
+          return;
+        }
+        if (_selectedTime == null) {
+          _showErrorSnackBar('Please select a new time for rescheduling');
+          return;
+        }
+      }
+      
       setState(() => _isLoading = true);
       
       try {
@@ -172,12 +241,33 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
           return;
         }
 
-        final response = await EmployeeApiService().updateTestDriveStatus(
-          testDriveId: widget.testDrive!.id,
-          driverId: employee.id,
-          status: _selectedStatus,
-          cancelDescription: _selectedStatus == 'canceled' ? _notesController.text.trim() : null,
-        );
+        EmployeeApiResponse<Map<String, dynamic>> response;
+        
+        if (_selectedStatus == 'rescheduled') {
+          // Format the new date and time
+          final newDateTime = DateTime(
+            _selectedDate!.year,
+            _selectedDate!.month,
+            _selectedDate!.day,
+            _selectedTime!.hour,
+            _selectedTime!.minute,
+          );
+          final formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(newDateTime);
+          
+          response = await EmployeeApiService().rescheduleTestDrive(
+            testDriveId: widget.testDrive!.id,
+            driverId: employee.id,
+            newDate: formattedDate,
+            reason: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+          );
+        } else {
+          response = await EmployeeApiService().updateTestDriveStatus(
+            testDriveId: widget.testDrive!.id,
+            driverId: employee.id,
+            status: _selectedStatus,
+            cancelDescription: _selectedStatus == 'canceled' ? _notesController.text.trim() : null,
+          );
+        }
         
         setState(() => _isLoading = false);
         
@@ -213,6 +303,8 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         return Colors.red;
       case 'rejected':
         return Colors.red;
+      case 'rescheduled':
+        return const Color(0xFF9C27B0);
       default:
         return Colors.grey;
     }
@@ -232,6 +324,8 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         return Icons.cancel_outlined;
       case 'rejected':
         return Icons.block;
+      case 'rescheduled':
+        return Icons.schedule;
       default:
         return Icons.help;
     }
@@ -251,6 +345,8 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';
+      case 'rescheduled':
+        return 'Rescheduled';
       default:
         return status;
     }
@@ -264,6 +360,9 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
       );
     }
 
+    // Check if status can be updated
+    final canUpdate = _canUpdateStatus();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -275,15 +374,9 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -329,27 +422,54 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             ),
             const SizedBox(height: 16),
             
+            // Status Update Disabled Message
+            if (!canUpdate) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange[700],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'This test drive cannot be updated because it is already ${_getStatusDisplayName(widget.testDrive!.status ?? '').toLowerCase()}.',
+                        style: TextStyle(
+                          color: Colors.orange[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
             // Status Selection
             Text(
               'Update Status',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: Colors.black87,
+                color: canUpdate ? Colors.black87 : Colors.grey[400],
               ),
             ),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -382,103 +502,236 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ...(_statusOptions.map((status) => _buildStatusOption(status))),
+                    ...(_statusOptions.map((status) => _buildStatusOption(status, enabled: canUpdate))),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
             
-            // Notes Section
-            Text(
-              _selectedStatus == 'canceled' ? 'Cancellation Reason' : 'Additional Notes',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3080A5).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.note,
-                            color: Color(0xFF3080A5),
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _selectedStatus == 'canceled' ? 'Reason for Cancellation' : 'Notes & Comments',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _notesController,
-                      maxLines: 3,
-                      validator: _selectedStatus == 'canceled' 
-                          ? (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please provide a reason for cancellation';
-                              }
-                              return null;
-                            }
-                          : null,
-                      decoration: InputDecoration(
-                        hintText: _selectedStatus == 'canceled' 
-                            ? 'Enter the reason for cancellation...'
-                            : 'Enter any additional notes or comments...',
-                        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        contentPadding: const EdgeInsets.all(12),
-                      ),
-                    ),
-                  ],
+            // Date and Time Selection for Rescheduling
+            if (_selectedStatus == 'rescheduled' && canUpdate) ...[
+              Text(
+                'New Date & Time',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9C27B0).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.schedule,
+                              color: Color(0xFF9C27B0),
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Select New Date & Time',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: _selectDate,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 18,
+                                      color: Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _selectedDate != null
+                                          ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
+                                          : 'Select Date',
+                                      style: TextStyle(
+                                        color: _selectedDate != null ? Colors.black87 : Colors.grey[500],
+                                        fontWeight: _selectedDate != null ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: _selectTime,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 18,
+                                      color: Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _selectedTime != null
+                                          ? _selectedTime!.format(context)
+                                          : 'Select Time',
+                                      style: TextStyle(
+                                        color: _selectedTime != null ? Colors.black87 : Colors.grey[500],
+                                        fontWeight: _selectedTime != null ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            // Notes Section
+            if (canUpdate) ...[
+              Text(
+                _selectedStatus == 'canceled' 
+                    ? 'Cancellation Reason' 
+                    : _selectedStatus == 'rescheduled'
+                        ? 'Rescheduling Reason'
+                        : 'Additional Notes',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+            if (canUpdate) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3080A5).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.note,
+                              color: Color(0xFF3080A5),
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _selectedStatus == 'canceled' 
+                                ? 'Reason for Cancellation' 
+                                : _selectedStatus == 'rescheduled'
+                                    ? 'Reason for Rescheduling'
+                                    : 'Notes & Comments',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _notesController,
+                        maxLines: 3,
+                        enabled: canUpdate,
+                        validator: _selectedStatus == 'canceled' || _selectedStatus == 'rescheduled'
+                            ? (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return _selectedStatus == 'canceled' 
+                                      ? 'Please provide a reason for cancellation'
+                                      : 'Please provide a reason for rescheduling';
+                                }
+                                return null;
+                              }
+                            : null,
+                        decoration: InputDecoration(
+                          hintText: _selectedStatus == 'canceled' 
+                              ? 'Enter the reason for cancellation...'
+                              : _selectedStatus == 'rescheduled'
+                                  ? 'Enter the reason for rescheduling...'
+                                  : 'Enter any additional notes or comments...',
+                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF3080A5), width: 2),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          contentPadding: const EdgeInsets.all(12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             
             // Action Buttons
@@ -522,7 +775,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                       ),
                     ),
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _updateStatus,
+                      onPressed: (canUpdate && !_isLoading) ? _updateStatus : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -605,7 +858,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
     );
   }
 
-  Widget _buildStatusOption(Map<String, dynamic> status) {
+  Widget _buildStatusOption(Map<String, dynamic> status, {bool enabled = true}) {
     final isSelected = _selectedStatus == status['value'];
     final color = status['color'] as Color;
     
@@ -624,7 +877,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
           children: [
             Icon(
               status['icon'] as IconData,
-              color: color,
+              color: enabled ? color : Colors.grey[400],
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -632,7 +885,9 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
               status['label'] as String,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? color : Colors.black87,
+                color: enabled 
+                    ? (isSelected ? color : Colors.black87)
+                    : Colors.grey[400],
                 fontSize: 14,
               ),
             ),
@@ -640,11 +895,11 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         ),
         value: status['value'] as String,
         groupValue: _selectedStatus,
-        onChanged: (value) {
+        onChanged: enabled ? (value) {
           setState(() {
             _selectedStatus = value!;
           });
-        },
+        } : null,
         activeColor: color,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
@@ -667,6 +922,56 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         duration: const Duration(seconds: 4),
       ),
     );
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3080A5),
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3080A5),
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
   }
 
   void _showErrorSnackBar(String message) {

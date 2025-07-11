@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/storage_service.dart';
 import '../services/employee_storage_service.dart';
 import '../main.dart';
@@ -113,71 +114,74 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF0095D9);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo in a circle with shadow
-                Container(
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryBlue.withOpacity(0.15),
-                        blurRadius: 40,
-                        spreadRadius: 10,
-                      ),
-                    ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo in a circle with shadow
+                  Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryBlue.withOpacity(0.15),
+                          blurRadius: 40,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/varenium-removebg-preview.png',
+                      height: 150,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                  child: Image.asset(
-                    'assets/images/varenium-removebg-preview.png',
-                    height: 150,
-                    fit: BoxFit.contain,
+                  const SizedBox(height: 24),
+                  Text(
+                    'Varenyam',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                      letterSpacing: 1.2,
+                      shadows: [
+                        Shadow(
+                          color: primaryBlue.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Varenyam',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: primaryBlue,
-                    letterSpacing: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: primaryBlue.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your Trusted Platform',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: primaryBlue.withOpacity(0.8),
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your Trusted Platform',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: primaryBlue.withOpacity(0.8),
-                    letterSpacing: 0.5,
+                  const SizedBox(height: 32),
+                  // Loading indicator
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                // Loading indicator
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

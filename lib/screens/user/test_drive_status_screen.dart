@@ -171,7 +171,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return const Color(0xFF2196F3);
       case 'cancelled':
-      case 'canceled':
         return const Color(0xFFE53935);
       case 'rejected':
         return const Color(0xFFE53935);
@@ -191,7 +190,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return 'Completed';
       case 'cancelled':
-      case 'canceled':
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';
@@ -211,7 +209,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return Icons.done_all_rounded;
       case 'cancelled':
-      case 'canceled':
         return Icons.cancel_outlined;
       case 'rejected':
         return Icons.cancel_outlined;
@@ -238,7 +235,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
         break;
       case 'rejected':
       case 'cancelled':
-      case 'canceled':
       case 'rescheduled':
         // No action for these statuses
         break;
@@ -253,7 +249,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return 'Completed';
       case 'cancelled':
-      case 'canceled':
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';

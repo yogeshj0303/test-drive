@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'personal_info_screen.dart';
 import 'about_screen.dart';
+import 'change_password_screen.dart';
 import 'employee_login_screen.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/driver_api_service.dart';
@@ -50,9 +51,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   late Animation<Offset> _slideAnimation;
   
   Employee? _employee;
-  PerformanceCountData? _performanceData;
+  // PerformanceCountData? _performanceData;
   bool _isLoading = true;
-  bool _isLoadingPerformance = true;
+  // bool _isLoadingPerformance = true;
   String? _errorMessage;
 
   @override
@@ -87,9 +88,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           _isLoading = false;
         });
         // Load performance data even if employee is cached
-        if (_employee != null) {
-          await _loadPerformanceData(_employee!.id);
-        }
+        // if (_employee != null) {
+        //   await _loadPerformanceData(_employee!.id);
+        // }
         return;
       }
     }
@@ -117,7 +118,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           });
           
           // Load performance data
-          await _loadPerformanceData(employee.id);
+          // await _loadPerformanceData(employee.id);
         } else {
           setState(() {
             _employee = employee; // Use cached data if API fails
@@ -126,7 +127,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           });
           
           // Load performance data even if profile API fails
-          await _loadPerformanceData(employee.id);
+          // await _loadPerformanceData(employee.id);
         }
       } else {
         setState(() {
@@ -142,43 +143,43 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     }
   }
 
-  Future<void> _loadPerformanceData(int driverId) async {
-    setState(() {
-      _isLoadingPerformance = true;
-    });
+  // Future<void> _loadPerformanceData(int driverId) async {
+  //   setState(() {
+  //     _isLoadingPerformance = true;
+  //   });
 
-    try {
-      final response = await EmployeeApiService().getPerformanceCount(driverId);
+  //   try {
+  //     final response = await EmployeeApiService().getPerformanceCount(driverId);
       
-      if (mounted) {
-        setState(() {
-          _isLoadingPerformance = false;
-          if (response.success) {
-            _performanceData = response.data!.data;
-          } else {
-            // Handle error - keep default values
-            _performanceData = PerformanceCountData(
-              totalTestdrives: 0,
-              pendingTestdrives: 0,
-              thisMonthTestdrives: 0,
-            );
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingPerformance = false;
-          // Set default values on error
-          _performanceData = PerformanceCountData(
-            totalTestdrives: 0,
-            pendingTestdrives: 0,
-            thisMonthTestdrives: 0,
-          );
-        });
-      }
-    }
-  }
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoadingPerformance = false;
+  //         if (response.success) {
+  //           _performanceData = response.data!.data;
+  //         } else {
+  //           // Handle error - keep default values
+  //           _performanceData = PerformanceCountData(
+  //             totalTestdrives: 0,
+  //             pendingTestdrives: 0,
+  //             thisMonthTestdrives: 0,
+  //           );
+  //         }
+  //       });
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoadingPerformance = false;
+  //         // Set default values on error
+  //         _performanceData = PerformanceCountData(
+  //           totalTestdrives: 0,
+  //           pendingTestdrives: 0,
+  //           thisMonthTestdrives: 0,
+  //         );
+  //       });
+  //     }
+  //   }
+  // }
 
   Future<void> _refreshProfile() async {
     // Clear cache to force fresh data
@@ -346,32 +347,32 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_errorMessage != null) _buildErrorMessage(_errorMessage!),
-                        Container(
-                          margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: AppTheme.spacingXS),
-                              Text(
-                                'Performance',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.2,
-                                  height: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _buildStatsSection(context),
-                        const SizedBox(height: AppTheme.spacingL),
+                        // Container(
+                        //   margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                        //   child: Row(
+                        //     children: [
+                        //       Container(
+                        //         width: 4,
+                        //         height: 20,
+                        //         decoration: BoxDecoration(
+                        //           color: theme.colorScheme.primary,
+                        //           borderRadius: BorderRadius.circular(2),
+                        //         ),
+                        //       ),
+                        //       const SizedBox(width: AppTheme.spacingXS),
+                        //       Text(
+                        //         'Performance',
+                        //         style: theme.textTheme.titleMedium?.copyWith(
+                        //           fontWeight: FontWeight.w600,
+                        //           letterSpacing: 0.2,
+                        //           height: 1.2,
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+                        // _buildStatsSection(context),
+                        // const SizedBox(height: AppTheme.spacingL),
                         if (_employee?.documents.isNotEmpty == true) ...[
                           Container(
                             margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
@@ -590,42 +591,42 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     );
   }
 
-  Widget _buildStatsSection(BuildContext context) {
-    final theme = Theme.of(context);
+  // Widget _buildStatsSection(BuildContext context) {
+  //   final theme = Theme.of(context);
 
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      mainAxisSpacing: AppTheme.spacingXS,
-      crossAxisSpacing: AppTheme.spacingXS,
-      childAspectRatio: 0.9,
-      padding: EdgeInsets.zero,
-      children: [
-        _buildStatCard(
-          context,
-          'Test Drives',
-          _isLoadingPerformance ? '...' : '${_performanceData?.totalTestdrives ?? 0}',
-          Icons.directions_car_outlined,
-          theme.colorScheme.primary,
-        ),
-        _buildStatCard(
-          context,
-          'Rating',
-          '4.8',
-          Icons.star_rounded,
-          AppTheme.warningColor,
-        ),
-        _buildStatCard(
-          context,
-          'Documents',
-          '${_employee?.documents.length ?? 0}',
-          Icons.description_outlined,
-          AppTheme.successColor,
-        ),
-      ],
-    );
-  }
+  //   return GridView.count(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     crossAxisCount: 3,
+  //     mainAxisSpacing: AppTheme.spacingXS,
+  //     crossAxisSpacing: AppTheme.spacingXS,
+  //     childAspectRatio: 0.9,
+  //     padding: EdgeInsets.zero,
+  //     children: [
+  //       _buildStatCard(
+  //         context,
+  //         'Test Drives',
+  //         _isLoadingPerformance ? '...' : '${_performanceData?.totalTestdrives ?? 0}',
+  //         Icons.directions_car_outlined,
+  //         theme.colorScheme.primary,
+  //       ),
+  //       _buildStatCard(
+  //         context,
+  //         'Rating',
+  //         '4.8',
+  //         Icons.star_rounded,
+  //         AppTheme.warningColor,
+  //       ),
+  //       _buildStatCard(
+  //         context,
+  //         'Documents',
+  //         '${_employee?.documents.length ?? 0}',
+  //         Icons.description_outlined,
+  //         AppTheme.successColor,
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildStatCard(BuildContext context, String label, String value, IconData icon, Color color) {
     final theme = Theme.of(context);
@@ -887,6 +888,15 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     );
   }
 
+  void _navigateToChangePassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ChangePasswordScreen(),
+      ),
+    );
+  }
+
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -969,6 +979,38 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   Widget _buildSettingsSection(BuildContext context) {
     final theme = Theme.of(context);
     
+    return Column(
+      children: [
+        _buildSettingTile(
+          'Personal Information',
+          'View your profile details',
+          Icons.person_outline_rounded,
+          theme.colorScheme.primary,
+          () => _navigateToPersonalInfo(),
+        ),
+        const SizedBox(height: AppTheme.spacingS),
+        _buildSettingTile(
+          'Change Password',
+          'Update your account password',
+          Icons.lock_outline_rounded,
+          AppTheme.warningColor,
+          () => _navigateToChangePassword(),
+        ),
+        const SizedBox(height: AppTheme.spacingS),
+        _buildSettingTile(
+          'About',
+          'App version and information',
+          Icons.info_outline_rounded,
+          AppTheme.successColor,
+          () => _navigateToAbout(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingTile(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -981,88 +1023,64 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
           ),
         ],
       ),
-      child: Column(
-        children: [
-          _buildSettingItem(
-            'Personal Information',
-            'View your profile details',
-            Icons.person_outline_rounded,
-            theme.colorScheme.primary,
-            () => _navigateToPersonalInfo(),
-          ),
-          _buildDivider(theme),
-          _buildSettingItem(
-            'About',
-            'App version and information',
-            Icons.info_outline_rounded,
-            AppTheme.successColor,
-            () => _navigateToAbout(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    final theme = Theme.of(context);
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacingS),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingM),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppTheme.spacingS),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
                 ),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              const SizedBox(width: AppTheme.spacingM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      const SizedBox(height: AppTheme.spacingXS),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDivider(ThemeData theme) {
-    return Divider(
-      height: 1,
-      color: theme.colorScheme.outline.withOpacity(0.2),
-      indent: 56,
-    );
-  }
+  // Widget _buildDivider(ThemeData theme) {
+  //   return Divider(
+  //     height: 1,
+  //     color: theme.colorScheme.outline.withOpacity(0.2),
+  //     indent: 56,
+  //   );
+  // }
 
   Widget _buildErrorMessage(String message) {
     final theme = Theme.of(context);

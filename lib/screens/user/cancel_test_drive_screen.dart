@@ -16,7 +16,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
   final ApiService _apiService = ApiService();
   final StorageService _storageService = StorageService();
   
-  List<TestDriveListResponse> _canceledTestDrives = [];
+  List<TestDriveListResponse> _cancelledTestDrives = [];
   bool _isLoading = true;
   String? _errorMessage;
   User? _currentUser;
@@ -24,10 +24,10 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCanceledTestDrives();
+    _loadCancelledTestDrives();
   }
 
-  Future<void> _loadCanceledTestDrives() async {
+  Future<void> _loadCancelledTestDrives() async {
     try {
       setState(() {
         _isLoading = true;
@@ -53,7 +53,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
             testDrive.status?.toLowerCase() == 'rejected').toList() ?? [];
         
         setState(() {
-          _canceledTestDrives = rejectedTestDrives;
+          _cancelledTestDrives = rejectedTestDrives;
           _isLoading = false;
         });
       } else {
@@ -65,7 +65,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
             errorMessage.contains('empty')) {
           // Treat as empty state rather than error
           setState(() {
-            _canceledTestDrives = [];
+            _cancelledTestDrives = [];
             _isLoading = false;
           });
         } else {
@@ -532,7 +532,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
               ),
               child: const Icon(Icons.refresh_rounded, size: 16),
             ),
-            onPressed: _loadCanceledTestDrives,
+            onPressed: _loadCancelledTestDrives,
           ),
         ],
         bottom: PreferredSize(
@@ -582,7 +582,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       ),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: _loadCanceledTestDrives,
+                        onPressed: _loadCancelledTestDrives,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0095D9),
                           foregroundColor: Colors.white,
@@ -592,7 +592,7 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                     ],
                   ),
                 )
-              : _canceledTestDrives.isEmpty
+              : _cancelledTestDrives.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -623,12 +623,12 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       ),
                     )
                   : RefreshIndicator(
-                      onRefresh: _loadCanceledTestDrives,
+                      onRefresh: _loadCancelledTestDrives,
                       child: ListView.builder(
                         padding: const EdgeInsets.all(12),
-                        itemCount: _canceledTestDrives.length,
+                        itemCount: _cancelledTestDrives.length,
                         itemBuilder: (context, index) {
-                          final testDrive = _canceledTestDrives[index];
+                          final testDrive = _cancelledTestDrives[index];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             elevation: 0,

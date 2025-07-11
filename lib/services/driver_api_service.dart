@@ -256,6 +256,57 @@ class EmployeeApiService {
     }
   }
 
+  Future<EmployeeApiResponse<AssignedTestDriveResponse>> getTestDrivesByStatus(int driverId, String status) async {
+    try {
+      debugPrint('Fetching test drives for driver ID: $driverId with status: $status');
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/driver/testdrives/status?driver_id=$driverId&status=$status');
+      
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('Test drives by status response status: ${response.statusCode}');
+      debugPrint('Test drives by status response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final assignedTestDrivesResponse = AssignedTestDriveResponse.fromJson(responseData);
+          debugPrint('Successfully fetched ${assignedTestDrivesResponse.data.length} test drives with status: $status');
+          return EmployeeApiResponse.success(assignedTestDrivesResponse, message: assignedTestDrivesResponse.message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch test drives by status';
+          return EmployeeApiResponse.error(errorMessage);
+        }
+      } else if (response.statusCode == 404) {
+        // Handle 404 - No test drives found for this status
+        debugPrint('No test drives found for status: $status (404)');
+        return EmployeeApiResponse.success(
+          AssignedTestDriveResponse(
+            success: true,
+            message: 'No test drives found for this status',
+            data: [],
+          ),
+          message: 'No test drives found for this status',
+        );
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return EmployeeApiResponse.error(errorMessage ?? 'Failed to fetch test drives by status');
+      }
+    } on SocketException {
+      return EmployeeApiResponse.error('Network error: Please check your internet connection');
+    } on FormatException {
+      return EmployeeApiResponse.error('Invalid response format from server');
+    } on TimeoutException {
+      return EmployeeApiResponse.error('Request timeout. Please try again.');
+    } catch (e) {
+      return EmployeeApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
   Future<EmployeeApiResponse<PerformanceCountResponse>> getPerformanceCount(int driverId) async {
     try {
       debugPrint('Fetching performance count for driver ID: $driverId');
@@ -311,8 +362,8 @@ class EmployeeApiService {
         'driver_id': driverId.toString(),
       };
       
-      // Add cancel_description if status is canceled
-      if (status.toLowerCase() == 'canceled' && cancelDescription != null && cancelDescription.isNotEmpty) {
+          // Add cancel_description if status is cancelled
+    if (status.toLowerCase() == 'cancelled' && cancelDescription != null && cancelDescription.isNotEmpty) {
         queryParams['cancel_description'] = cancelDescription;
       }
       
@@ -343,6 +394,67 @@ class EmployeeApiService {
       } else {
         final errorMessage = _extractErrorMessage(response.body);
         return EmployeeApiResponse.error(errorMessage ?? 'Failed to update test drive status');
+      }
+    } on SocketException {
+      return EmployeeApiResponse.error('Network error: Please check your internet connection');
+    } on FormatException {
+      return EmployeeApiResponse.error('Invalid response format from server');
+    } on TimeoutException {
+      return EmployeeApiResponse.error('Request timeout. Please try again.');
+    } catch (e) {
+      return EmployeeApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<EmployeeApiResponse<Map<String, dynamic>>> rescheduleTestDrive({
+    required int testDriveId,
+    required int driverId,
+    required String newDate,
+    String? reason,
+  }) async {
+    try {
+      debugPrint('Rescheduling test drive for ID: $testDriveId, Driver ID: $driverId, New Date: $newDate');
+      
+      // Build query parameters
+      final queryParams = {
+        'status': 'rescheduled',
+        'testdrive_id': testDriveId.toString(),
+        'driver_id': driverId.toString(),
+        'next_date': newDate,
+      };
+      
+      // Add reason if provided
+      if (reason != null && reason.isNotEmpty) {
+        queryParams['cancel_description'] = reason;
+      }
+      
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.testDriveStatusUpdateEndpoint))
+          .replace(queryParameters: queryParams);
+      
+      debugPrint('Reschedule test drive URL: $uri');
+      
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('Reschedule test drive response status: ${response.statusCode}');
+      debugPrint('Reschedule test drive response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive rescheduled successfully';
+          debugPrint('Successfully rescheduled test drive to: $newDate');
+          return EmployeeApiResponse.success(responseData, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to reschedule test drive';
+          return EmployeeApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return EmployeeApiResponse.error(errorMessage ?? 'Failed to reschedule test drive');
       }
     } on SocketException {
       return EmployeeApiResponse.error('Network error: Please check your internet connection');

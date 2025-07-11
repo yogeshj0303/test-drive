@@ -24,7 +24,7 @@ class _EmployeeMainScreenState extends State<EmployeeMainScreen> {
     super.initState();
     _screens = [
       const EmployeeHomeScreen(),
-      AssignedTestDrivesScreen(key: _assignedTestDrivesKey),
+      AssignedTestDrivesScreen(key: _assignedTestDrivesKey, showBackButton: false),
       const AddExpenseScreen(showBackButton: false),
       EmployeeProfileScreen(key: _profileScreenKey),
     ];
@@ -39,69 +39,113 @@ class _EmployeeMainScreenState extends State<EmployeeMainScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: Colors.grey[200]!,
+              width: 0.5,
             ),
-          ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            // Check if we're navigating to the Test Drives tab from a different tab
-            if (index == 1 && _previousIndex != 1) {
-              // Call onScreenVisible method to refresh data
-              _assignedTestDrivesKey.currentState?.onScreenVisible();
-            }
-            
-            // Check if we're navigating to the Profile tab from a different tab
-            if (index == 3 && _previousIndex != 3) {
-              // Call onScreenVisible method to refresh data
-              (_profileScreenKey.currentState as dynamic)?.onScreenVisible();
-            }
-            
-            setState(() {
-              _currentIndex = index;
-              _previousIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF3080A5),
-          unselectedItemColor: Colors.grey[600],
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
+        child: SafeArea(
+          child: Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(child: _buildNavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Home',
+                  index: 0,
+                )),
+                Expanded(child: _buildNavItem(
+                  icon: Icons.directions_car_outlined,
+                  activeIcon: Icons.directions_car_rounded,
+                  label: 'Test Drives',
+                  index: 1,
+                )),
+                Expanded(child: _buildNavItem(
+                  icon: Icons.receipt_outlined,
+                  activeIcon: Icons.receipt_rounded,
+                  label: 'Expenses',
+                  index: 2,
+                )),
+                Expanded(child: _buildNavItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  index: 3,
+                )),
+              ],
+            ),
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
+        ),
+      ),
+    );
+  }
+
+  void _onTabTapped(int index) {
+    // Check if we're navigating to the Test Drives tab from a different tab
+    if (index == 1 && _previousIndex != 1) {
+      // Call onScreenVisible method to refresh data
+      _assignedTestDrivesKey.currentState?.onScreenVisible();
+    }
+    
+    // Check if we're navigating to the Profile tab from a different tab
+    if (index == 3 && _previousIndex != 3) {
+      // Call onScreenVisible method to refresh data
+      (_profileScreenKey.currentState as dynamic)?.onScreenVisible();
+    }
+    
+    setState(() {
+      _currentIndex = index;
+      _previousIndex = index;
+    });
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onTabTapped(index),
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
+                color: isSelected 
+                    ? const Color(0xFF3080A5)
+                    : Colors.grey[600],
+                size: 20,
+              ),
+              const SizedBox(height: 1),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected 
+                      ? const Color(0xFF3080A5)
+                      : Colors.grey[600],
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.directions_car_outlined),
-              activeIcon: Icon(Icons.directions_car),
-              label: 'Test Drives',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Expenses',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
         ),
       ),
     );

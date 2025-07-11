@@ -776,14 +776,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        shape: Border(
-          bottom: BorderSide(
-            color: Colors.grey[300]!,
-            width: 1,
-          ),
-        ),
         title: Text(
           'Test Drive Status',
           style: theme.textTheme.titleMedium?.copyWith(
@@ -791,9 +783,30 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
             letterSpacing: -0.2,
           ),
         ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+        toolbarHeight: 56,
+        shape: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
         leading: widget.showBackButton
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 18,
+                  ),
+                ),
                 onPressed: () => Navigator.pop(context),
               )
             : null,

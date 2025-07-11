@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../models/employee_model.dart';
@@ -60,7 +61,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
       
       try {
         final employeeId = _employeeIdController.text.trim();
-        final password = _passwordController.text.trim();
+        final password = _passwordController.text;
         
         // Try login with employee ID first, then with email
         EmployeeApiResponse<EmployeeLoginResponse> response;
@@ -79,9 +80,17 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response.message),
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
                 backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 3),
               ),
             );
             
@@ -96,9 +105,17 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response.message),
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(response.message)),
+                  ],
+                ),
                 backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 4),
               ),
             );
           }
@@ -107,9 +124,17 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${e.toString()}'),
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('An error occurred: ${e.toString()}')),
+                ],
+              ),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 4),
             ),
           );
         }
@@ -130,14 +155,17 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     const Color secondaryBlue = Color(0xFF0095D9); // Primary blue from logo
     const Color darkGray = Color(0xFF1D1B1C); // Dark gray from logo
 
-    return Scaffold(
-      body: Container(
-        color: Colors.white,
-        child: SafeArea(
-          child: Center(
-            child: isSmallScreen
-                ? _buildMobileLayout(size, primaryBlue)
-                : _buildDesktopLayout(size, primaryBlue),
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: Container(
+          color: Colors.white,
+          child: SafeArea(
+            child: Center(
+              child: isSmallScreen
+                  ? _buildMobileLayout(size, primaryBlue)
+                  : _buildDesktopLayout(size, primaryBlue),
+            ),
           ),
         ),
       ),
@@ -148,48 +176,48 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     const Color secondaryBlue = Color(0xFF0095D9);
     const Color darkGray = Color(0xFF1D1B1C);
     
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: 1200,
-        maxHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-      ),
-      child: Row(
-        children: [
-          // Left side - Branding
-          Expanded(
-            flex: 1,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: size.height * 0.05,
-                horizontal: 40,
-              ),
-              decoration: BoxDecoration(
-                color: primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
+    return SingleChildScrollView(
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: 850, // Further reduced from 900
+          minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+        ),
+        child: Row(
+          children: [
+            // Left side - Branding
+            Expanded(
+              flex: 1,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: size.height * 0.015, // Further reduced from 0.02
+                  horizontal: 20, // Further reduced from 24
                 ),
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SingleChildScrollView(
+                decoration: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(20), // Further reduced from 25
+                    bottomRight: Radius.circular(20), // Further reduced from 25
+                  ),
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: size.height * 0.15,
+                        height: size.height * 0.06, // Further reduced from 0.08
                         child: _buildLogo(),
                       ),
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.015), // Further reduced from 0.02
                       Text(
                         'Employee Portal',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
-                          height: 1.2,
+                          height: 1.1, // Further reduced from 1.2
                           shadows: [
                             Shadow(
                               color: Colors.black.withOpacity(0.1),
@@ -199,15 +227,15 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                           ],
                         ),
                       ),
-                      SizedBox(height: size.height * 0.02),
+                      SizedBox(height: size.height * 0.008), // Further reduced from 0.01
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 16), // Further reduced from 20
                         child: Text(
                           'Access your employee dashboard',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: Colors.white,
                             letterSpacing: 0.3,
-                            height: 1.5,
+                            height: 1.3, // Further reduced from 1.4
                             shadows: [
                               Shadow(
                                 color: Colors.black.withOpacity(0.1),
@@ -219,113 +247,122 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.015), // Further reduced from 0.02
                       _buildFeatureList(),
+                      SizedBox(height: size.height * 0.02), // Further reduced from 0.025
+                      _buildTrustIndicators(),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-          // Right side - Login Form
-          Expanded(
-            flex: 1,
-            child: Container(
-              height: double.infinity,
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: 48,
-                vertical: size.height * 0.05,
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: SingleChildScrollView(
+            // Right side - Login Form
+            Expanded(
+              flex: 1,
+              child: Container(
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24, // Further reduced from 28
+                  vertical: size.height * 0.015, // Further reduced from 0.02
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
                     child: _buildLoginForm(primaryBlue),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMobileLayout(Size size, Color primaryBlue) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-      ),
-      child: Column(
-        children: [
-          // Header Section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              vertical: size.height * 0.04,
-              horizontal: 24,
-            ),
-            decoration: BoxDecoration(
-              color: primaryBlue,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+    return SingleChildScrollView(
+      child: Container(
+        constraints: BoxConstraints(
+          minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+        ),
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: size.height * 0.02, // Further reduced from 0.025
+                horizontal: 14, // Further reduced from 16
               ),
-            ),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: size.height * 0.12,
-                    child: _buildLogo(),
-                  ),
-                  SizedBox(height: size.height * 0.02),
-                  Text(
-                    'Employee Portal',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: size.height * 0.01),
-                  Text(
-                    'Access your dashboard',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 0.3,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
+              decoration: BoxDecoration(
+                color: primaryBlue,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20), // Further reduced from 25
+                  bottomRight: Radius.circular(20), // Further reduced from 25
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withOpacity(0.3),
+                    blurRadius: 12, // Further reduced from 15
+                    offset: const Offset(0, 3), // Further reduced from 4
                   ),
                 ],
               ),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: size.height * 0.06, // Further reduced from 0.08
+                      child: _buildLogo(),
+                    ),
+                    SizedBox(height: size.height * 0.012), // Further reduced from 0.015
+                    Text(
+                      'Employee Portal',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: size.height * 0.006), // Further reduced from 0.008
+                    Text(
+                      'Access your employee dashboard',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: size.height * 0.012), // Further reduced from 0.015
+                    // Add feature highlights for mobile
+                    _buildMobileFeatureHighlights(),
+                  ],
+                ),
+              ),
             ),
-          ),
-          // Login Form Section
-          Expanded(
-            child: SingleChildScrollView(
+            // Login Form Section
+            Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: size.height * 0.03,
+                horizontal: 14, // Further reduced from 16
+                vertical: size.height * 0.015, // Further reduced from 0.02
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -335,8 +372,8 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -345,15 +382,15 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     return Hero(
       tag: 'employee_logo',
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(10), // Further reduced from 12
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).primaryColor.withOpacity(0.15),
-              blurRadius: 30,
-              spreadRadius: 5,
+              blurRadius: 16, // Further reduced from 20
+              spreadRadius: 1.5, // Further reduced from 2
             ),
           ],
         ),
@@ -369,184 +406,182 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     const Color darkGray = Color(0xFF1D1B1C);
     
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.all(16), // Further reduced from 20
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(14), // Further reduced from 16
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.08),
-            blurRadius: 30,
-            spreadRadius: 5,
-            offset: const Offset(0, 5),
+            blurRadius: 16, // Further reduced from 20
+            spreadRadius: 1.5, // Further reduced from 2
+            offset: const Offset(0, 2), // Further reduced from 3
           ),
         ],
+        border: Border.all(
+          color: primaryBlue.withOpacity(0.1),
+          width: 1,
+        ),
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Fixed Header Section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Welcome Back',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: darkGray,
-                    letterSpacing: 0.5,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: darkGray.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Fixed Header Section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 2.5, // Further reduced from 3
+                    height: 18, // Further reduced from 20
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
+                  const SizedBox(width: 8), // Further reduced from 10
+                  Expanded(
+                    child: Text(
+                      'Welcome Back',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: darkGray,
+                        letterSpacing: 0.5,
+                        height: 1.1, // Further reduced from 1.2
+                        shadows: [
+                          Shadow(
+                            color: darkGray.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2), // Further reduced from 3
+              Padding(
+                padding: const EdgeInsets.only(left: 10), // Further reduced from 13
+                child: Text(
                   'Sign in to your employee account',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: darkGray.withOpacity(0.8),
                     letterSpacing: 0.3,
-                    height: 1.5,
+                    height: 1.3, // Further reduced from 1.4
                   ),
                 ),
-                const SizedBox(height: 36),
+              ),
+              const SizedBox(height: 16), // Further reduced from 20
+            ],
+          ),
+          // Form Section
+          Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildInputField(
+                  controller: _employeeIdController,
+                  label: 'Employee ID / Email',
+                  hint: 'Enter your employee ID or email',
+                  prefixIcon: Icons.badge_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  accentColor: primaryBlue,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your employee ID or email';
+                    }
+                    // Check if it's an email
+                    if (value.contains('@')) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                    } else {
+                      // Check if it's a valid employee ID (alphanumeric)
+                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)) {
+                        return 'Employee ID must contain only letters and numbers';
+                      }
+                      if (value.length < 3) {
+                        return 'Employee ID must be at least 3 characters';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12), // Further reduced from 14
+                _buildInputField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hint: 'Enter your password',
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: !_isPasswordVisible,
+                  accentColor: primaryBlue,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: primaryBlue,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12), // Further reduced from 14
+                SizedBox(
+                  width: double.infinity,
+                  height: 40, // Further reduced from 42
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBlue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10), // Further reduced from 12
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8), // Further reduced from 10
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 14, // Further reduced from 16
+                            width: 14, // Further reduced from 16
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontSize: 14, // Further reduced from 15
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                  ),
+                ),
               ],
             ),
-            // Scrollable Form Section
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildInputField(
-                        controller: _employeeIdController,
-                        label: 'Employee ID / Email',
-                        hint: 'Enter your employee ID or email',
-                        prefixIcon: Icons.badge_outlined,
-                        keyboardType: TextInputType.text,
-                        accentColor: primaryBlue,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your employee ID or email';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildInputField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        hint: 'Enter your password',
-                        prefixIcon: Icons.lock_outline,
-                        obscureText: !_isPasswordVisible,
-                        accentColor: primaryBlue,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: primaryBlue,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          // TODO: Implement forgot password
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Forgot password functionality coming soon'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: primaryBlue,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        ),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -567,7 +602,7 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: const TextStyle(
-        fontSize: 16,
+        fontSize: 13, // Further reduced from 14
         letterSpacing: 0.3,
       ),
       decoration: InputDecoration(
@@ -576,43 +611,46 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
         labelStyle: TextStyle(
           color: Colors.grey[600],
           letterSpacing: 0.3,
+          fontSize: 12, // Further reduced from 13
         ),
         hintStyle: TextStyle(
           color: Colors.grey[400],
           letterSpacing: 0.3,
+          fontSize: 12, // Further reduced from 13
         ),
         prefixIcon: Icon(
           prefixIcon,
           color: accentColor,
+          size: 16, // Further reduced from 18
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: accentColor,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
             width: 2,
@@ -621,41 +659,151 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 8, // Further reduced from 10
+          vertical: 8, // Further reduced from 10
         ),
+        isDense: true,
       ),
       validator: validator,
     );
   }
 
   Widget _buildFeatureList() {
-    return Column(
-      children: [
-        _buildFeatureItem(Icons.security, 'Secure Access'),
-        const SizedBox(height: 16),
-        _buildFeatureItem(Icons.work_outline, 'Employee Dashboard'),
-        const SizedBox(height: 16),
-        _buildFeatureItem(Icons.support_agent, 'HR Support'),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildFeatureItem(Icons.security, 'Secure Access'),
+          const SizedBox(height: 10),
+          _buildFeatureItem(Icons.work_outline, 'Employee Dashboard'),
+        ],
+      ),
     );
   }
 
   Widget _buildFeatureItem(IconData icon, String text) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileFeatureHighlights() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildFeatureItem(Icons.security, 'Secure Access'),
+          const SizedBox(height: 6),
+          _buildFeatureItem(Icons.work_outline, 'Employee Dashboard'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrustIndicators() {
+    return Column(
+      children: [
+        Text(
+          'Streamlining employee management',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 13, // Reduced from 14
+            letterSpacing: 0.3,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10), // Reduced from 12
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildTrustIndicator(Icons.security, 'Security'),
+            const SizedBox(width: 16), // Reduced from 20
+            _buildTrustIndicator(Icons.work, 'Workflow'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrustIndicator(IconData icon, String text) {
+    return Column(
       children: [
         Icon(
           icon,
           color: Colors.white,
-          size: 20,
+          size: 16, // Reduced from 18
         ),
-        const SizedBox(width: 12),
+        const SizedBox(height: 3), // Reduced from 4
         Text(
           text,
           style: TextStyle(
             color: Colors.white,
-            fontSize: 15,
+            fontSize: 11, // Reduced from 12
+            fontWeight: FontWeight.bold,
             letterSpacing: 0.3,
             shadows: [
               Shadow(

@@ -232,13 +232,14 @@ class EmployeeApiService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final assignedTestDrivesResponse = AssignedTestDriveResponse.fromJson(responseData);
         
-        if (assignedTestDrivesResponse.success) {
+        if (responseData['success'] == true) {
+          final assignedTestDrivesResponse = AssignedTestDriveResponse.fromJson(responseData);
           debugPrint('Successfully fetched ${assignedTestDrivesResponse.data.length} assigned test drives');
           return EmployeeApiResponse.success(assignedTestDrivesResponse, message: assignedTestDrivesResponse.message);
         } else {
-          return EmployeeApiResponse.error(assignedTestDrivesResponse.message);
+          final errorMessage = responseData['message'] as String? ?? 'Failed to fetch assigned test drives';
+          return EmployeeApiResponse.error(errorMessage);
         }
       } else {
         final errorMessage = _extractErrorMessage(response.body);

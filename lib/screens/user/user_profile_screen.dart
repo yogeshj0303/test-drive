@@ -1231,6 +1231,8 @@ class UserProfileScreenState extends State<UserProfileScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1239,12 +1241,14 @@ class UserProfileScreenState extends State<UserProfileScreen>
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
+            color: Colors.black87,
           ),
         ),
         content: Text(
           'Are you sure you want to logout?',
           style: theme.textTheme.bodyLarge?.copyWith(
             letterSpacing: 0.2,
+            color: Colors.black87,
           ),
         ),
         actions: [
@@ -1287,8 +1291,15 @@ class UserProfileScreenState extends State<UserProfileScreen>
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: const Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
 

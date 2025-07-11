@@ -435,14 +435,20 @@ class AssignedTestDriveResponse {
   });
 
   factory AssignedTestDriveResponse.fromJson(Map<String, dynamic> json) {
-    return AssignedTestDriveResponse(
-      success: json['success'] as bool? ?? false,
-      message: json['message'] as String? ?? '',
-      data: (json['data'] as List<dynamic>?)
-              ?.map((item) => AssignedTestDrive.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [],
-    );
+    try {
+      return AssignedTestDriveResponse(
+        success: json['success'] as bool? ?? false,
+        message: json['message'] as String? ?? '',
+        data: (json['data'] as List<dynamic>?)
+                ?.map((item) => AssignedTestDrive.fromJson(item as Map<String, dynamic>))
+                .toList() ??
+            [],
+      );
+    } catch (e) {
+      print('Error parsing AssignedTestDriveResponse: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 }
 
@@ -474,9 +480,13 @@ class AssignedTestDrive {
   final String? userMobile;
   final String? userEmail;
   final String? userAdhar;
+  final String? rescheduledBy;
+  final String? rescheduledDate;
   final TestDriveCar? car;
   final TestDriveUser? frontUser;
   final TestDriveUser? requestbyEmplyee;
+  final TestDriveUser? approverRejecter;
+  final TestDriveUser? rescheduler;
 
   AssignedTestDrive({
     required this.id,
@@ -506,48 +516,68 @@ class AssignedTestDrive {
     this.userMobile,
     this.userEmail,
     this.userAdhar,
+    this.rescheduledBy,
+    this.rescheduledDate,
     this.car,
     this.frontUser,
     this.requestbyEmplyee,
+    this.approverRejecter,
+    this.rescheduler,
   });
 
   factory AssignedTestDrive.fromJson(Map<String, dynamic> json) {
-    final carJson = json['car'] as Map<String, dynamic>?;
-    final frontUserJson = json['front_user'] as Map<String, dynamic>?;
-    final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
-    
-    return AssignedTestDrive(
-      id: json['id'] as int? ?? 0,
-      createdAt: json['created_at'] as String?,
-      updatedAt: json['updated_at'] as String?,
-      carId: json['car_id'] as int? ?? 0,
-      frontUserId: json['front_user_id'] as int? ?? 0,
-      date: json['date'] as String?,
-      time: json['time'] as String?,
-      pickupAddress: json['pickup_address'] as String?,
-      pickupCity: json['pickup_city'] as String?,
-      pickupPincode: json['pickup_pincode'] as String?,
-      drivingLicense: json['driving_license'] as String?,
-      aadharNo: json['aadhar_no'] as String?,
-      note: json['note'] as String?,
-      status: json['status'] as String?,
-      showroomId: json['showroom_id']?.toString(),
-      rejectDescription: json['reject_description'] as String?,
-      approvedEmployeeId: json['approved_employee_id'] as int?,
-      cancelDescription: json['cancel_description'] as String?,
-      cancelDateTime: json['cancel_date_time'] as String?,
-      driverId: json['driver_id']?.toString(),
-      driverUpdateDate: json['driver_update_date'] as String?,
-      approverOrRejectBy: json['approver_or_reject_by']?.toString(),
-      approvedOrRejectDate: json['approved_or_reject_date'] as String?,
-      userName: json['user_name'] as String?,
-      userMobile: json['user_mobile'] as String?,
-      userEmail: json['user_email'] as String?,
-      userAdhar: json['user_adhar'] as String?,
-      car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
-      frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
-      requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
-    );
+    try {
+      final carJson = json['car'] as Map<String, dynamic>?;
+      final frontUserJson = json['front_user'] as Map<String, dynamic>?;
+      final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
+      final approverRejecterJson = json['approver_rejecter'] as Map<String, dynamic>?;
+      final reschedulerJson = json['rescheduler'] as Map<String, dynamic>?;
+      
+      return AssignedTestDrive(
+        id: json['id'] as int? ?? 0,
+        createdAt: json['created_at'] as String?,
+        updatedAt: json['updated_at'] as String?,
+        carId: json['car_id'] as int? ?? 0,
+        frontUserId: json['front_user_id'] as int? ?? 0,
+        date: json['date'] as String?,
+        time: json['time'] as String?,
+        pickupAddress: json['pickup_address'] as String?,
+        pickupCity: json['pickup_city'] as String?,
+        pickupPincode: json['pickup_pincode'] as String?,
+        drivingLicense: json['driving_license'] as String?,
+        aadharNo: json['aadhar_no'] as String?,
+        note: json['note'] as String?,
+        status: json['status'] as String?,
+        showroomId: json['showroom_id']?.toString(),
+        rejectDescription: json['reject_description'] as String?,
+        approvedEmployeeId: json['approved_employee_id'] is int 
+            ? json['approved_employee_id'] as int 
+            : json['approved_employee_id'] is String 
+                ? int.tryParse(json['approved_employee_id'] as String)
+                : null,
+        cancelDescription: json['cancel_description'] as String?,
+        cancelDateTime: json['cancel_date_time'] as String?,
+        driverId: json['driver_id']?.toString(),
+        driverUpdateDate: json['driver_update_date'] as String?,
+        approverOrRejectBy: json['approver_or_reject_by']?.toString(),
+        approvedOrRejectDate: json['approved_or_reject_date'] as String?,
+        userName: json['user_name'] as String?,
+        userMobile: json['user_mobile'] as String?,
+        userEmail: json['user_email'] as String?,
+        userAdhar: json['user_adhar'] as String?,
+        rescheduledBy: json['rescheduled_by']?.toString(),
+        rescheduledDate: json['rescheduled_date'] as String?,
+        car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
+        frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
+        requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
+        approverRejecter: approverRejecterJson != null ? TestDriveUser.fromJson(approverRejecterJson) : null,
+        rescheduler: reschedulerJson != null ? TestDriveUser.fromJson(reschedulerJson) : null,
+      );
+    } catch (e) {
+      print('Error parsing AssignedTestDrive: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 }
 
@@ -597,27 +627,33 @@ class TestDriveUser {
   });
 
   factory TestDriveUser.fromJson(Map<String, dynamic> json) {
-    return TestDriveUser(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String?,
-      email: json['email'] as String?,
-      mobile: json['mobile'] as String?,
-      mobileNo: json['mobile_no'] as String?,
-      aadharNo: json['aadhar_no'] as String?,
-      drivingLicenseNo: json['driving_license_no'] as String?,
-      emailVerifiedAt: json['email_verified_at'] as String?,
-      isAdmin: json['is_admin'] as String?,
-      status: json['status'] as String?,
-      roleId: json['role_id'] as int?,
-      showroomId: json['showroom_id'] as int?,
-      avatar: json['avatar'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
-      createdAt: json['created_at'] as String?,
-      updatedAt: json['updated_at'] as String?,
-      city: json['city'] as String?,
-      state: json['state'] as String?,
-      district: json['district'] as String?,
-      pincode: json['pincode'] as String?,
-    );
+    try {
+      return TestDriveUser(
+        id: json['id'] as int? ?? 0,
+        name: json['name'] as String?,
+        email: json['email'] as String?,
+        mobile: json['mobile'] as String?,
+        mobileNo: json['mobile_no'] as String?,
+        aadharNo: json['aadhar_no'] as String?,
+        drivingLicenseNo: json['driving_license_no'] as String?,
+        emailVerifiedAt: json['email_verified_at'] as String?,
+        isAdmin: json['is_admin'] as String?,
+        status: json['status'] as String?,
+        roleId: json['role_id'] as int?,
+        showroomId: json['showroom_id'] as int?,
+        avatar: json['avatar'] as String?,
+        avatarUrl: json['avatar_url'] as String?,
+        createdAt: json['created_at'] as String?,
+        updatedAt: json['updated_at'] as String?,
+        city: json['city'] as String?,
+        state: json['state'] as String?,
+        district: json['district'] as String?,
+        pincode: json['pincode'] as String?,
+      );
+    } catch (e) {
+      print('Error parsing TestDriveUser: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 } 

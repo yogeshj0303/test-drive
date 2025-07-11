@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import 'main_user_screen.dart';
@@ -152,14 +153,17 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color secondaryBlue = Color(0xFF5D98AF);
     const Color darkGray = Color(0xFF242223);
 
-    return Scaffold(
-      body: Container(
-        color: Colors.white,
-        child: SafeArea(
-          child: Center(
-            child: isSmallScreen
-                ? _buildMobileLayout(size, primaryBlue)
-                : _buildDesktopLayout(size, primaryBlue),
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: Container(
+          color: Colors.white,
+          child: SafeArea(
+            child: Center(
+              child: isSmallScreen
+                  ? _buildMobileLayout(size, primaryBlue)
+                  : _buildDesktopLayout(size, primaryBlue),
+            ),
           ),
         ),
       ),
@@ -171,48 +175,48 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color secondaryBlue = Color(0xFF5D98AF);
     const Color darkGray = Color(0xFF242223);
     
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: 1000,
-        maxHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-      ),
-      child: Row(
-        children: [
-          // Left side - Branding
-          Expanded(
-            flex: 1,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: size.height * 0.03,
-                horizontal: 30,
-              ),
-              decoration: BoxDecoration(
-                color: primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+    return SingleChildScrollView(
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: 850, // Further reduced from 900
+          minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+        ),
+        child: Row(
+          children: [
+            // Left side - Branding
+            Expanded(
+              flex: 1,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: size.height * 0.015, // Further reduced from 0.02
+                  horizontal: 20, // Further reduced from 24
                 ),
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SingleChildScrollView(
+                decoration: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(20), // Further reduced from 25
+                    bottomRight: Radius.circular(20), // Further reduced from 25
+                  ),
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: size.height * 0.12,
+                        height: size.height * 0.06, // Further reduced from 0.08
                         child: _buildLogo(),
                       ),
-                      SizedBox(height: size.height * 0.03),
+                      SizedBox(height: size.height * 0.015), // Further reduced from 0.02
                       Text(
                         'Welcome to Varenyam',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
-                          height: 1.2,
+                          height: 1.1, // Further reduced from 1.2
                           shadows: [
                             Shadow(
                               color: Colors.black.withOpacity(0.1),
@@ -222,15 +226,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           ],
                         ),
                       ),
-                      SizedBox(height: size.height * 0.015),
+                      SizedBox(height: size.height * 0.008), // Further reduced from 0.01
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 16), // Further reduced from 20
                         child: Text(
-                          'Your trusted platform for secure transactions',
+                          'Your complete test drive management platform',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: Colors.white,
                             letterSpacing: 0.3,
-                            height: 1.5,
+                            height: 1.3, // Further reduced from 1.4
                             shadows: [
                               Shadow(
                                 color: Colors.black.withOpacity(0.1),
@@ -242,112 +246,122 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      SizedBox(height: size.height * 0.03),
+                      SizedBox(height: size.height * 0.015), // Further reduced from 0.02
                       _buildFeatureList(),
+                      SizedBox(height: size.height * 0.02), // Further reduced from 0.025
+                      _buildTrustIndicators(),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-          // Right side - Login Form
-          Expanded(
-            flex: 1,
-            child: Container(
-              height: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: 36,
-                vertical: size.height * 0.03,
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: SingleChildScrollView(
+            // Right side - Login Form
+            Expanded(
+              flex: 1,
+              child: Container(
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24, // Further reduced from 28
+                  vertical: size.height * 0.015, // Further reduced from 0.02
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
                     child: _buildLoginForm(primaryBlue),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMobileLayout(Size size, Color primaryBlue) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-      ),
-      child: Column(
-        children: [
-          // Header Section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              vertical: size.height * 0.03,
-              horizontal: 20,
-            ),
-            decoration: BoxDecoration(
-              color: primaryBlue,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+    return SingleChildScrollView(
+      child: Container(
+        constraints: BoxConstraints(
+          minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+        ),
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: size.height * 0.02, // Further reduced from 0.025
+                horizontal: 14, // Further reduced from 16
               ),
-            ),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: size.height * 0.10,
-                    child: _buildLogo(),
-                  ),
-                  SizedBox(height: size.height * 0.015),
-                  Text(
-                    'Welcome to Varenyam',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: size.height * 0.008),
-                  Text(
-                    'Your trusted platform',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 0.3,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
+              decoration: BoxDecoration(
+                color: primaryBlue,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20), // Further reduced from 25
+                  bottomRight: Radius.circular(20), // Further reduced from 25
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withOpacity(0.3),
+                    blurRadius: 12, // Further reduced from 15
+                    offset: const Offset(0, 3), // Further reduced from 4
                   ),
                 ],
               ),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: size.height * 0.06, // Further reduced from 0.08
+                      child: _buildLogo(),
+                    ),
+                    SizedBox(height: size.height * 0.012), // Further reduced from 0.015
+                    Text(
+                      'Welcome to Varenyam',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: size.height * 0.006), // Further reduced from 0.008
+                    Text(
+                      'Your complete test drive management platform',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: size.height * 0.012), // Further reduced from 0.015
+                    // Add feature highlights for mobile
+                    _buildMobileFeatureHighlights(),
+                  ],
+                ),
+              ),
             ),
-          ),
-          // Login Form Section
-          Expanded(
-            child: SingleChildScrollView(
+            // Login Form Section
+            Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: size.height * 0.02,
+                horizontal: 14, // Further reduced from 16
+                vertical: size.height * 0.015, // Further reduced from 0.02
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -357,8 +371,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -367,15 +381,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     return Hero(
       tag: 'logo',
       child: Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(10), // Further reduced from 12
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).primaryColor.withOpacity(0.15),
-              blurRadius: 25,
-              spreadRadius: 3,
+              blurRadius: 16, // Further reduced from 20
+              spreadRadius: 1.5, // Further reduced from 2
             ),
           ],
         ),
@@ -391,18 +405,22 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color darkGray = Color(0xFF242223);
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16), // Further reduced from 20
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14), // Further reduced from 16
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.08),
-            blurRadius: 25,
-            spreadRadius: 3,
-            offset: const Offset(0, 4),
+            blurRadius: 16, // Further reduced from 20
+            spreadRadius: 1.5, // Further reduced from 2
+            offset: const Offset(0, 2), // Further reduced from 3
           ),
         ],
+        border: Border.all(
+          color: primaryBlue.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,143 +431,157 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Welcome Back',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: darkGray,
-                  letterSpacing: 0.5,
-                  height: 1.2,
-                  shadows: [
-                    Shadow(
-                      color: darkGray.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+              Row(
+                children: [
+                  Container(
+                    width: 2.5, // Further reduced from 3
+                    height: 18, // Further reduced from 20
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 8), // Further reduced from 10
+                  Expanded(
+                    child: Text(
+                      'Welcome Back',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: darkGray,
+                        letterSpacing: 0.5,
+                        height: 1.1, // Further reduced from 1.2
+                        shadows: [
+                          Shadow(
+                            color: darkGray.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2), // Further reduced from 3
+              Padding(
+                padding: const EdgeInsets.only(left: 10), // Further reduced from 13
+                child: Text(
+                  'Sign in to continue',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: darkGray.withOpacity(0.8),
+                    letterSpacing: 0.3,
+                    height: 1.3, // Further reduced from 1.4
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Sign in to continue',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: darkGray.withOpacity(0.8),
-                  letterSpacing: 0.3,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16), // Further reduced from 20
             ],
           ),
-          // Scrollable Form Section
-          Flexible(
-            child: SingleChildScrollView(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildInputField(
-                      controller: _emailController,
-                      label: 'Email or Mobile',
-                      hint: 'Enter your email or mobile number',
-                      prefixIcon: Icons.person_outline,
-                      keyboardType: TextInputType.emailAddress,
-                      accentColor: primaryBlue,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email or mobile number';
-                        }
-                        // Check if it's an email
-                        if (value.contains('@')) {
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                            return 'Please enter a valid email';
-                          }
-                        } else {
-                          // Check if it's a valid mobile number
-                          if (value.length < 10) {
-                            return 'Mobile number must be at least 10 digits';
-                          }
-                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                            return 'Mobile number must contain only digits';
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInputField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      hint: 'Enter your password',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: !_isPasswordVisible,
-                      accentColor: primaryBlue,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: primaryBlue,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 45,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                      ),
-                    ),
-                    // const SizedBox(height: 20),
-                    // Center(
-                    //   child: _buildSignUpSection(accentColor: primaryBlue),
-                    // ),
-                  ],
+          // Form Section
+          Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildInputField(
+                  controller: _emailController,
+                  label: 'Email',
+                  hint: 'Enter your email',
+                  prefixIcon: Icons.person_outline,
+                  keyboardType: TextInputType.emailAddress,
+                  accentColor: primaryBlue,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email or mobile number';
+                    }
+                    // Check if it's an email
+                    if (value.contains('@')) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                    } else {
+                      // Check if it's a valid mobile number
+                      if (value.length < 10) {
+                        return 'Mobile number must be at least 10 digits';
+                      }
+                      if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                        return 'Mobile number must contain only digits';
+                      }
+                    }
+                    return null;
+                  },
                 ),
-              ),
+                const SizedBox(height: 12), // Further reduced from 14
+                _buildInputField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hint: 'Enter your password',
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: !_isPasswordVisible,
+                  accentColor: primaryBlue,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: primaryBlue,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12), // Further reduced from 14
+                SizedBox(
+                  width: double.infinity,
+                  height: 40, // Further reduced from 42
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBlue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10), // Further reduced from 12
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8), // Further reduced from 10
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 14, // Further reduced from 16
+                            width: 14, // Further reduced from 16
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontSize: 14, // Further reduced from 15
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                  ),
+                ),
+                // const SizedBox(height: 20),
+                // Center(
+                //   child: _buildSignUpSection(accentColor: primaryBlue),
+                // ),
+              ],
             ),
           ),
         ],
@@ -573,7 +605,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: const TextStyle(
-        fontSize: 15,
+        fontSize: 13, // Further reduced from 14
         letterSpacing: 0.3,
       ),
       decoration: InputDecoration(
@@ -582,46 +614,46 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         labelStyle: TextStyle(
           color: Colors.grey[600],
           letterSpacing: 0.3,
-          fontSize: 14,
+          fontSize: 12, // Further reduced from 13
         ),
         hintStyle: TextStyle(
           color: Colors.grey[400],
           letterSpacing: 0.3,
-          fontSize: 14,
+          fontSize: 12, // Further reduced from 13
         ),
         prefixIcon: Icon(
           prefixIcon,
           color: accentColor,
-          size: 20,
+          size: 16, // Further reduced from 18
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Colors.grey[300]!,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: accentColor,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8), // Further reduced from 10
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.error,
             width: 2,
@@ -630,8 +662,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
+          horizontal: 8, // Further reduced from 10
+          vertical: 8, // Further reduced from 10
         ),
         isDense: true,
       ),
@@ -685,32 +717,145 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
   // }
 
   Widget _buildFeatureList() {
-    return Column(
-      children: [
-        _buildFeatureItem(Icons.security, 'Secure Transactions'),
-        const SizedBox(height: 12),
-        _buildFeatureItem(Icons.speed, 'Fast Processing'),
-        const SizedBox(height: 12),
-        _buildFeatureItem(Icons.support_agent, '24/7 Support'),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildFeatureItem(Icons.directions_car, 'Test Drive Management'),
+          const SizedBox(height: 10),
+          _buildFeatureItem(Icons.location_on, 'Live Location Tracking'),
+        ],
+      ),
     );
   }
 
   Widget _buildFeatureItem(IconData icon, String text) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileFeatureHighlights() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildFeatureItem(Icons.directions_car, 'Test Drive Management'),
+          const SizedBox(height: 6),
+          _buildFeatureItem(Icons.location_on, 'Live Location Tracking'),
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildTrustIndicators() {
+    return Column(
+      children: [
+        Text(
+          'Streamlining test drives across showrooms',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 13, // Reduced from 14
+            letterSpacing: 0.3,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10), // Reduced from 12
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildTrustIndicator(Icons.directions_car, 'Test Drives'),
+            const SizedBox(width: 16), // Reduced from 20
+            _buildTrustIndicator(Icons.store, 'Showrooms'),
+            const SizedBox(width: 16), // Reduced from 20
+            _buildTrustIndicator(Icons.person, 'Drivers'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrustIndicator(IconData icon, String text) {
+    return Column(
       children: [
         Icon(
           icon,
           color: Colors.white,
-          size: 20,
+          size: 16, // Reduced from 18
         ),
-        const SizedBox(width: 12),
+        const SizedBox(height: 3), // Reduced from 4
         Text(
           text,
           style: TextStyle(
             color: Colors.white,
-            fontSize: 15,
+            fontSize: 11, // Reduced from 12
+            fontWeight: FontWeight.bold,
             letterSpacing: 0.3,
             shadows: [
               Shadow(

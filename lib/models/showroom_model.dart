@@ -12,6 +12,9 @@ class Showroom {
   final String? passwordWord;
   final String createdAt;
   final String updatedAt;
+  final String? locationType;
+  final String? longitude;
+  final String? latitude;
 
   Showroom({
     required this.id,
@@ -27,24 +30,36 @@ class Showroom {
     this.passwordWord,
     required this.createdAt,
     required this.updatedAt,
+    this.locationType,
+    this.longitude,
+    this.latitude,
   });
 
   factory Showroom.fromJson(Map<String, dynamic> json) {
-    return Showroom(
-      id: json['id'] ?? 0,
-      authId: json['auth_id'] ?? 0,
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
-      district: json['district'] ?? '',
-      pincode: json['pincode'] ?? '',
-      showroomImage: json['showroom_image'],
-      ratting: json['ratting'] ?? 0,
-      passwordWord: json['password_word'],
-      createdAt: json['created_at'] ?? '',
-      updatedAt: json['updated_at'] ?? '',
-    );
+    try {
+      return Showroom(
+        id: json['id'] ?? 0,
+        authId: json['auth_id'] ?? 0,
+        name: json['name'] ?? '',
+        address: json['address'] ?? '',
+        city: json['city'] ?? '',
+        state: json['state'] ?? '',
+        district: json['district'] ?? '',
+        pincode: json['pincode'] ?? '',
+        showroomImage: json['showroom_image'],
+        ratting: json['ratting'] ?? 0,
+        passwordWord: json['password_word'],
+        createdAt: json['created_at'] ?? '',
+        updatedAt: json['updated_at'] ?? '',
+        locationType: json['location_type'],
+        longitude: json['longitude'],
+        latitude: json['latitude'],
+      );
+    } catch (e) {
+      print('Error parsing Showroom: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -62,6 +77,9 @@ class Showroom {
       'password_word': passwordWord,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      'location_type': locationType,
+      'longitude': longitude,
+      'latitude': latitude,
     };
   }
 

@@ -38,7 +38,6 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
       case 'completed':
         return Colors.green;
       case 'cancelled':
-      case 'canceled':
         return Colors.red;
       case 'rejected':
         return Colors.red;
@@ -57,7 +56,6 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
       case 'completed':
         return Icons.check_circle_outline;
       case 'cancelled':
-      case 'canceled':
         return Icons.cancel_outlined;
       case 'rejected':
         return Icons.block;
@@ -76,7 +74,6 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
       case 'completed':
         return 'Completed';
       case 'cancelled':
-      case 'canceled':
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';
@@ -172,7 +169,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
 
   final List<Map<String, dynamic>> _statusOptions = [
     {'value': 'completed', 'label': 'Completed', 'color': Colors.green, 'icon': Icons.check_circle_outline},
-    {'value': 'canceled', 'label': 'Cancelled', 'color': Colors.red, 'icon': Icons.cancel_outlined},
+    {'value': 'cancelled', 'label': 'Cancelled', 'color': Colors.red, 'icon': Icons.cancel_outlined},
     {'value': 'rescheduled', 'label': 'Reschedule', 'color': const Color(0xFF9C27B0), 'icon': Icons.schedule},
   ];
 
@@ -180,7 +177,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
   void initState() {
     super.initState();
     if (widget.testDrive != null) {
-      // Only allow completed or canceled status for assigned test drives
+      // Only allow completed or cancelled status for assigned test drives
       if (widget.testDrive!.status == 'approved' || widget.testDrive!.status == 'in_progress') {
         _selectedStatus = 'completed'; // Default to completed for assigned drives
       } else {
@@ -194,8 +191,8 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
     if (widget.testDrive == null) return false;
     
     final status = widget.testDrive!.status?.toLowerCase() ?? '';
-    // Only allow updates if status is not canceled or completed
-    return status != 'canceled' && status != 'cancelled' && status != 'completed';
+    // Only allow updates if status is not cancelled or completed
+    return status != 'cancelled' && status != 'completed';
   }
 
   @override
@@ -254,7 +251,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             testDriveId: widget.testDrive!.id,
             driverId: employee.id,
             status: _selectedStatus,
-            cancelDescription: _selectedStatus == 'canceled' ? _notesController.text.trim() : null,
+            cancelDescription: _selectedStatus == 'cancelled' ? _notesController.text.trim() : null,
           );
         }
         
@@ -288,7 +285,6 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
       case 'completed':
         return Colors.green;
       case 'cancelled':
-      case 'canceled':
         return Colors.red;
       case 'rejected':
         return Colors.red;
@@ -309,7 +305,6 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
       case 'completed':
         return Icons.check_circle_outline;
       case 'cancelled':
-      case 'canceled':
         return Icons.cancel_outlined;
       case 'rejected':
         return Icons.block;
@@ -329,8 +324,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
         return 'In Progress';
       case 'completed':
         return 'Completed';
-      case 'cancelled':
-      case 'canceled':
+      case 'cancelled':     
         return 'Cancelled';
       case 'rejected':
         return 'Rejected';
@@ -623,7 +617,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             // Notes Section
             if (canUpdate) ...[
               Text(
-                _selectedStatus == 'canceled' 
+                _selectedStatus == 'cancelled' 
                     ? 'Cancellation Reason' 
                     : _selectedStatus == 'rescheduled'
                         ? 'Rescheduling Reason'
@@ -664,7 +658,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _selectedStatus == 'canceled' 
+                            _selectedStatus == 'cancelled' 
                                 ? 'Reason for Cancellation' 
                                 : _selectedStatus == 'rescheduled'
                                     ? 'Reason for Rescheduling'
@@ -682,10 +676,10 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                         controller: _notesController,
                         maxLines: 3,
                         enabled: canUpdate,
-                        validator: _selectedStatus == 'canceled' || _selectedStatus == 'rescheduled'
+                        validator: _selectedStatus == 'cancelled' || _selectedStatus == 'rescheduled'
                             ? (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return _selectedStatus == 'canceled' 
+                                  return _selectedStatus == 'cancelled' 
                                       ? 'Please provide a reason for cancellation'
                                       : 'Please provide a reason for rescheduling';
                                 }
@@ -693,7 +687,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                               }
                             : null,
                         decoration: InputDecoration(
-                          hintText: _selectedStatus == 'canceled' 
+                          hintText: _selectedStatus == 'cancelled' 
                               ? 'Enter the reason for cancellation...'
                               : _selectedStatus == 'rescheduled'
                                   ? 'Enter the reason for rescheduling...'

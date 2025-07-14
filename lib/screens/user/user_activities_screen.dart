@@ -738,8 +738,8 @@ class _UserActivitiesScreenState extends State<UserActivitiesScreen> {
 
   IconData _getActivityIcon(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Icons.receipt_outlined;
-    if (activity.operation.toLowerCase().contains('canceled') || 
-        activity.operationDescription.toLowerCase().contains('canceled')) return Icons.cancel_outlined;
+    if (activity.operation.toLowerCase().contains('cancelled') || 
+        activity.operationDescription.toLowerCase().contains('cancelled')) return Icons.cancel_outlined;
     if (activity.operation.toLowerCase().contains('completed') || 
         activity.operationDescription.toLowerCase().contains('completed')) return Icons.check_circle_outline;
     if (activity.operation.toLowerCase().contains('rescheduled') || 
@@ -752,8 +752,8 @@ class _UserActivitiesScreenState extends State<UserActivitiesScreen> {
 
   Color _getActivityColor(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Colors.blue;
-    if (activity.operation.toLowerCase().contains('canceled') || 
-        activity.operationDescription.toLowerCase().contains('canceled')) return Colors.red;
+    if (activity.operation.toLowerCase().contains('cancelled') || 
+        activity.operationDescription.toLowerCase().contains('cancelled')) return Colors.red;
     if (activity.operation.toLowerCase().contains('completed') || 
         activity.operationDescription.toLowerCase().contains('completed')) return Colors.green;
     if (activity.operation.toLowerCase().contains('rescheduled') || 

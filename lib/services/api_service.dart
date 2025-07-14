@@ -959,7 +959,7 @@ class ApiService {
         
         if (responseData['success'] == true) {
           final message = responseData['message'] as String? ?? 'Test drive status updated to rejected.';
-          debugPrint('Successfully canceled test drive ID: $testDriveId');
+          debugPrint('Successfully cancelled test drive ID: $testDriveId');
           return ApiResponse.success(message, message: message);
         } else {
           final errorMessage = responseData['message'] as String? ?? 'Failed to cancel test drive';

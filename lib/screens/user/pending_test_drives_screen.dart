@@ -948,7 +948,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
       final cancelDescription = reason.isNotEmpty 
           ? reason 
-          : 'User canceled the test drive request';
+          : 'User cancelled the test drive request';
       
       final response = await _apiService.cancelTestDrive(
         request.id, 
@@ -990,7 +990,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           ),
         );
 
-        // Refresh the list to remove the canceled test drive
+        // Refresh the list to remove the cancelled test drive
         _loadPendingTestDrives();
       } else {
         // Show error message

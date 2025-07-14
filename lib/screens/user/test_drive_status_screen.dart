@@ -267,7 +267,6 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
       case 'completed':
         return Colors.grey;
       case 'cancelled':
-      case 'canceled':
       case 'rejected':
       case 'rescheduled':
         return Colors.grey;

@@ -7,6 +7,7 @@ import '../models/employee_model.dart';
 import '../models/expense_model.dart';
 import '../models/test_drive_model.dart';
 import '../models/activity_log_model.dart';
+import '../models/gate_pass_model.dart';
 import 'api_config.dart';
 
 class EmployeeApiService {
@@ -502,6 +503,55 @@ class EmployeeApiService {
       } else {
         final errorMessage = _extractErrorMessage(response.body);
         return EmployeeApiResponse.error(errorMessage ?? 'Failed to fetch recent activities');
+      }
+    } on SocketException {
+      return EmployeeApiResponse.error('Network error: Please check your internet connection');
+    } on FormatException {
+      return EmployeeApiResponse.error('Invalid response format from server');
+    } on TimeoutException {
+      return EmployeeApiResponse.error('Request timeout. Please try again.');
+    } catch (e) {
+      return EmployeeApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<EmployeeApiResponse<GatePassResponse>> getGatePass({
+    required int driverId,
+    required int testDriveId,
+  }) async {
+    try {
+      debugPrint('Fetching gate pass for driver ID: $driverId, test drive ID: $testDriveId');
+      
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/gatepass?driver_id=$driverId&testdrive_id=$testDriveId',
+      );
+      
+      debugPrint('Gate pass API URL: $uri');
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('Gate pass response status: ${response.statusCode}');
+      debugPrint('Gate pass response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final gatePassResponse = GatePassResponse.fromJson(responseData);
+        
+        debugPrint('Parsed ${gatePassResponse.data.length} gate passes');
+        
+        // Return the response regardless of success status to handle empty data cases
+        if (gatePassResponse.success && gatePassResponse.data.isNotEmpty) {
+          return EmployeeApiResponse.success(gatePassResponse, message: gatePassResponse.message);
+        } else {
+          // Handle case where API returns success: false or empty data
+          return EmployeeApiResponse.error(gatePassResponse.message);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return EmployeeApiResponse.error(errorMessage ?? 'Failed to fetch gate pass');
       }
     } on SocketException {
       return EmployeeApiResponse.error('Network error: Please check your internet connection');

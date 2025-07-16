@@ -78,21 +78,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         return;
       }
 
-      final response = await _apiService.getShowrooms();
-      
+      // Fetch only the assigned showroom by ID
+      final response = await _apiService.getShowroomById(currentUser.showroomId);
       if (response.success) {
-        // Filter showrooms to only show the one that matches user's showroom_id
-        final allShowrooms = response.data ?? [];
-        final filteredShowrooms = allShowrooms.where((showroom) => 
-          showroom.id == currentUser.showroomId
-        ).toList();
-        
         setState(() {
-          _showrooms = filteredShowrooms;
+          _showrooms = [response.data!];
           _isLoadingShowrooms = false;
         });
-        
-        // Fetch car counts for each showroom
+        // Fetch car counts for the showroom
         _fetchCarCounts();
       } else {
         setState(() {
@@ -1040,20 +1033,39 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       width: double.infinity,
                       height: 36, // Reduced from 40
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CarsScreen(
-                                showroomName: showroom.name,
-                                availableCars: [],
-                                showroomLocation: showroom.locationDisplay,
-                                showroomRating: showroom.ratting.toString(),
-                                showroomDistance: 'N/A',
-                                showroomId: showroom.id,
-                              ),
-                            ),
+                        onPressed: () async {
+                          // Show loading dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(child: CircularProgressIndicator()),
                           );
+                          final carResponse = await _apiService.getCarsByShowroom(showroom.id);
+                          if (mounted) Navigator.pop(context); // Close loading dialog
+                          if (carResponse.success) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CarsScreen(
+                                  showroomName: showroom.name,
+                                  availableCars: carResponse.data ?? [],
+                                  showroomLocation: showroom.locationDisplay,
+                                  showroomRating: showroom.ratting.toString(),
+                                  showroomDistance: 'N/A',
+                                  showroomId: showroom.id,
+                                ),
+                              ),
+                            );
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(carResponse.message ?? 'Failed to load cars'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0095D9),

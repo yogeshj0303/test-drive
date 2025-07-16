@@ -5,6 +5,8 @@ import 'package:video_player/video_player.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../models/expense_model.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final bool showBackButton;
@@ -22,6 +24,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
+  final NumberFormat _currencyFormat = NumberFormat.currency(locale: "en_IN", symbol: "₹");
   final _receiptNumberController = TextEditingController();
   final _notesController = TextEditingController();
   
@@ -56,8 +59,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(_formatAmountInput);
+  }
+
+  void _formatAmountInput() {
+    final text = _amountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (text.isEmpty) return;
+    final double? value = double.tryParse(text);
+    if (value == null) return;
+    final newText = value.truncateToDouble() == value
+        ? _currencyFormat.format(value).replaceAll('.00', '')
+        : _currencyFormat.format(value);
+    if (_amountController.text != newText) {
+      final selectionIndex = newText.length;
+      _amountController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: selectionIndex),
+      );
+    }
+  }
+
+  @override
   void dispose() {
     _descriptionController.dispose();
+    _amountController.removeListener(_formatAmountInput);
     _amountController.dispose();
     _receiptNumberController.dispose();
     _notesController.dispose();
@@ -340,7 +367,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         final expenseRequest = ExpenseRequest(
           userId: employee.id,
           description: _descriptionController.text.trim(),
-          amount: double.parse(_amountController.text.trim()),
+          amount: double.parse(_amountController.text.trim().replaceAll('₹', '').replaceAll(',', '')),
           date: formattedDate,
           classification: _selectedCategory,
           paymentMode: _selectedPaymentMethod,
@@ -534,6 +561,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines ?? 1,
+        inputFormatters: label == 'Amount' ? [
+          FilteringTextInputFormatter.allow(RegExp(r'^[₹0-9,\.]*')),
+        ] : null,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
@@ -949,18 +979,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     _buildFormField(
                       controller: _amountController,
                       label: 'Amount',
-                      icon: Icons.attach_money,
+                      icon: Icons.currency_rupee,
                       hint: '0.00',
-                      prefixText: '\$',
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter an amount';
                         }
-                        if (double.tryParse(value) == null) {
+                        // Remove ₹ and commas for validation
+                        final cleanValue = value.replaceAll('₹', '').replaceAll(',', '').trim();
+                        if (double.tryParse(cleanValue) == null) {
                           return 'Please enter a valid amount';
                         }
-                        if (double.parse(value) <= 0) {
+                        if (double.parse(cleanValue) <= 0) {
                           return 'Amount must be greater than 0';
                         }
                         return null;

@@ -78,27 +78,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           final showroomResponse = await _apiService.getShowroomById(currentUser.showroomId);
           if (showroomResponse.success && showroomResponse.data != null) {
             showroom = showroomResponse.data;
-          } else {
-            // Fallback: get all showrooms and find the matching one
-            final allShowroomsResponse = await _apiService.getShowrooms();
-            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
-              showroom = allShowroomsResponse.data!.firstWhere(
-                (s) => s.id == currentUser.showroomId,
-                orElse: () => Showroom(
-                  id: 0,
-                  authId: 0,
-                  name: '',
-                  address: '',
-                  city: '',
-                  state: '',
-                  district: '',
-                  pincode: '',
-                  ratting: 0,
-                  createdAt: '',
-                  updatedAt: '',
-                ),
-              );
-            }
           }
         } catch (e) {
           print('Error fetching showroom details: $e');

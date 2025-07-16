@@ -5,6 +5,7 @@ import 'request_test_drive_screen.dart';
 import '../../services/api_service.dart';
 import '../../services/api_config.dart';
 import '../../models/showroom_model.dart';
+import '../../services/storage_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -17,6 +18,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final stt.SpeechToText _speech = stt.SpeechToText();
   final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
   bool _isListening = false;
   String _searchQuery = '';
   List<Showroom> _allShowrooms = [];
@@ -46,7 +48,23 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     try {
-      final response = await _apiService.getShowrooms();
+      // Get user's pincode or use a default one
+      String pincode = '462023'; // Default pincode
+      try {
+        final user = await _storageService.getUser();
+        if (user != null) {
+          // Try to get pincode from user's showroom or use default
+          final showroomResponse = await _apiService.getShowroomById(user.showroomId);
+          if (showroomResponse.success) {
+            pincode = showroomResponse.data!.pincode;
+          }
+        }
+      } catch (e) {
+        // Use default pincode if user data is not available
+        print('Using default pincode: $e');
+      }
+
+      final response = await _apiService.getNearbyShowrooms(pincode);
       
       if (response.success) {
         setState(() {

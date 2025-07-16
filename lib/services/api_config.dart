@@ -10,8 +10,9 @@ class ApiConfig {
   static const String forgotPasswordOtpEndpoint = '/api/front-user/forgot-password-otp';
   static const String verifyForgotPasswordOtpEndpoint = '/api/front-user/verify-forgot-password-otp';
   static const String resetPasswordEndpoint = '/api/front-user/reset-password';
-  static const String showroomsEndpoint = '/api/front-showrooms';
+  static const String showroomByIdEndpoint = '/api/front-showrooms'; // Endpoint for fetching showroom by ID
   static const String carsByShowroomEndpoint = '/api/front-cars/by-showroom';
+  static const String carsByLocationTypeEndpoint = '/api/front-cars/by-location_type';
   static const String userProfileEndpoint = '/api/driver/profile'; // Base endpoint for user profile
   static const String updateUserProfileEndpoint = '/api/app-users/update'; // Endpoint for updating user profile
   static const String testDriveStoreEndpoint = '/api/app-users/textdrives-store'; // Endpoint for creating test drive request

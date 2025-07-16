@@ -107,27 +107,6 @@ class UserProfileScreen extends StatefulWidget {
           final showroomResponse = await apiService.getShowroomById(_cachedUser!.showroomId);
           if (showroomResponse.success && showroomResponse.data != null) {
             showroom = showroomResponse.data;
-          } else {
-            // Fallback: get all showrooms and find the matching one
-            final allShowroomsResponse = await apiService.getShowrooms();
-            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
-              showroom = allShowroomsResponse.data!.firstWhere(
-                (s) => s.id == _cachedUser!.showroomId,
-                orElse: () => Showroom(
-                  id: 0,
-                  authId: 0,
-                  name: '',
-                  address: '',
-                  city: '',
-                  state: '',
-                  district: '',
-                  pincode: '',
-                  ratting: 0,
-                  createdAt: '',
-                  updatedAt: '',
-                ),
-              );
-            }
           }
         } catch (e) {
           print('Error fetching showroom details: $e');
@@ -246,34 +225,6 @@ class UserProfileScreenState extends State<UserProfileScreen>
           if (showroomResponse.success && showroomResponse.data != null) {
             showroom = showroomResponse.data;
             print('Debug: Found showroom via individual API: ${showroom!.name}');
-          } else {
-            print('Debug: Individual showroom API failed, trying all showrooms');
-            // Fallback: get all showrooms and find the matching one
-            final allShowroomsResponse = await _apiService.getShowrooms();
-            print('Debug: All showrooms response: ${allShowroomsResponse.success}');
-            if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
-              print('Debug: Found ${allShowroomsResponse.data!.length} showrooms');
-              showroom = allShowroomsResponse.data!.firstWhere(
-                (s) => s.id == currentUser.showroomId,
-                orElse: () {
-                  print('Debug: No matching showroom found for ID: ${currentUser.showroomId}');
-                  return Showroom(
-                    id: 0,
-                    authId: 0,
-                    name: '',
-                    address: '',
-                    city: '',
-                    state: '',
-                    district: '',
-                    pincode: '',
-                    ratting: 0,
-                    createdAt: '',
-                    updatedAt: '',
-                  );
-                },
-              );
-              print('Debug: Found showroom via all showrooms: ${showroom.name}');
-            }
           }
         } catch (e) {
           print('Error fetching showroom details: $e');
@@ -339,27 +290,6 @@ class UserProfileScreenState extends State<UserProfileScreen>
         final showroomResponse = await _apiService.getShowroomById(showroomId);
         if (showroomResponse.success && showroomResponse.data != null) {
           showroom = showroomResponse.data;
-        } else {
-          // Fallback: get all showrooms and find the matching one
-          final allShowroomsResponse = await _apiService.getShowrooms();
-          if (allShowroomsResponse.success && allShowroomsResponse.data != null) {
-            showroom = allShowroomsResponse.data!.firstWhere(
-              (s) => s.id == showroomId,
-              orElse: () => Showroom(
-                id: 0,
-                authId: 0,
-                name: '',
-                address: '',
-                city: '',
-                state: '',
-                district: '',
-                pincode: '',
-                ratting: 0,
-                createdAt: '',
-                updatedAt: '',
-              ),
-            );
-          }
         }
       } catch (e) {
         print('Error fetching showroom details: $e');

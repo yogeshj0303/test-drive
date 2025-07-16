@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'showroom_model.dart';
 
 class TestDriveCar {
@@ -163,6 +165,7 @@ class TestDriveRequest {
   final String userMobile;
   final String userEmail;
   final String userAdhar;
+  final List<File> carImages;
 
   TestDriveRequest({
     required this.carId,
@@ -181,6 +184,8 @@ class TestDriveRequest {
     required this.userMobile,
     required this.userEmail,
     required this.userAdhar,
+    required this.carImages,
+    required int openingKm,
   });
 
   Map<String, dynamic> toJson() {

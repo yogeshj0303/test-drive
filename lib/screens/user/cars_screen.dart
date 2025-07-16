@@ -5,11 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'car_details_screen.dart';
 import '../../services/api_service.dart';
 import '../../models/car_model.dart';
+import '../../models/user_model.dart';
 
 class NotchedCardShape extends ShapeBorder {
   final double notchRadius;
   final double borderRadius;
-  NotchedCardShape({this.notchRadius = 32, this.borderRadius = 28});
+  NotchedCardShape({this.notchRadius = 32, this.borderRadius = 12});
 
   @override
   EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
@@ -59,7 +60,7 @@ class NotchedCardShape extends ShapeBorder {
 
 class CarsScreen extends StatefulWidget {
   final String showroomName;
-  final List<String> availableCars;
+  final List<Car> availableCars;
   final String showroomLocation;
   final String showroomRating;
   final String showroomDistance;
@@ -105,6 +106,11 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
   // View and sort options
   String _viewMode = 'list'; // 'list' or 'grid'
   String _sortBy = 'name'; // 'name', 'price', 'newest'
+
+  // Location type filter
+  String _selectedLocationType = 'all'; // 'all', 'showroom', 'yard', 'workshop'
+  List<String> _locationTypes = ['all', 'showroom', 'yard', 'workshop'];
+  bool _isFilteringByLocation = false;
 
   @override
   void initState() {
@@ -304,17 +310,17 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12), // Standardized
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16), // Reduced from 18
-                          padding: const EdgeInsets.all(4), // Reduced from 6
-                        ),
+                                                borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                      padding: const EdgeInsets.all(4),
+                    ),
                       ),
                       const SizedBox(width: 8), // Reduced from 12
                       Expanded(
@@ -359,12 +365,12 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               height: 40, // Reduced from 44
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(12), // Standardized
+                                borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 8, // Reduced from 12
-                                    offset: const Offset(0, 3), // Reduced from 4
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -385,7 +391,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                     margin: const EdgeInsets.only(right: 2), // Reduced from 4
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12), // Standardized
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(Icons.search, color: Color(0xFF0095D9), size: 14), // Reduced from 16
                                   ),
@@ -393,12 +399,12 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                     margin: const EdgeInsets.only(right: 2), // Reduced from 4
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 200),
-                                      decoration: BoxDecoration(
-                                        color: _isListening 
-                                            ? const Color(0xFF0095D9).withOpacity(0.1)
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12), // Standardized
-                                      ),
+                                                                              decoration: BoxDecoration(
+                                          color: _isListening 
+                                              ? const Color(0xFF0095D9).withOpacity(0.1)
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
                                       child: Stack(
                                         alignment: Alignment.center,
                                         children: [
@@ -467,14 +473,14 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0), // Reduced from 24
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0), // Reduced from 24
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Reduced
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12), // Standardized
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: Colors.white.withOpacity(0.2),
                               width: 1,
@@ -483,9 +489,11 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                           child: Text(
                             _cars.isEmpty 
                                 ? 'No Results'
-                                : _filteredCars.length == _cars.length
-                                    ? '${_filteredCars.length} Results'
-                                    : '${_filteredCars.length} of ${_cars.length} Results',
+                                : _isFilteringByLocation
+                                    ? '${_filteredCars.length} ${_getLocationTypeLabel(_selectedLocationType)}'
+                                    : _filteredCars.length == _cars.length
+                                        ? '${_filteredCars.length} Results'
+                                        : '${_filteredCars.length} of ${_cars.length} Results',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -494,18 +502,18 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         const Spacer(),
-                        GestureDetector(
-                          onTap: _showOptionsMenu,
-                          child: Container(
-                            padding: const EdgeInsets.all(5), // Reduced from 6
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12), // Standardized
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.2),
-                                width: 1,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
                             ),
+                          ),
+                          child: GestureDetector(
+                            onTap: _showOptionsMenu,
                             child: Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.9), size: 16), // Reduced from 18
                           ),
                         ),
@@ -520,14 +528,14 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12), // Standardized
-                        topRight: Radius.circular(12), // Standardized
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
                     ),
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24), // Reduced from 28
-                        topRight: Radius.circular(24), // Reduced from 28
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
                       child: _isLoading
                           ? const Center(
@@ -574,7 +582,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                           backgroundColor: const Color(0xFF0095D9),
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
                                         ),
                                         child: const Text('Retry'),
@@ -609,14 +617,16 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                           Text(
                                             _cars.isEmpty 
                                                 ? 'Check back later for available cars'
-                                                : 'Try adjusting your search or filters',
+                                                : _isFilteringByLocation
+                                                    ? 'No cars found in ${_getLocationTypeLabel(_selectedLocationType).toLowerCase()}'
+                                                    : 'Try adjusting your search or filters',
                                             style: TextStyle(
                                               color: Colors.grey[600],
                                               fontSize: 13, // Reduced from 14
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
-                                          if (_cars.isNotEmpty && (_searchQuery.isNotEmpty))
+                                          if (_cars.isNotEmpty && (_searchQuery.isNotEmpty || _isFilteringByLocation))
                                             Padding(
                                               padding: const EdgeInsets.only(top: 12), // Reduced from 16
                                               child: TextButton(
@@ -674,12 +684,12 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                     elevation: 0,
                     color: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // Standardized
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12), // Standardized
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.06),
@@ -707,14 +717,14 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               children: [
                                 // Rating badge with enhanced design
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [Color(0xFFFF8A65), Color(0xFFFF5722)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(12), // Standardized
+                                    borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0xFFFF5722).withOpacity(0.25),
@@ -742,14 +752,14 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 ),
                                 // Deals badge with enhanced design
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(12), // Standardized
+                                    borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0xFF4CAF50).withOpacity(0.25),
@@ -784,7 +794,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                             height: 150, // Reduced from 120
                             margin: const EdgeInsets.symmetric(horizontal: 12), // Reduced from 16
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12), // Reduced from 16
+                              borderRadius: BorderRadius.circular(12),
                               child: Stack(
                                 children: [
                                   // Car image
@@ -804,7 +814,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                               const Color(0xFF0095D9).withOpacity(0.02),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(12), // Standardized
+                                          borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
                                             color: const Color(0xFF0095D9).withOpacity(0.1),
                                             width: 1,
@@ -847,7 +857,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                               const Color(0xFF0095D9).withOpacity(0.02),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(12), // Standardized
+                                          borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
                                             color: const Color(0xFF0095D9).withOpacity(0.1),
                                             width: 1,
@@ -881,7 +891,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                   Positioned.fill(
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12), // Reduced from 16
+                                        borderRadius: BorderRadius.circular(12),
                                         gradient: LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
@@ -938,7 +948,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                         height: 40, // Reduced from 44
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12), // Standardized
+                                          borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
                                             color: const Color(0xFF0095D9),
                                             width: 2,
@@ -967,7 +977,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                                 ),
                                               );
                                             },
-                                            borderRadius: BorderRadius.circular(12), // Standardized
+                                            borderRadius: BorderRadius.circular(12),
                                             child: const Center(
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
@@ -1022,7 +1032,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
             padding: const EdgeInsets.all(4), // Reduced from 6
             decoration: BoxDecoration(
               color: const Color(0xFF0095D9).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12), // Standardized
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
@@ -1069,7 +1079,15 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
     });
 
     try {
-      final response = await _apiService.getCarsByShowroom(widget.showroomId);
+      ApiResponse<List<Car>> response;
+      
+      if (_isFilteringByLocation && _selectedLocationType != 'all') {
+        // Fetch cars by location type
+        response = await _apiService.getCarsByLocationType(_selectedLocationType);
+      } else {
+        // Fetch cars by showroom (default behavior)
+        response = await _apiService.getCarsByShowroom(widget.showroomId);
+      }
       
       if (response.success) {
         setState(() {
@@ -1133,8 +1151,19 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
     setState(() {
       _searchQuery = '';
       _searchController.clear();
+      _selectedLocationType = 'all';
+      _isFilteringByLocation = false;
     });
     _applyFilters();
+    _fetchCars();
+  }
+
+  void _resetLocationFilter() {
+    setState(() {
+      _selectedLocationType = 'all';
+      _isFilteringByLocation = false;
+    });
+    _fetchCars();
   }
 
   // Menu functionality methods
@@ -1151,8 +1180,8 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
         ),
       ),
       child: Column(
@@ -1165,7 +1194,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           const SizedBox(height: 20),
@@ -1280,6 +1309,62 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 20), // Reduced spacing
                   
+                  // Location Filter Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Location Filter',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildLocationFilterOption(
+                        icon: Icons.public,
+                        title: 'All Locations',
+                        isSelected: _selectedLocationType == 'all',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _onLocationTypeChanged('all');
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildLocationFilterOption(
+                        icon: Icons.store,
+                        title: 'Showrooms',
+                        isSelected: _selectedLocationType == 'showroom',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _onLocationTypeChanged('showroom');
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildLocationFilterOption(
+                        icon: Icons.local_parking,
+                        title: 'Yards',
+                        isSelected: _selectedLocationType == 'yard',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _onLocationTypeChanged('yard');
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildLocationFilterOption(
+                        icon: Icons.build,
+                        title: 'Workshops',
+                        isSelected: _selectedLocationType == 'workshop',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _onLocationTypeChanged('workshop');
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20), // Reduced spacing
+                  
                   // Actions Section
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1385,7 +1470,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF0095D9).withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? const Color(0xFF0095D9) : Colors.grey[200]!,
             width: isSelected ? 2 : 1,
@@ -1433,7 +1518,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Colors.grey[200]!,
             width: 1,
@@ -1502,7 +1587,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         title: Row(
           children: [
@@ -1510,7 +1595,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFF0095D9).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.help_outline, color: Color(0xFF0095D9)),
             ),
@@ -1535,8 +1620,17 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
             SizedBox(height: 12),
             Text('• Use the search bar to find specific cars'),
             Text('• Tap the microphone for voice search'),
+            Text('• Use location filters to find cars by type'),
             Text('• Use the menu (⋮) for view options and sorting'),
             Text('• Tap "Book" to view car details'),
+            SizedBox(height: 12),
+            Text(
+              'Location Types:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text('• Showrooms: Cars available at showroom locations'),
+            Text('• Yards: Cars stored in yard facilities'),
+            Text('• Workshops: Cars being serviced or repaired'),
             SizedBox(height: 12),
             Text(
               'Need more help?',
@@ -1632,7 +1726,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12), // Standardized
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.06),
@@ -1650,8 +1744,8 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                     flex: 2, // Reduced from 4 to make image smaller
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12), // Standardized
-                        topRight: Radius.circular(12), // Standardized
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
                       child: CachedNetworkImage(
                         imageUrl: car.mainImage,
@@ -1752,7 +1846,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                                 backgroundColor: const Color(0xFF0095D9),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12), // Standardized
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding: EdgeInsets.zero,
                                 elevation: 0,
@@ -1786,7 +1880,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
           padding: const EdgeInsets.all(2), // Increased from 1
           decoration: BoxDecoration(
             color: const Color(0xFF0095D9).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12), // Standardized
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
@@ -1822,5 +1916,91 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
         ),
       ],
     );
+  }
+
+  Widget _buildLocationFilterOption({
+    required IconData icon,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0095D9).withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0095D9) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF0095D9) : Colors.grey[600],
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? const Color(0xFF0095D9) : const Color(0xFF1A1A1A),
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFF0095D9),
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onLocationTypeChanged(String locationType) {
+    setState(() {
+      _selectedLocationType = locationType;
+      _isFilteringByLocation = locationType != 'all';
+    });
+    _fetchCars();
+  }
+
+  IconData _getLocationTypeIcon(String locationType) {
+    switch (locationType) {
+      case 'all':
+        return Icons.public;
+      case 'showroom':
+        return Icons.store;
+      case 'yard':
+        return Icons.local_parking;
+      case 'workshop':
+        return Icons.build;
+      default:
+        return Icons.public;
+    }
+  }
+
+  String _getLocationTypeLabel(String locationType) {
+    switch (locationType) {
+      case 'all':
+        return 'All Locations';
+      case 'showroom':
+        return 'Showrooms';
+      case 'yard':
+        return 'Yards';
+      case 'workshop':
+        return 'Workshops';
+      default:
+        return 'All Locations';
+    }
   }
 } 

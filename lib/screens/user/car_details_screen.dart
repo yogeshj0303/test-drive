@@ -547,7 +547,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                               MaterialPageRoute(
                                 builder: (context) => RequestTestDriveScreen(
                                   showroomName: widget.showroomName,
-                                  availableCars: [widget.carName],
+                                  availableCars: [],
                                   selectedStartDate: DateTime.now(),
                                   selectedEndDate: DateTime.now().add(const Duration(days: 1)),
                                   pickupLocation: "Showroom Location",

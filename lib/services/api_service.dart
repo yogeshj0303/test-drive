@@ -60,46 +60,12 @@ class ApiService {
     }
   }
 
-  Future<ApiResponse<List<Showroom>>> getShowrooms() async {
-    try {
-      debugPrint('Fetching showrooms from API');
-      
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.showroomsEndpoint));
-      final response = await http.get(
-        uri,
-        headers: ApiConfig.defaultHeaders,
-      );
-
-      debugPrint('Showrooms response status: ${response.statusCode}');
-      debugPrint('Showrooms response data: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final List<dynamic> responseData = jsonDecode(response.body) as List<dynamic>;
-        final showrooms = responseData.map((json) => Showroom.fromJson(json)).toList();
-        debugPrint('Successfully fetched ${showrooms.length} showrooms');
-        return ApiResponse.success(showrooms, message: 'Showrooms fetched successfully');
-      } else {
-        final errorMessage = _extractErrorMessage(response.body);
-        return ApiResponse.error(errorMessage ?? 'Failed to fetch showrooms');
-      }
-    } on SocketException {
-      debugPrint('Showrooms network error: No internet connection');
-      return ApiResponse.error(ApiConfig.networkErrorMessage);
-    } on FormatException {
-      debugPrint('Showrooms format error: Invalid response format');
-      return ApiResponse.error('Invalid response format from server');
-    } catch (e) {
-      debugPrint('Showrooms unexpected error: ${e.toString()}');
-      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-
   Future<ApiResponse<Showroom>> getShowroomById(int showroomId) async {
     try {
       debugPrint('Fetching showroom details for ID: $showroomId');
       
-      // Try different endpoint patterns since we're not sure about the exact API structure
-      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.showroomsEndpoint)}/$showroomId');
+      // Use query parameter instead of path parameter
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.showroomByIdEndpoint)}?showroom_id=$showroomId');
       debugPrint('Showroom details URL: $uri');
       
       final response = await http.get(
@@ -111,8 +77,27 @@ class ApiService {
       debugPrint('Showroom details response data: ${response.body}');
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        final showroom = Showroom.fromJson(responseData);
+        final dynamic responseData = jsonDecode(response.body);
+        
+        Showroom showroom;
+        
+        // Handle both List and Map responses
+        if (responseData is List) {
+          // API returned a list of showrooms, take the first one
+          if (responseData.isNotEmpty) {
+            showroom = Showroom.fromJson(responseData.first as Map<String, dynamic>);
+          } else {
+            debugPrint('No showrooms found for ID: $showroomId');
+            return ApiResponse.error('Showroom not found');
+          }
+        } else if (responseData is Map<String, dynamic>) {
+          // API returned a single showroom object
+          showroom = Showroom.fromJson(responseData);
+        } else {
+          debugPrint('Unexpected response format: $responseData');
+          return ApiResponse.error('Invalid response format from server');
+        }
+        
         debugPrint('Successfully fetched showroom details for ID $showroomId');
         return ApiResponse.success(showroom, message: 'Showroom details fetched successfully');
       } else if (response.statusCode == 404) {
@@ -253,6 +238,40 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Cars unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<List<Car>>> getCarsByLocationType(String locationType) async {
+    try {
+      debugPrint('Fetching cars by location type: $locationType');
+      
+      final uri = Uri.parse('${ApiConfig.getFullUrl(ApiConfig.carsByLocationTypeEndpoint)}?car_location_type=$locationType');
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      debugPrint('Cars by location type response status: ${response.statusCode}');
+      debugPrint('Cars by location type response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = jsonDecode(response.body) as List<dynamic>;
+        final cars = responseData.map((json) => Car.fromJson(json)).toList();
+        debugPrint('Successfully fetched ${cars.length} cars for location type $locationType');
+        return ApiResponse.success(cars, message: 'Cars fetched successfully');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch cars');
+      }
+    } on SocketException {
+      debugPrint('Cars by location type network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Cars by location type format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Cars by location type unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }
@@ -398,16 +417,55 @@ class ApiService {
       debugPrint('Submitting test drive request for car ID: ${request.carId}');
       debugPrint('Request data: ${request.toJson()}');
       
-      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.testDriveStoreEndpoint))
-          .replace(queryParameters: request.toQueryParameters());
+      final uri = Uri.parse(ApiConfig.getFullUrl(ApiConfig.testDriveStoreEndpoint));
       
       debugPrint('Test drive request URL: $uri');
-      debugPrint('Full URL with query params: ${uri.toString()}');
       
-      final response = await http.post(
-        uri,
-        headers: ApiConfig.defaultHeaders,
-      );
+      http.Response response;
+      
+      // Check if we have images to upload
+      if (request.carImages != null && request.carImages!.isNotEmpty) {
+        // Use multipart request for image upload
+        var request_ = http.MultipartRequest('POST', uri);
+        
+        // Add text fields
+        request_.fields.addAll(request.toQueryParameters());
+        
+        // Define the expected field names for car images
+        final imageFieldNames = [
+          'car_front_img',    // Front image
+          'right_side_img',   // Right side image
+          'back_car_img',     // Rear image
+          'left_side_img',    // Left side image
+          'upper_view',       // Inside/upper view image
+        ];
+        
+        // Add image files with specific field names
+        for (int i = 0; i < request.carImages!.length && i < imageFieldNames.length; i++) {
+          final file = request.carImages![i];
+          final fieldName = imageFieldNames[i];
+          final stream = http.ByteStream(file.openRead());
+          final length = await file.length();
+          final multipartFile = http.MultipartFile(
+            fieldName, // Use specific field name for each image
+            stream,
+            length,
+            filename: '${fieldName}_${i}.jpg',
+          );
+          request_.files.add(multipartFile);
+        }
+        
+        // Send multipart request
+        final streamedResponse = await request_.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // Use regular POST request without images
+        response = await http.post(
+          uri,
+          headers: ApiConfig.defaultHeaders,
+          body: jsonEncode(request.toJson()),
+        );
+      }
 
       debugPrint('Test drive request response status: ${response.statusCode}');
       debugPrint('Test drive request response data: ${response.body}');
@@ -1102,6 +1160,70 @@ class ApiService {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
       debugPrint('Update test drive status unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<String>> completeTestDrive({
+    required int testDriveId,
+    required int employeeId,
+    required int closingKm,
+    Map<String, String>? returnImages,
+  }) async {
+    try {
+      debugPrint('Completing test drive - ID: $testDriveId, Employee: $employeeId, Closing KM: $closingKm');
+      
+      // Build query parameters
+      final queryParams = <String, String>{
+        'employee_id': employeeId.toString(),
+        'status': 'completed',
+        'testdrive_id': testDriveId.toString(),
+        'closing_km': closingKm.toString(),
+      };
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update')
+          .replace(queryParameters: queryParams);
+      
+      // Prepare request body for images if provided
+      Map<String, dynamic> requestBody = {};
+      
+      if (returnImages != null && returnImages.isNotEmpty) {
+        // Add return images to request body with specific field names
+        requestBody.addAll(returnImages);
+      }
+      
+      final response = await http.post(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+        body: requestBody.isNotEmpty ? jsonEncode(requestBody) : null,
+      );
+
+      debugPrint('Complete test drive response status: ${response.statusCode}');
+      debugPrint('Complete test drive response data: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (responseData['success'] == true) {
+          final message = responseData['message'] as String? ?? 'Test drive completed successfully.';
+          debugPrint('Successfully completed test drive ID: $testDriveId');
+          return ApiResponse.success(message, message: message);
+        } else {
+          final errorMessage = responseData['message'] as String? ?? 'Failed to complete test drive';
+          return ApiResponse.error(errorMessage);
+        }
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to complete test drive');
+      }
+    } on SocketException {
+      debugPrint('Complete test drive network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('Complete test drive format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('Complete test drive unexpected error: ${e.toString()}');
       return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
     }
   }

@@ -53,8 +53,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   Employee? _employee;
   // PerformanceCountData? _performanceData;
   bool _isLoading = true;
-  // bool _isLoadingPerformance = true;
   String? _errorMessage;
+  bool _isFetching = false; // Add a flag to prevent concurrent fetches
+  DateTime? _lastFetchTime; // Track last fetch time
+  static const Duration _minRefreshInterval = Duration(seconds: 2); // Prevent rapid repeat fetches
+  // bool _isLoadingPerformance = true;
 
   @override
   void initState() {
@@ -78,56 +81,43 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     _loadEmployeeProfile();
   }
 
-  Future<void> _loadEmployeeProfile() async {
+  Future<void> _loadEmployeeProfile({bool forceRefresh = false}) async {
+    if (_isFetching) return; // Prevent concurrent fetches
+    _isFetching = true;
+    // Only clear cache if forced or cache expired
+    if (forceRefresh) EmployeeProfileScreen.clearCache();
     // Check if we have valid cached data
-    if (EmployeeProfileScreen.cachedEmployee != null && EmployeeProfileScreen.lastCacheTime != null) {
+    if (!forceRefresh && EmployeeProfileScreen.cachedEmployee != null && EmployeeProfileScreen.lastCacheTime != null) {
       final timeSinceLastCache = DateTime.now().difference(EmployeeProfileScreen.lastCacheTime!);
       if (timeSinceLastCache < EmployeeProfileScreen.cacheValidDuration) {
         setState(() {
           _employee = EmployeeProfileScreen.cachedEmployee;
           _isLoading = false;
         });
-        // Load performance data even if employee is cached
-        // if (_employee != null) {
-        //   await _loadPerformanceData(_employee!.id);
-        // }
+        _isFetching = false;
         return;
       }
     }
-
     try {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
-
-      // Get employee data from storage
       final employee = await EmployeeStorageService.getEmployeeData();
-      
       if (employee != null) {
-        // Fetch fresh profile data from API
         final apiResponse = await EmployeeApiService().getProfile(employee.id);
-        
         if (apiResponse.success && apiResponse.data != null) {
-          // Cache the data
           EmployeeProfileScreen.updateCache(apiResponse.data!.user);
-          
           setState(() {
             _employee = EmployeeProfileScreen.cachedEmployee;
             _isLoading = false;
           });
-          
-          // Load performance data
-          // await _loadPerformanceData(employee.id);
         } else {
           setState(() {
-            _employee = employee; // Use cached data if API fails
+            _employee = employee;
             _isLoading = false;
             _errorMessage = apiResponse.message;
           });
-          
-          // Load performance data even if profile API fails
-          // await _loadPerformanceData(employee.id);
         }
       } else {
         setState(() {
@@ -138,8 +128,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load profile: ${e.toString()}';
+        _errorMessage = 'Failed to load profile:  [38;5;9m${e.toString()} [0m';
       });
+    } finally {
+      _isFetching = false;
+      _lastFetchTime = DateTime.now();
     }
   }
 
@@ -182,9 +175,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   // }
 
   Future<void> _refreshProfile() async {
-    // Clear cache to force fresh data
-    EmployeeProfileScreen.clearCache();
-    await _loadEmployeeProfile();
+    // Only refresh if not already loading/fetching
+    if (_isFetching) return;
+    await _loadEmployeeProfile(forceRefresh: true);
   }
 
   @override
@@ -1092,6 +1085,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
 
   // Method to be called when screen becomes visible
   void onScreenVisible() {
-    _refreshProfile();
+    // Only refresh if not already loading/fetching and not refreshed very recently
+    if (_isFetching) return;
+    if (_lastFetchTime != null && DateTime.now().difference(_lastFetchTime!) < _minRefreshInterval) return;
+    _loadEmployeeProfile();
   }
 }

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'dart:convert';
 import '../../models/test_drive_model.dart';
 import '../../models/showroom_model.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/user_model.dart';
 import '../../services/api_config.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_test_drives_provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ApprovedTestDrivesScreen extends StatefulWidget {
   const ApprovedTestDrivesScreen({super.key});
@@ -14,148 +19,77 @@ class ApprovedTestDrivesScreen extends StatefulWidget {
 }
 
 class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
-  List<TestDriveListResponse> _approvedTestDrives = [];
-  bool _isLoading = true;
-  bool _isRefreshing = false;
-  
-  final ApiService _apiService = ApiService();
-  final StorageService _storageService = StorageService();
-  User? _currentUser;
-
   @override
   void initState() {
     super.initState();
-    _loadUserDataAndApprovedTestDrives();
-  }
-
-  Future<void> _loadUserDataAndApprovedTestDrives() async {
-    try {
-      // Load current user data
-      _currentUser = await _storageService.getUser();
-      
-      if (_currentUser != null) {
-        await _loadApprovedTestDrives();
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorSnackBar('User data not found. Please login again.');
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('Failed to load user data: ${e.toString()}');
-    }
-  }
-
-  Future<void> _loadApprovedTestDrives() async {
-    if (_currentUser == null) {
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Use the unified API to get all test drives
-      final response = await _apiService.getUserTestDrives(_currentUser!.id);
-      
-      if (response.success) {
-        // Filter for approved test drives
-        final approvedTestDrives = response.data?.where((testDrive) => 
-            testDrive.status?.toLowerCase() == 'approved').toList() ?? [];
-        
-        setState(() {
-          _approvedTestDrives = approvedTestDrives;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorSnackBar(response.message);
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('Failed to load approved test drives: ${e.toString()}');
-    }
-  }
-
-  Future<void> _refreshData() async {
-    if (_isRefreshing) return;
-    setState(() {
-      _isRefreshing = true;
-    });
-    await _loadApprovedTestDrives();
-    setState(() {
-      _isRefreshing = false;
+    // Use smart refresh with screen-specific caching
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      provider.smartRefresh(screenName: 'approved');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Approved Test Drives',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey[200],
-          ),
-        ),
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(6),
+    return Consumer<UserTestDrivesProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          backgroundColor: Colors.grey.shade50,
+          appBar: AppBar(
+            title: const Text(
+              'Approved Test Drives',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-              child: const Icon(Icons.refresh_rounded, size: 18),
             ),
-            onPressed: _refreshData,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.arrow_back_rounded, size: 18),
+              ),
+              onPressed: () => Navigator.pop(context, true), // Return true to indicate screen was visited
+            ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18),
+                ),
+                onPressed: provider.refresh,
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: _isLoading
-          ? _buildLoadingWidget()
-          : RefreshIndicator(
-              onRefresh: _refreshData,
-              child: _approvedTestDrives.isEmpty
-                  ? _buildEmptyStateWidget()
-                  : _buildTestDrivesList(),
-            ),
+          body: provider.isLoadingForScreen('approved')
+              ? _buildLoadingWidget()
+              : RefreshIndicator(
+                  onRefresh: provider.refresh,
+                  child: provider.approvedTestDrives.isEmpty
+                      ? _buildEmptyStateWidget()
+                      : _buildTestDrivesList(provider.approvedTestDrives),
+                ),
+        );
+      },
     );
   }
 
@@ -242,7 +176,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _refreshData,
+              onPressed: () => Provider.of<UserTestDrivesProvider>(context, listen: false).refresh(),
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
@@ -260,12 +194,12 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Widget _buildTestDrivesList() {
+  Widget _buildTestDrivesList(List approvedTestDrives) {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _approvedTestDrives.length,
+      itemCount: approvedTestDrives.length,
       itemBuilder: (context, index) {
-        final request = _approvedTestDrives[index];
+        final request = approvedTestDrives[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -535,8 +469,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   Widget _buildActionButtonsSection(TestDriveListResponse request) {
     // Check permissions
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canDeleteTestDrive ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -655,7 +589,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   void _showRescheduleDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
     
     if (!canChangeTestDriveStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -825,7 +759,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   void _showCompleteDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
     
     if (!canChangeTestDriveStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -853,96 +787,412 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       return;
     }
     
+    final TextEditingController closingKmController = TextEditingController();
+    final Map<String, String> returnImages = {};
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: Colors.green.shade600,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Complete Test Drive',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: Colors.green.shade600,
+                size: 24,
               ),
+              const SizedBox(width: 8),
+              const Text(
+                'Complete Test Drive',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Complete test drive for ${request.car?.name ?? 'Unknown'}:',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Closing KM Input
+                Row(
+                  children: [
+                    Text(
+                      'Closing Kilometer Reading',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        'Required',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: closingKmController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter closing kilometer reading',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.green.shade400),
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Return Images Section
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Car Return Images',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        'Required - 5 images',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                
+                // Image Type Selection and Upload Grid
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1.0,
+                  children: [
+                    _buildImageUploadSection('Image 1', 'return_front_img', returnImages, setState),
+                    _buildImageUploadSection('Image 2', 'return_back_img', returnImages, setState),
+                    _buildImageUploadSection('Image 3', 'return_right_img', returnImages, setState),
+                    _buildImageUploadSection('Image 4', 'return_left_img', returnImages, setState),
+                    _buildImageUploadSection('Image 5', 'return_upper_img', returnImages, setState),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Progress Counter
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: returnImages.length == 5 ? Colors.green.shade50 : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: returnImages.length == 5 ? Colors.green.shade200 : Colors.orange.shade200,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        returnImages.length == 5 ? Icons.check_circle : Icons.info_outline,
+                        color: returnImages.length == 5 ? Colors.green.shade600 : Colors.orange.shade600,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${returnImages.length}/5 images uploaded',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: returnImages.length == 5 ? Colors.green.shade700 : Colors.orange.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.green.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Please provide the closing kilometer reading and 5 car return images (front, back, right, left, upper views).',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Validate closing KM
+                final closingKm = int.tryParse(closingKmController.text.trim());
+                if (closingKm == null || closingKm <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Please enter a valid closing kilometer reading'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                
+                // Validate that exactly 5 images are provided
+                if (returnImages.length != 5) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please provide exactly 5 car return images (currently ${returnImages.length})'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                
+                Navigator.pop(context);
+                _completeTestDrive(request, closingKm, returnImages);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Complete Test Drive'),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to mark the test drive for ${request.car?.name ?? 'Unknown'} as completed?',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
+      ),
+    );
+  }
+
+  Widget _buildImageUploadSection(String title, String fieldName, Map<String, String> returnImages, StateSetter setState) {
+    final hasImage = returnImages.containsKey(fieldName);
+    
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: hasImage ? Colors.green.shade300 : Colors.grey.shade300,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        color: hasImage ? Colors.green.shade50 : Colors.grey.shade50,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title and Required Badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: hasImage ? Colors.green.shade700 : Colors.grey.shade700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (!hasImage)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: TextStyle(
+                      fontSize: 7,
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          
+          if (hasImage) ...[
+            // Image Preview
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.grey.shade100,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: returnImages[fieldName]!.startsWith('data:image') || returnImages[fieldName]!.startsWith('/')
+                      ? Image.memory(
+                          base64Decode(returnImages[fieldName]!.split(',')[1]),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : Image.file(
+                          File(returnImages[fieldName]!),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.green.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This will mark the test drive as completed and update the status.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.green.shade700,
+            const SizedBox(height: 6),
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showImageSourceDialog(setState, returnImages, fieldName),
+                    icon: const Icon(Icons.edit, size: 12),
+                    label: const Text('Change', style: TextStyle(fontSize: 10)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.green.shade700,
+                      side: BorderSide(color: Colors.green.shade300),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: 4),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      returnImages.remove(fieldName);
+                    });
+                  },
+                  icon: const Icon(Icons.delete, size: 12),
+                  label: const Text('Remove', style: TextStyle(fontSize: 10)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                    side: BorderSide(color: Colors.red.shade300),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            // Upload Button
+            Expanded(
+              child: Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showImageSourceDialog(setState, returnImages, fieldName),
+                  icon: const Icon(Icons.add_a_photo, size: 16),
+                  label: Text('Upload', style: TextStyle(fontSize: 10)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                    foregroundColor: Colors.grey.shade700,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _completeTestDrive(request);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Complete Test Drive'),
-          ),
         ],
       ),
     );
@@ -950,8 +1200,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   void _showRejectDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canDeleteTestDrive ?? false;
     
     if (!canChangeTestDriveStatus && !canDeleteTestDrive) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1106,7 +1356,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Future<void> _completeTestDrive(TestDriveListResponse request) async {
+  Future<void> _completeTestDrive(TestDriveListResponse request, int closingKm, Map<String, String> returnImages) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1137,7 +1387,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      if (_currentUser == null) {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -1166,51 +1417,26 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         return;
       }
 
-      // Get driver ID from the request
-      final driverId = request.driverId;
-      if (driverId == null || driverId.isEmpty) {
-        // Close loading dialog
-        Navigator.pop(context);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text('Driver not assigned to this test drive.'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.orange,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-        return;
+      // Prepare return images map for API
+      Map<String, String> returnImagesMap = {};
+      for (final entry in returnImages.entries) {
+        returnImagesMap[entry.key] = entry.value;
       }
 
-      // Call the complete test drive API
-      final response = await _apiService.updateTestDriveStatus(
-        driverId: driverId,
-        status: 'completed',
+      // Call the complete test drive API with the correct method
+      final response = await ApiService().completeTestDrive(
         testDriveId: request.id,
-        employeeId: _currentUser!.id,
+        employeeId: currentUser.id,
+        closingKm: closingKm,
+        returnImages: returnImagesMap,
       );
 
       // Close loading dialog
       Navigator.pop(context);
 
       if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
+        // Close detail modal and return true to indicate data was updated
+        Navigator.pop(context, true);
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1239,8 +1465,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ),
         );
 
-        // Refresh the list to remove the completed test drive
-        _loadApprovedTestDrives();
+        // Optimistically remove the completed test drive from cache
+        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1330,7 +1556,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      if (_currentUser == null) {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -1363,10 +1590,10 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ? reason 
           : 'User rejected the approved test drive';
       
-      final response = await _apiService.cancelTestDrive(
+      final response = await ApiService().cancelTestDrive(
         request.id, 
         rejectDescription,
-        _currentUser!.id,
+        currentUser.id,
       );
 
       // Close loading dialog
@@ -1404,7 +1631,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         );
 
         // Refresh the list to remove the rejected test drive
-        _loadApprovedTestDrives();
+        Provider.of<UserTestDrivesProvider>(context, listen: false).refresh();
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1496,7 +1723,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      if (_currentUser == null) {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -1529,18 +1757,18 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       final formattedDate = '${newDate.year}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}';
 
       // Call the reschedule API
-      final response = await _apiService.rescheduleTestDrive(
+      final response = await ApiService().rescheduleTestDrive(
         request.id,
         formattedDate,
-        _currentUser!.id,
+        currentUser.id,
       );
 
       // Close loading dialog
       Navigator.pop(context);
 
       if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
+        // Close detail modal and return true to indicate data was updated
+        Navigator.pop(context, true);
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1569,8 +1797,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ),
         );
 
-        // Refresh the list
-        _loadApprovedTestDrives();
+        // Optimistically remove the rescheduled test drive from cache
+        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1877,5 +2105,94 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         );
       },
     );
+  }
+
+  void _showImageSourceDialog(StateSetter setState, Map<String, String> returnImages, String fieldName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Select Image Source',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
+              title: const Text('Camera'),
+              subtitle: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera, setState, returnImages, fieldName);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text('Gallery'),
+              subtitle: const Text('Choose an image from gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery, setState, returnImages, fieldName);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source, StateSetter setState, Map<String, String> returnImages, String fieldName) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      
+      // Pick a single image for the specific field
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        // Convert image to base64
+        final bytes = await image.readAsBytes();
+        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        
+        setState(() {
+          returnImages[fieldName] = base64String;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
   }
 } 

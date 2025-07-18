@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'user_home_screen.dart';
 // import 'showrooms_screen.dart'; // Commented out - no longer used in bottom navigation
 import 'user_expense_screen.dart';
 import 'user_profile_screen.dart';
 import 'test_drive_status_screen.dart';
 import 'user_activities_screen.dart';
+import '../../providers/user_test_drives_provider.dart';
 
 class MainUserScreen extends StatefulWidget {
   const MainUserScreen({super.key});
@@ -31,14 +33,19 @@ class _MainUserScreenState extends State<MainUserScreen> {
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
-      if (index == 2) { // Status tab selected, refresh test drive data
-        // Status tab selected, refresh test drive data
+      
+      // Use smart refresh to avoid unnecessary API calls
+      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      
+      if (index == 2) { // Status tab selected
+        // Use smart refresh - only fetches if cache is stale
+        provider.smartRefresh();
         _statusKey.currentState?.refreshData();
-      } else if (index == 3) { // Activities tab selected, refresh activities data
-        // Activities tab selected, refresh activities data
-        // Note: Activities screen will refresh automatically when navigated to
-      } else if (index == 4) { // Profile tab selected, refresh profile data
-        // Profile tab selected, refresh profile data
+      } else if (index == 3) { // Activities tab selected
+        // Activities screen will refresh automatically when navigated to
+      } else if (index == 4) { // Profile tab selected
+        // Use smart refresh for test drive counts
+        provider.smartRefresh();
         _profileKey.currentState?.refreshProfileData();
       }
     });

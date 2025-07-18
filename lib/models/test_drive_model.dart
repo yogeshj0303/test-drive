@@ -166,6 +166,7 @@ class TestDriveRequest {
   final String userEmail;
   final String userAdhar;
   final List<File> carImages;
+  final int openingKm;
 
   TestDriveRequest({
     required this.carId,
@@ -185,7 +186,7 @@ class TestDriveRequest {
     required this.userEmail,
     required this.userAdhar,
     required this.carImages,
-    required int openingKm,
+    required this.openingKm,
   });
 
   Map<String, dynamic> toJson() {
@@ -206,6 +207,7 @@ class TestDriveRequest {
       'user_mobile': userMobile,
       'user_email': userEmail,
       'user_adhar': userAdhar,
+      'opening_km': openingKm.toString(),
     };
   }
 
@@ -227,6 +229,7 @@ class TestDriveRequest {
       'user_mobile': userMobile,
       'user_email': userEmail,
       'user_adhar': userAdhar,
+      'opening_km': openingKm.toString(),
     };
   }
 }

@@ -4,6 +4,8 @@ import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
 import '../../models/user_model.dart';
 import '../../services/api_config.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_test_drives_provider.dart';
 
 class PendingTestDrivesScreen extends StatefulWidget {
   const PendingTestDrivesScreen({super.key});
@@ -16,146 +18,150 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
   final ApiService _apiService = ApiService();
   final StorageService _storageService = StorageService();
 
-  List<TestDriveListResponse> _pendingTestDrives = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  bool _isRefreshing = false;
-  User? _currentUser;
-
   @override
   void initState() {
     super.initState();
-    _loadPendingTestDrives();
-  }
-
-  Future<void> _loadPendingTestDrives() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final user = await _storageService.getUser();
-      if (user == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Please log in again to view your test drives.';
-        });
-        return;
-      }
-
-      // Store current user for permission checks
-      _currentUser = user;
-
-      // Use the unified API to get all test drives
-      final response = await _apiService.getUserTestDrives(user.id);
-      if (response.success) {
-        // Filter for pending test drives
-        final pendingTestDrives = response.data?.where((testDrive) => 
-            testDrive.status?.toLowerCase() == 'pending').toList() ?? [];
-        
-        setState(() {
-          _pendingTestDrives = pendingTestDrives;
-          _isLoading = false;
-        });
-      } else {
-        // Check if the error message indicates no data found
-        final errorMessage = response.message.toLowerCase();
-        if (errorMessage.contains('no test drives') || 
-            errorMessage.contains('not found') ||
-            errorMessage.contains('no data') ||
-            errorMessage.contains('empty')) {
-          // Treat as empty state rather than error
-          setState(() {
-            _pendingTestDrives = [];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = response.message.isNotEmpty 
-                ? response.message 
-                : 'Unable to load pending test drives. Please try again.';
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection error. Please check your internet connection and try again.';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _refreshData() async {
-    if (_isRefreshing) return;
-    setState(() {
-      _isRefreshing = true;
-    });
-    await _loadPendingTestDrives();
-    setState(() {
-      _isRefreshing = false;
+    // Use smart refresh with screen-specific caching
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      provider.smartRefresh(screenName: 'pending');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Pending Test Drives',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey[200],
-          ),
-        ),
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(6),
+    return Consumer<UserTestDrivesProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          backgroundColor: Colors.grey.shade50,
+          appBar: AppBar(
+            title: const Text(
+              'Pending Test Drives',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-              child: const Icon(Icons.refresh_rounded, size: 18),
             ),
-            onPressed: _refreshData,
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: _isLoading
-          ? _buildLoadingWidget()
-          : _errorMessage != null
-              ? _buildErrorWidget()
-              : RefreshIndicator(
-                  onRefresh: _refreshData,
-                  child: _pendingTestDrives.isEmpty
-                      ? _buildEmptyStateWidget()
-                      : _buildTestDrivesList(),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
                 ),
+                child: const Icon(Icons.arrow_back_rounded, size: 18),
+              ),
+              onPressed: () => Navigator.pop(context, true), // Return true to indicate screen was visited
+            ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18),
+                ),
+                onPressed: provider.refresh,
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+          body: _buildBody(provider),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(UserTestDrivesProvider provider) {
+    // Show loading state only if we don't have valid cache
+    if (provider.isLoadingForScreen('pending')) {
+      return _buildLoadingWidget();
+    }
+
+    // Show error state
+    if (provider.errorMessage != null) {
+      return _buildErrorWidget(provider.errorMessage!, provider.refresh);
+    }
+
+    // Show empty state or list
+    return RefreshIndicator(
+      onRefresh: provider.refresh,
+      child: provider.pendingTestDrives.isEmpty
+          ? _buildEmptyStateWidget(provider.refresh)
+          : _buildTestDrivesList(provider.pendingTestDrives),
+    );
+  }
+
+  Widget _buildInitialState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Icon(
+                Icons.cloud_download_outlined,
+                color: Colors.blue.shade400,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Load Test Drives',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Click the reload button to fetch your pending test drives',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.3,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => Provider.of<UserTestDrivesProvider>(context, listen: false).refresh(),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Load Test Drives'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -200,7 +206,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(String errorMessage, VoidCallback onRetry) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -232,7 +238,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage!,
+              errorMessage,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -242,7 +248,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _loadPendingTestDrives,
+              onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
@@ -260,7 +266,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Widget _buildEmptyStateWidget() {
+  Widget _buildEmptyStateWidget(VoidCallback onRefresh) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -302,7 +308,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _refreshData,
+              onPressed: onRefresh,
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
@@ -320,12 +326,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Widget _buildTestDrivesList() {
+  Widget _buildTestDrivesList(List pendingTestDrives) {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _pendingTestDrives.length,
+      itemCount: pendingTestDrives.length,
       itemBuilder: (context, index) {
-        final request = _pendingTestDrives[index];
+        final request = pendingTestDrives[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -754,8 +760,9 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
   void _showCancelDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+    final canChangeTestDriveStatus = currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = currentUser?.role?.permissions.canDeleteTestDrive ?? false;
     
     if (!canChangeTestDriveStatus && !canDeleteTestDrive) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -917,7 +924,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
     try {
       // Use current user data for employee ID
-      if (_currentUser == null) {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -953,15 +961,15 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       final response = await _apiService.cancelTestDrive(
         request.id, 
         cancelDescription,
-        _currentUser!.id,
+        currentUser.id,
       );
 
       // Close loading dialog
       Navigator.pop(context);
 
       if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
+        // Close detail modal and return true to indicate data was updated
+        Navigator.pop(context, true);
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -990,8 +998,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           ),
         );
 
-        // Refresh the list to remove the cancelled test drive
-        _loadPendingTestDrives();
+        // Optimistically remove the cancelled test drive from cache
+        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1113,9 +1121,10 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
   Widget _buildActionButtonsSection(TestDriveListResponse request) {
     // Check permissions
-    final canApproveTestDrive = _currentUser?.role?.permissions.canApproveTestDrive ?? false;
-    final canChangeTestDriveStatus = _currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = _currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+    final canApproveTestDrive = currentUser?.role?.permissions.canApproveTestDrive ?? false;
+    final canChangeTestDriveStatus = currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canDeleteTestDrive = currentUser?.role?.permissions.canDeleteTestDrive ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1209,7 +1218,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
   void _showApproveDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canApproveTestDrive = _currentUser?.role?.permissions.canApproveTestDrive ?? false;
+    final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+    final canApproveTestDrive = currentUser?.role?.permissions.canApproveTestDrive ?? false;
     
     if (!canApproveTestDrive) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1588,7 +1598,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
 
     try {
       // Use current user data for employee ID
-      if (_currentUser == null) {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
         
@@ -1621,15 +1632,15 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
       final response = await _apiService.approveTestDrive(
         request.id,
         int.parse(selectedDriver['id'].toString()),
-        _currentUser!.id,
+        currentUser.id,
       );
 
       // Close loading dialog
       Navigator.pop(context);
 
       if (response.success) {
-        // Close detail modal
-        Navigator.pop(context);
+        // Close detail modal and return true to indicate data was updated
+        Navigator.pop(context, true);
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1658,8 +1669,8 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
           ),
         );
 
-        // Refresh the list
-        _loadPendingTestDrives();
+        // Optimistically remove the approved test drive from cache
+        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(

@@ -4,6 +4,8 @@ import '../../services/storage_service.dart';
 import '../../models/test_drive_model.dart';
 import '../../models/user_model.dart';
 import '../../services/api_config.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_test_drives_provider.dart';
 
 class CancelTestDriveScreen extends StatefulWidget {
   const CancelTestDriveScreen({super.key});
@@ -24,65 +26,11 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCancelledTestDrives();
-  }
-
-  Future<void> _loadCancelledTestDrives() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      // Get current user
-      _currentUser = await _storageService.getUser();
-      if (_currentUser == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'User not found. Please login again.';
-        });
-        return;
-      }
-
-      // Use the unified API to get all test drives and filter for rejected ones
-      final response = await _apiService.getUserTestDrives(_currentUser!.id);
-      
-      if (response.success) {
-        // Filter for rejected test drives
-        final rejectedTestDrives = response.data?.where((testDrive) => 
-            testDrive.status?.toLowerCase() == 'rejected').toList() ?? [];
-        
-        setState(() {
-          _cancelledTestDrives = rejectedTestDrives;
-          _isLoading = false;
-        });
-      } else {
-        // Check if the error message indicates no data found
-        final errorMessage = response.message.toLowerCase();
-        if (errorMessage.contains('no test drives') || 
-            errorMessage.contains('not found') ||
-            errorMessage.contains('no data') ||
-            errorMessage.contains('empty')) {
-          // Treat as empty state rather than error
-          setState(() {
-            _cancelledTestDrives = [];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = response.message.isNotEmpty 
-                ? response.message 
-                : 'Unable to load rejected test drives. Please try again.';
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection error. Please check your internet connection and try again.';
-        _isLoading = false;
-      });
-    }
+    // Use smart refresh with screen-specific caching
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      provider.smartRefresh(screenName: 'rejected');
+    });
   }
 
   void _showTestDriveDetails(TestDriveListResponse testDrive) {
@@ -498,314 +446,318 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Rejected Test Drives',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10),
+    return Consumer<UserTestDrivesProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text(
+              'Rejected Test Drives',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-              child: const Icon(Icons.refresh_rounded, size: 16),
             ),
-            onPressed: _loadCancelledTestDrives,
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey[200],
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF0095D9),
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.arrow_back_rounded, size: 18),
               ),
-            )
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red[400],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Error',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red[800],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.red[600],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _loadCancelledTestDrives,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0095D9),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
+              onPressed: () => Navigator.pop(context, true), // Return true to indicate screen was visited
+            ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 16),
+                ),
+                onPressed: provider.refresh,
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+          ),
+          body: provider.isLoadingForScreen('rejected')
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF0095D9),
                   ),
                 )
-              : _cancelledTestDrives.isEmpty
+              : provider.errorMessage != null
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.directions_car_outlined,
+                            Icons.error_outline,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: Colors.red[400],
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No Rejected Test Drives',
+                            'Error',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
+                              color: Colors.red[800],
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            'You don\'t have any rejected test drives at the moment',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              provider.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.red[600],
+                              ),
                             ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: provider.refresh,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0095D9),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Retry'),
                           ),
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: _loadCancelledTestDrives,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _cancelledTestDrives.length,
-                        itemBuilder: (context, index) {
-                          final testDrive = _cancelledTestDrives[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.grey[200]!),
-                            ),
-                            child: InkWell(
-                              onTap: () => _showTestDriveDetails(testDrive),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      testDrive.car?.name ?? 'Unknown',
-                                                      style: const TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: Color(0xFF1A1A1A),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.red.withOpacity(0.1),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                      border: Border.all(color: Colors.red.withOpacity(0.3)),
-                                                    ),
-                                                    child: Text(
-                                                      'REJECTED',
-                                                      style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: Colors.red[700],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '${testDrive.userName ?? 'Unknown'} • ${testDrive.date ?? 'Unknown'} • ${testDrive.time ?? 'Unknown'}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.location_on,
-                                                    size: 12,
-                                                    color: Colors.grey[600],  
-                                                  ),
-                                                  const SizedBox(width: 2),
-                                                  Expanded(
-                                                    child: Text(
-                                                      '${testDrive.pickupCity ?? 'Unknown'}, ${testDrive.pickupPincode ?? 'Unknown'}',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[600],
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Date',
-                                            testDrive.date ?? 'Unknown',
-                                            Icons.calendar_today_outlined,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Time',
-                                            testDrive.time ?? 'Unknown',
-                                            Icons.access_time_rounded,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: _buildInfoItem(
-                                            'Location',
-                                            testDrive.pickupCity ?? 'Unknown',
-                                            Icons.location_on_outlined,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (testDrive.note?.isNotEmpty == true) ...[
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[50],
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.note_outlined,
-                                              size: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                            const SizedBox(width: 3),
-                                            Expanded(
-                                              child: Text(
-                                                testDrive.note ?? ''    ,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.grey[700],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty) ...[
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.red[50],
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.block_outlined,
-                                              size: 12,
-                                              color: Colors.red[600],
-                                            ),
-                                            const SizedBox(width: 3),
-                                            Expanded(
-                                              child: Text(
-                                                testDrive.rejectDescription!,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.red[700],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
+                  : provider.rejectedTestDrives.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.directions_car_outlined,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No Rejected Test Drives',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[800],
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'You don\'t have any rejected test drives at the moment',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: provider.refresh,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: provider.rejectedTestDrives.length,
+                            itemBuilder: (context, index) {
+                              final testDrive = provider.rejectedTestDrives[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                child: InkWell(
+                                  onTap: () => _showTestDriveDetails(testDrive),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          testDrive.car?.name ?? 'Unknown',
+                                                          style: const TextStyle(
+                                                            fontSize: 15,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Color(0xFF1A1A1A),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.red.withOpacity(0.1),
+                                                          borderRadius: BorderRadius.circular(8),
+                                                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                                                        ),
+                                                        child: Text(
+                                                          'REJECTED',
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Colors.red[700],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    '${testDrive.userName ?? 'Unknown'} • ${testDrive.date ?? 'Unknown'} • ${testDrive.time ?? 'Unknown'}',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.location_on,
+                                                        size: 12,
+                                                        color: Colors.grey[600],  
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      Expanded(
+                                                        child: Text(
+                                                          '${testDrive.pickupCity ?? 'Unknown'}, ${testDrive.pickupPincode ?? 'Unknown'}',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.grey[600],
+                                                          ),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildInfoItem(
+                                                'Date',
+                                                testDrive.date ?? 'Unknown',
+                                                Icons.calendar_today_outlined,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: _buildInfoItem(
+                                                'Time',
+                                                testDrive.time ?? 'Unknown',
+                                                Icons.access_time_rounded,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: _buildInfoItem(
+                                                'Location',
+                                                testDrive.pickupCity ?? 'Unknown',
+                                                Icons.location_on_outlined,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (testDrive.note?.isNotEmpty == true) ...[
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[50],
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.note_outlined,
+                                                  size: 12,
+                                                  color: Colors.grey[600],
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Expanded(
+                                                  child: Text(
+                                                    testDrive.note ?? ''    ,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.grey[700],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                        if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red[50],
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.block_outlined,
+                                                  size: 12,
+                                                  color: Colors.red[600],
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Expanded(
+                                                  child: Text(
+                                                    testDrive.rejectDescription!,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.red[700],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+        );
+      },
     );
   }
 

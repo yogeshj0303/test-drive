@@ -1,142 +1,75 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_test_drives_provider.dart';
 import '../../models/test_drive_model.dart';
 import '../../services/api_config.dart';
 
-class CompletedTestDrivesScreen extends StatefulWidget {
+class CompletedTestDrivesScreen extends StatelessWidget {
   const CompletedTestDrivesScreen({super.key});
 
   @override
-  State<CompletedTestDrivesScreen> createState() => _CompletedTestDrivesScreenState();
-}
-
-class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
-  final ApiService _apiService = ApiService();
-  final StorageService _storageService = StorageService();
-
-  List<TestDriveListResponse> _completedTestDrives = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  bool _isRefreshing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCompletedTestDrives();
-  }
-
-  Future<void> _loadCompletedTestDrives() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final user = await _storageService.getUser();
-      if (user == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'User not found. Please login again.';
-        });
-        return;
-      }
-      
-      // Use the unified API to get all test drives
-      final response = await _apiService.getUserTestDrives(user.id);
-      
-      if (response.success) {
-        // Filter for completed test drives
-        final completedTestDrives = response.data?.where((testDrive) => 
-            testDrive.status?.toLowerCase() == 'completed').toList() ?? [];
-        
-        setState(() {
-          _completedTestDrives = completedTestDrives;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.message;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'An error occurred: ${e.toString()}';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _refreshData() async {
-    if (_isRefreshing) return;
-    setState(() {
-      _isRefreshing = true;
-    });
-    await _loadCompletedTestDrives();
-    setState(() {
-      _isRefreshing = false;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Completed Test Drives',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey[200],
-          ),
-        ),
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(6),
+    return Consumer<UserTestDrivesProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          backgroundColor: Colors.grey.shade50,
+          appBar: AppBar(
+            title: const Text(
+              'Completed Test Drives',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-              child: const Icon(Icons.refresh_rounded, size: 18),
             ),
-            onPressed: _refreshData,
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: _isLoading
-          ? _buildLoadingWidget()
-          : _errorMessage != null
-              ? _buildErrorWidget()
-              : RefreshIndicator(
-                  onRefresh: _refreshData,
-                  child: _completedTestDrives.isEmpty
-                      ? _buildEmptyStateWidget()
-                      : _buildTestDrivesList(),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
                 ),
+                child: const Icon(Icons.arrow_back_rounded, size: 18),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18),
+                ),
+                onPressed: provider.refresh,
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+          body: provider.isLoading
+              ? _buildLoadingWidget()
+              : provider.errorMessage != null
+                  ? _buildErrorWidget(provider)
+                  : RefreshIndicator(
+                      onRefresh: provider.refresh,
+                      child: provider.completedTestDrives.isEmpty
+                          ? _buildEmptyStateWidget(provider)
+                          : _buildTestDrivesList(provider.completedTestDrives, context),
+                    ),
+        );
+      },
     );
   }
 
@@ -181,7 +114,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(UserTestDrivesProvider provider) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -213,7 +146,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage!,
+              provider.errorMessage ?? '',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -223,7 +156,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _loadCompletedTestDrives,
+              onPressed: provider.refresh,
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
@@ -241,7 +174,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
     );
   }
 
-  Widget _buildEmptyStateWidget() {
+  Widget _buildEmptyStateWidget(UserTestDrivesProvider provider) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -283,7 +216,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _refreshData,
+              onPressed: provider.refresh,
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
@@ -301,12 +234,12 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
     );
   }
 
-  Widget _buildTestDrivesList() {
+  Widget _buildTestDrivesList(List<TestDriveListResponse> completedTestDrives, BuildContext context) {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _completedTestDrives.length,
+      itemCount: completedTestDrives.length,
       itemBuilder: (context, index) {
-        final testDrive = _completedTestDrives[index];
+        final testDrive = completedTestDrives[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -323,7 +256,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => _showTestDriveDetails(testDrive),
+              onTap: () => _showTestDriveDetails(context, testDrive),
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -589,7 +522,7 @@ class _CompletedTestDrivesScreenState extends State<CompletedTestDrivesScreen> {
     );
   }
 
-  void _showTestDriveDetails(TestDriveListResponse testDrive) {
+  void _showTestDriveDetails(BuildContext context, TestDriveListResponse testDrive) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

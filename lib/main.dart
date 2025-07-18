@@ -4,10 +4,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/user/user_login_screen.dart';
 import 'screens/employee/employee_login_screen.dart';
 import 'screens/splash_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/user_test_drives_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const VareniumApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserTestDrivesProvider()),
+      ],
+      child: const VareniumApp(),
+    ),
+  );
 }
 
 class VareniumApp extends StatelessWidget {

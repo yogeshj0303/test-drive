@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'rescheduled_test_drives_screen.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart' as api;
@@ -15,6 +16,7 @@ import 'pending_test_drives_screen.dart';
 import 'approved_test_drives_screen.dart';
 import 'user_activities_screen.dart';
 import '../../models/activity_log_model.dart';
+import '../../providers/user_test_drives_provider.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -397,52 +399,80 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         'title': 'Pending Test Drive',
                         'icon': Icons.pending_actions_outlined,
                         'color': Colors.orange,
-                        'onTap': () {
-                          Navigator.push(
+                        'onTap': () async {
+                          // Navigate to pending test drives screen
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const PendingTestDrivesScreen(),
                             ),
                           );
+                          
+                          // If we returned from the screen, use smart refresh
+                          if (result == true) {
+                            // Use smart refresh to get latest data only if needed
+                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                          }
                         },
                       },
                       {
                         'title': 'Rescheduled Test Drive',
                         'icon': Icons.schedule,
                         'color': Colors.orange,
-                        'onTap': () {
-                          Navigator.push(
+                        'onTap': () async {
+                          // Navigate to rescheduled test drives screen
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const RescheduledTestDrivesScreen(),
                             ),
                           );
+                          
+                          // If we returned from the screen, use smart refresh
+                          if (result == true) {
+                            // Use smart refresh to get latest data only if needed
+                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                          }
                         },
                       },
                       {
                         'title': 'Rejected Test Drive',
                         'icon': Icons.cancel_outlined,
                         'color': Colors.red,
-                        'onTap': () {
-                          Navigator.push(
+                        'onTap': () async {
+                          // Navigate to rejected test drives screen
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const CancelTestDriveScreen(),
                             ),
                           );
+                          
+                          // If we returned from the screen, use smart refresh
+                          if (result == true) {
+                            // Use smart refresh to get latest data only if needed
+                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                          }
                         },
                       },
                       {
                         'title': 'Approved Test Drive',
                         'icon': Icons.check_circle_outline,
                         'color': Colors.green,
-                        'onTap': () {
-                          Navigator.push(
+                        'onTap': () async {
+                          // Navigate to approved test drives screen
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const ApprovedTestDrivesScreen(),
                             ),
                           );
+                          
+                          // If we returned from the screen, use smart refresh
+                          if (result == true) {
+                            // Use smart refresh to get latest data only if needed
+                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                          }
                         },
                       },
                     ];

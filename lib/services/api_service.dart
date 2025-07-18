@@ -517,17 +517,15 @@ class ApiService {
     try {
       debugPrint('Fetching test drives for user ID: $userId');
       
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/all/testdrives');
+      // Use GET instead of POST, pass userId as query param
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/all/testdrives?users_id=$userId');
       final headers = await _getAuthHeaders();
-      final response = await http.post(
+      final response = await http.get(
         uri,
         headers: headers,
-        body: jsonEncode({
-          'users_id': userId,
-        }),
       );
 
-      debugPrint('User test drives response status: ${response.statusCode}');
+      debugPrint('User test drives response status:  [32m [1m${response.statusCode} [0m');
       debugPrint('User test drives response data: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -538,7 +536,7 @@ class ApiService {
           final testDrives = data.map((json) => TestDriveListResponse.fromJson(json)).toList();
           final message = responseData['message'] as String? ?? 'Test drives fetched successfully';
           
-          debugPrint('Successfully fetched ${testDrives.length} test drives for user $userId');
+          debugPrint('Successfully fetched  [32m${testDrives.length} [0m test drives for user $userId');
           return ApiResponse.success(testDrives, message: message);
         } else {
           final errorMessage = responseData['message'] as String? ?? 'Failed to fetch test drives';
@@ -1168,7 +1166,7 @@ class ApiService {
     required int testDriveId,
     required int employeeId,
     required int closingKm,
-    Map<String, String>? returnImages,
+    required Map<String, String> returnImages,
   }) async {
     try {
       debugPrint('Completing test drive - ID: $testDriveId, Employee: $employeeId, Closing KM: $closingKm');
@@ -1184,18 +1182,17 @@ class ApiService {
       final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update')
           .replace(queryParameters: queryParams);
       
-      // Prepare request body for images if provided
+      // Prepare request body for required return images
       Map<String, dynamic> requestBody = {};
       
-      if (returnImages != null && returnImages.isNotEmpty) {
-        // Add return images to request body with specific field names
-        requestBody.addAll(returnImages);
-      }
+      // Add return images to request body with specific field names
+      // The API expects return_* field names for images
+      requestBody.addAll(returnImages);
       
       final response = await http.post(
         uri,
         headers: ApiConfig.defaultHeaders,
-        body: requestBody.isNotEmpty ? jsonEncode(requestBody) : null,
+        body: jsonEncode(requestBody),
       );
 
       debugPrint('Complete test drive response status: ${response.statusCode}');

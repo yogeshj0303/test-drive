@@ -1,166 +1,93 @@
 import 'package:flutter/material.dart';
-import 'cancel_test_drive_screen.dart';
-import 'showrooms_screen.dart';
-import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_test_drives_provider.dart';
 import '../../models/test_drive_model.dart';
 
 class TestDriveStatusScreen extends StatefulWidget {
   final bool showBackButton;
-  
-  const TestDriveStatusScreen({
-    super.key,
-    this.showBackButton = true,
-  });
+  const TestDriveStatusScreen({super.key, this.showBackButton = true});
 
   @override
   State<TestDriveStatusScreen> createState() => TestDriveStatusScreenState();
 }
 
-class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with WidgetsBindingObserver {
-  final ApiService _apiService = ApiService();
-  final StorageService _storageService = StorageService();
-  
-  List<TestDriveListResponse> _testDriveRequests = [];
-  List<TestDriveListResponse> _filteredTestDriveRequests = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  bool _isRefreshing = false;
-  
-  // Filter state
+class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
   String? _selectedStatusFilter;
-  
 
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadTestDrives();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Refresh data when screen becomes active
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_isLoading) {
-        _refreshData();
-      }
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    // Refresh data when app becomes active
-    if (state == AppLifecycleState.resumed && mounted && !_isLoading) {
-      _refreshData();
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  Future<void> _loadTestDrives() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final user = await _storageService.getUser();
-      if (user == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'User not found. Please login again.';
-        });
-        return;
-      }
-
-      final response = await _apiService.getUserTestDrives(user.id);
-      
-      if (response.success) {
-        setState(() {
-          _testDriveRequests = response.data!;
-          _applyFilters();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.message;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'An error occurred while loading test drives: ${e.toString()}';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> refreshData() async {
-    await _refreshData();
-  }
-
-  Future<void> _refreshData() async {
-    if (_isRefreshing) return;
-    
-    setState(() {
-      _isRefreshing = true;
-    });
-
-    try {
-      final user = await _storageService.getUser();
-      if (user == null) {
-        setState(() {
-          _isRefreshing = false;
-          _errorMessage = 'User not found. Please login again.';
-        });
-        return;
-      }
-
-      final response = await _apiService.getUserTestDrives(user.id);
-      
-      if (response.success) {
-        setState(() {
-          _testDriveRequests = response.data!;
-          _applyFilters();
-          _isRefreshing = false;
-          _errorMessage = null;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.message;
-          _isRefreshing = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'An error occurred while refreshing test drives: ${e.toString()}';
-        _isRefreshing = false;
-      });
-    }
-  }
-
-  void _applyFilters() {
+  List<TestDriveListResponse> _applyFilters(List<TestDriveListResponse> allTestDrives) {
     if (_selectedStatusFilter == null) {
-      // Show all test drives
-      _filteredTestDriveRequests = List.from(_testDriveRequests);
+      return List.from(allTestDrives);
     } else {
-      // Filter by selected status
-      _filteredTestDriveRequests = _testDriveRequests
-          .where((testDrive) => 
+      return allTestDrives
+          .where((testDrive) =>
               testDrive.status?.toLowerCase() == _selectedStatusFilter?.toLowerCase())
           .toList();
     }
   }
 
-
+  Widget _buildFilterChips() {
+    final theme = Theme.of(context);
+    final statusOptions = [
+      {'label': 'All', 'value': null, 'color': const Color(0xFF2196F3)},
+      {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
+      {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
+      {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
+      {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
+      {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
+      {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
+    ];
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        child: Row(
+          children: statusOptions.map((status) {
+            final isSelected = _selectedStatusFilter == status['value'];
+            final statusColor = status['color'] as Color;
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: isSelected,
+                label: Text(
+                  status['label'] as String,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected 
+                        ? theme.colorScheme.onPrimary 
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedStatusFilter = status['value'] as String?;
+                  });
+                },
+                backgroundColor: theme.colorScheme.surfaceVariant,
+                selectedColor: statusColor,
+                checkmarkColor: theme.colorScheme.onPrimary,
+                side: BorderSide(
+                  color: isSelected 
+                      ? statusColor 
+                      : theme.colorScheme.outline.withOpacity(0.3),
+                  width: 1,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                avatar: isSelected ? Icon(
+                  Icons.check_rounded,
+                  size: 16,
+                  color: theme.colorScheme.onPrimary,
+                ) : null,
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -219,16 +146,342 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserTestDrivesProvider>(
+      builder: (context, provider, child) {
+        final filteredTestDrives = _applyFilters(provider.allTestDrives);
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text(
+              'Test Drive Status',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            leading: widget.showBackButton
+                ? IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded, size: 18),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18),
+                ),
+                onPressed: provider.refresh,
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: provider.refresh,
+            color: const Color(0xFF0095D9),
+            child: Column(
+              children: [
+                // Filter Chips Section
+                if (!provider.isLoading && provider.errorMessage == null && provider.allTestDrives.isNotEmpty)
+                  _buildFilterChips(),
+                // Main Content
+                Expanded(
+                  child: provider.isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF0095D9),
+                          ),
+                        )
+                      : provider.errorMessage != null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Error Loading Test Drives',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    provider.errorMessage!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton(
+                                    onPressed: provider.refresh,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0095D9),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Retry',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : filteredTestDrives.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.directions_car_outlined,
+                                        size: 64,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'No Test Drive Requests',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'You haven\'t scheduled any test drives yet',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: filteredTestDrives.length,
+                                  itemBuilder: (context, index) {
+                                    final request = filteredTestDrives[index];
+                                    return Card(
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: BorderSide(color: Colors.grey[200]!),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () => _showTestDriveDetails(request),
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Row(
+                                            children: [
+                                              // Status icon
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: _getStatusColor(request.status ?? 'Unknown')
+                                                      .withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Icon(
+                                                  _getStatusIcon(request.status ?? 'Unknown'),
+                                                  color: _getStatusColor(request.status ?? 'Unknown'),
+                                                  size: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              // Main content
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    // Car name and status in same row
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            request.car?.name ?? 'Unknown',
+                                                            style: const TextStyle(
+                                                              fontSize: 15,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: Color(0xFF1A1A1A),
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(
+                                                            horizontal: 6,
+                                                            vertical: 2,
+                                                          ),
+                                                          decoration: BoxDecoration(
+                                                            color: _getStatusColor(request.status ?? 'Unknown')
+                                                                .withOpacity(0.1),
+                                                            borderRadius: BorderRadius.circular(6),
+                                                          ),
+                                                          child: Text(
+                                                            _getStatusText(request.status ?? 'Unknown'),
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: _getStatusColor(request.status ?? 'Unknown'),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    // Showroom name
+                                                    Text(
+                                                      request.showroom?.name ?? 'Unknown',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    // Date and time in same row
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.calendar_today_outlined,
+                                                          size: 12,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          request.date ?? 'Unknown',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors.grey[600],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 12),
+                                                        Icon(
+                                                          Icons.access_time_rounded,
+                                                          size: 12,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          request.time ?? 'Unknown',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors.grey[600],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    // Pickup location and pincode in same row
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.location_on_outlined,
+                                                          size: 12,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            request.pickupCity ?? 'Unknown',
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              color: Colors.grey[600],
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 12),
+                                                        Icon(
+                                                          Icons.pin_drop_outlined,
+                                                          size: 12,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          request.pickupPincode ?? 'Unknown',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors.grey[600],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      },
+    );
+  }
+
   void _handleAction(TestDriveListResponse request) {
     switch (request.status?.toLowerCase() ?? '') {
       case 'approved':
       case 'pending':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CancelTestDriveScreen(),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => const CancelTestDriveScreen(),
+        //   ),
+        // );
         break;
       case 'completed':
         // Review functionality removed
@@ -330,7 +583,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Request ID: ${request.id}',
+                          'Request ID: 24{request.id}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -696,23 +949,19 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
   }
 
   String _cleanHtmlDescription(String htmlDescription) {
-    // Remove HTML tags and decode HTML entities
     String cleaned = htmlDescription
-        .replaceAll(RegExp(r'<[^>]*>'), '') // Remove HTML tags
-        .replaceAll('&nbsp;', ' ') // Replace &nbsp; with space
-        .replaceAll('&amp;', '&') // Replace &amp; with &
-        .replaceAll('&lt;', '<') // Replace &lt; with <
-        .replaceAll('&gt;', '>') // Replace &gt; with >
-        .replaceAll('&quot;', '"') // Replace &quot; with "
-        .replaceAll('&#39;', "'") // Replace &#39; with '
-        .replaceAll('\r\n', '\n') // Normalize line breaks
-        .replaceAll('\r', '\n') // Normalize line breaks
-        .trim(); // Remove leading/trailing whitespace
-    
-    // Remove extra whitespace and normalize
-    cleaned = cleaned.replaceAll(RegExp(r'\n\s*\n'), '\n\n'); // Remove multiple empty lines
-    cleaned = cleaned.replaceAll(RegExp(r' +'), ' '); // Replace multiple spaces with single space
-    
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .trim();
+    cleaned = cleaned.replaceAll(RegExp(r'\n\s*\n'), '\n\n');
+    cleaned = cleaned.replaceAll(RegExp(r' +'), ' ');
     return cleaned;
   }
 
@@ -764,445 +1013,8 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> with Widge
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          'Test Drive Status',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.colorScheme.surface,
-        toolbarHeight: 56,
-        shape: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    size: 18,
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                Icons.refresh_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 18,
-              ),
-            ),
-            onPressed: _refreshData,
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        color: const Color(0xFF0095D9),
-        child: Column(
-          children: [
-            // Filter Chips Section
-            if (!_isLoading && _errorMessage == null && _testDriveRequests.isNotEmpty)
-              _buildFilterChips(),
-            
-            // Main Content
-            Expanded(
-              child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF0095D9),
-                ),
-              )
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error Loading Test Drives',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _loadTestDrives,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0095D9),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Retry',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : _testDriveRequests.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.directions_car_outlined,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No Test Drive Requests',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'You haven\'t scheduled any test drives yet',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Navigate to showrooms screen to browse available cars
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (context) => const ShowroomsScreen(),
-                                //   ),
-                                // );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0095D9),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Browse Showrooms',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _filteredTestDriveRequests.length,
-                        itemBuilder: (context, index) {
-                          final request = _filteredTestDriveRequests[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: Colors.grey[200]!),
-                            ),
-                            child: InkWell(
-                              onTap: () => _showTestDriveDetails(request),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    // Status icon
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: _getStatusColor(request.status ?? 'Unknown')
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        _getStatusIcon(request.status ?? 'Unknown'),
-                                        color: _getStatusColor(request.status ?? 'Unknown'),
-                                        size: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    
-                                    // Main content
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          // Car name and status in same row
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  request.car?.name ?? 'Unknown',
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF1A1A1A),
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 2,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: _getStatusColor(request.status ?? 'Unknown')
-                                                      .withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  _getStatusText(request.status ?? 'Unknown'),
-                                                  style: TextStyle(
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: _getStatusColor(request.status ?? 'Unknown'),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          
-                                          // Showroom name
-                                          Text(
-                                            request.showroom?.name ?? 'Unknown',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          
-                                          // Date and time in same row
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.calendar_today_outlined,
-                                                size: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                request.date ?? 'Unknown',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Icon(
-                                                Icons.access_time_rounded,
-                                                size: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                request.time ?? 'Unknown',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          
-                                          // Pickup location and pincode in same row
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.location_on_outlined,
-                                                size: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  request.pickupCity ?? 'Unknown',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey[600],
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Icon(
-                                                Icons.pin_drop_outlined,
-                                                size: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                request.pickupPincode ?? 'Unknown',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      );
+  void refreshData() {
+    final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+    provider.refresh();
   }
-
-  Widget _buildFilterChips() {
-    final theme = Theme.of(context);
-    final statusOptions = [
-      {'label': 'All', 'value': null, 'color': const Color(0xFF2196F3)},
-      {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
-      {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
-      {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
-      {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
-      {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
-      {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
-    ];
-    
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
-        child: Row(
-          children: statusOptions.map((status) {
-            final isSelected = _selectedStatusFilter == status['value'];
-            final statusColor = status['color'] as Color;
-            
-            return Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                selected: isSelected,
-                label: Text(
-                  status['label'] as String,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isSelected 
-                        ? theme.colorScheme.onPrimary 
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedStatusFilter = status['value'] as String?;
-                    _applyFilters();
-                  });
-                },
-                backgroundColor: theme.colorScheme.surfaceVariant,
-                selectedColor: statusColor,
-                checkmarkColor: theme.colorScheme.onPrimary,
-                side: BorderSide(
-                  color: isSelected 
-                      ? statusColor 
-                      : theme.colorScheme.outline.withOpacity(0.3),
-                  width: 1,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                avatar: isSelected ? Icon(
-                  Icons.check_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onPrimary,
-                ) : null,
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-
 } 

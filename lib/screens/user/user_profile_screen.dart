@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_service.dart';
@@ -11,6 +12,7 @@ import 'about_screen.dart';
 import 'completed_test_drives_screen.dart';
 import 'user_expense_screen.dart';
 import 'test_drive_status_screen.dart';
+import '../../providers/user_test_drives_provider.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -76,18 +78,10 @@ class UserProfileScreen extends StatefulWidget {
       final storageService = StorageService();
       final currentUser = await storageService.getUser();
       if (currentUser != null) {
-        final apiService = ApiService();
-        final testDrivesResponse = await apiService.getUserTestDrives(currentUser.id);
-        
-        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-        final completedTestDriveCount = testDrivesResponse.success 
-            ? testDrivesResponse.data!.where((testDrive) => 
-                testDrive.status?.toLowerCase() == 'completed').length 
-            : 0;
-        
-        // Update cache with new counts
+        // Remove automatic test drives API call - let user manually refresh
+        // Only update cache if we have existing data
         if (_cachedUser != null) {
-          updateCache(_cachedUser!, testDriveCount, completedTestDriveCount, _cachedShowroom);
+          updateCache(_cachedUser!, _cachedTestDriveCount ?? 0, _cachedCompletedTestDriveCount ?? 0, _cachedShowroom);
         }
       }
       
@@ -161,8 +155,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
     ));
     _animationController.forward();
     
-    // Register refresh callback
-    UserProfileScreen.registerRefreshCallback(_refreshProfileData);
+    // Remove refresh callback registration since we're not using automatic refresh
     
     _loadUserProfile();
   }
@@ -170,21 +163,13 @@ class UserProfileScreenState extends State<UserProfileScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed && mounted) {
-      // Refresh data when app becomes active
-      _refreshProfileData();
-    }
+    // Remove automatic refresh when app resumes
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Refresh data when screen becomes active (but only once)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_isLoading) {
-        _refreshProfileData();
-      }
-    });
+    // Remove automatic refresh when dependencies change
   }
 
   Future<void> _loadUserProfile() async {
@@ -212,9 +197,8 @@ class UserProfileScreenState extends State<UserProfileScreen>
     try {
       final currentUser = await _storageService.getUser();
       if (currentUser != null) {
-        // Load user profile, test drive count, and showroom details in parallel
+        // Load user profile and showroom details (remove test drives API call)
         final profileResponse = await _apiService.getUserProfile(currentUser.id);
-        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
         
         // Try to get showroom details - first try individual showroom, then fallback to all showrooms
         Showroom? showroom;
@@ -231,13 +215,9 @@ class UserProfileScreenState extends State<UserProfileScreen>
         }
         
         if (profileResponse.success && profileResponse.data != null) {
-          final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-          
-          // Filter completed test drives from the main response
-          final completedTestDriveCount = testDrivesResponse.success 
-              ? testDrivesResponse.data!.where((testDrive) => 
-                  testDrive.status?.toLowerCase() == 'completed').length 
-              : 0;
+          // Use cached test drive counts or default to 0
+          final testDriveCount = UserProfileScreen.cachedTestDriveCount ?? 0;
+          final completedTestDriveCount = UserProfileScreen.cachedCompletedTestDriveCount ?? 0;
           
           // Cache the data
           UserProfileScreen.updateCache(
@@ -282,6 +262,39 @@ class UserProfileScreenState extends State<UserProfileScreen>
     await _loadUserProfile();
   }
 
+  // Method to manually refresh test drive counts
+  Future<void> _refreshTestDriveCounts() async {
+    try {
+      // Use the provider to refresh test drive data
+      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      await provider.refresh();
+      
+      // Update local counts from provider data
+      final testDriveCount = provider.allTestDrives.length;
+      final completedTestDriveCount = provider.completedTestDrives.length;
+      
+      // Update cache with new counts
+      if (UserProfileScreen.cachedUser != null) {
+        UserProfileScreen.updateCache(
+          UserProfileScreen.cachedUser!,
+          testDriveCount,
+          completedTestDriveCount,
+          UserProfileScreen.cachedShowroom,
+        );
+      }
+      
+      // Update UI
+      if (mounted) {
+        setState(() {
+          _testDriveCount = testDriveCount;
+          _completedTestDriveCount = completedTestDriveCount;
+        });
+      }
+    } catch (e) {
+      print('Error refreshing test drive counts: $e');
+    }
+  }
+
   // Method to fetch showroom data separately
   Future<void> _fetchShowroomData(int showroomId) async {
     try {
@@ -315,54 +328,14 @@ class UserProfileScreenState extends State<UserProfileScreen>
     }
   }
 
-  // Method to refresh profile data without clearing cache (for real-time updates)
-  Future<void> _refreshProfileData() async {
-    try {
-      final currentUser = await _storageService.getUser();
-      if (currentUser != null) {
-        // Only refresh the counts, not the entire profile
-        final testDrivesResponse = await _apiService.getUserTestDrives(currentUser.id);
-        
-        final testDriveCount = testDrivesResponse.success ? testDrivesResponse.data!.length : 0;
-        
-        // Filter completed test drives from the main response
-        final completedTestDriveCount = testDrivesResponse.success 
-            ? testDrivesResponse.data!.where((testDrive) => 
-                testDrive.status?.toLowerCase() == 'completed').length 
-            : 0;
-        
-        // Update cache with new counts
-        if (UserProfileScreen.cachedUser != null) {
-          UserProfileScreen.updateCache(
-            UserProfileScreen.cachedUser!,
-            testDriveCount,
-            completedTestDriveCount,
-            UserProfileScreen.cachedShowroom,
-          );
-        }
-        
-        // Update UI if counts have changed
-        if (mounted && (_testDriveCount != testDriveCount || _completedTestDriveCount != completedTestDriveCount)) {
-          setState(() {
-            _testDriveCount = testDriveCount;
-            _completedTestDriveCount = completedTestDriveCount;
-          });
-        }
-      }
-      
-    } catch (e) {
-      // Silently handle errors to avoid disrupting the UI
-      print('Error refreshing profile data: $e');
-    }
-  }
+
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     
-    // Unregister refresh callback
-    UserProfileScreen.unregisterRefreshCallback(_refreshProfileData);
+    // Remove refresh callback unregistration since we're not using automatic refresh
     
     super.dispose();
   }
@@ -757,51 +730,70 @@ class UserProfileScreenState extends State<UserProfileScreen>
   Widget _buildStatsSection(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      mainAxisSpacing: AppTheme.spacingXS,
-      crossAxisSpacing: AppTheme.spacingXS,
-      childAspectRatio: 0.9,
-      padding: EdgeInsets.zero,
+    return Column(
       children: [
-        _buildStatCard(
-          context,
-          'Test Drives',
-          '$_testDriveCount',
-          Icons.directions_car_outlined,
-          theme.colorScheme.primary,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const TestDriveStatusScreen(),
+        // Header without reload button since data loads automatically
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Statistics',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
-            );
-          },
+            ),
+            // Remove reload button since data loads automatically
+          ],
         ),
-        _buildStatCard(
-          context,
-          'Completed',
-          '$_completedTestDriveCount',
-          Icons.check_circle_outline,
-          Colors.green,
-          onTap: () {
-            Navigator.push(
+        const SizedBox(height: 8),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 3,
+          mainAxisSpacing: AppTheme.spacingXS,
+          crossAxisSpacing: AppTheme.spacingXS,
+          childAspectRatio: 0.9,
+          padding: EdgeInsets.zero,
+          children: [
+            _buildStatCard(
               context,
-              MaterialPageRoute(
-                builder: (context) => const CompletedTestDrivesScreen(),
-              ),
-            );
-          },
-        ),
-        _buildStatCard(
-          context,
-          'Member Since',
-          _formatMemberSinceDate(),
-          Icons.calendar_today_outlined,
-          AppTheme.successColor,
+              'Test Drives',
+              '$_testDriveCount',
+              Icons.directions_car_outlined,
+              theme.colorScheme.primary,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TestDriveStatusScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildStatCard(
+              context,
+              'Completed',
+              '$_completedTestDriveCount',
+              Icons.check_circle_outline,
+              Colors.green,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CompletedTestDrivesScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildStatCard(
+              context,
+              'Member Since',
+              _formatMemberSinceDate(),
+              Icons.calendar_today_outlined,
+              AppTheme.successColor,
+            ),
+          ],
         ),
       ],
     );
@@ -1300,7 +1292,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
 
   // Expose this method for parent to call
   void refreshProfileData() {
-    _refreshProfileData();
+    _refreshTestDriveCounts();
   }
 
   // Expose this method for parent to call

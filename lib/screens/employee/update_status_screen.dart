@@ -4,6 +4,8 @@ import '../../models/test_drive_model.dart';
 import '../../models/employee_model.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class UpdateStatusScreen extends StatefulWidget {
   final AssignedTestDrive? selectedTestDrive;
@@ -166,6 +168,15 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
   bool _isLoading = false;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  final TextEditingController _closingKmController = TextEditingController();
+  final Map<String, File?> _returnImages = {
+    'return_front_img': null,
+    'return_back_img': null,
+    'return_right_img': null,
+    'return_left_img': null,
+    'return_upper_img': null,
+  };
+  final ImagePicker _picker = ImagePicker();
 
   final List<Map<String, dynamic>> _statusOptions = [
     {'value': 'completed', 'label': 'Completed', 'color': Colors.green, 'icon': Icons.check_circle_outline},
@@ -198,6 +209,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
   @override
   void dispose() {
     _notesController.dispose();
+    _closingKmController.dispose();
     super.dispose();
   }
 
@@ -222,29 +234,45 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
           return;
         }
       }
-      
+      // Validate for completed: closing_km and images
+      if (_selectedStatus == 'completed') {
+        if (_closingKmController.text.trim().isEmpty) {
+          _showErrorSnackBar('Please enter the closing KM');
+          return;
+        }
+        for (final key in _returnImages.keys) {
+          if (_returnImages[key] == null) {
+            _showErrorSnackBar('Please select all required return images');
+            return;
+          }
+        }
+      }
       setState(() => _isLoading = true);
-      
       try {
-        // Get employee data to get the driver ID
         final employee = await EmployeeStorageService.getEmployeeData();
         if (employee == null) {
           _showErrorSnackBar('Employee data not found. Please login again.');
           setState(() => _isLoading = false);
           return;
         }
-
         EmployeeApiResponse<Map<String, dynamic>> response;
-        
         if (_selectedStatus == 'rescheduled') {
-          // Format only the date (API expects only date, not datetime)
           final formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-          
           response = await EmployeeApiService().rescheduleTestDrive(
             testDriveId: widget.testDrive!.id,
             driverId: employee.id,
             newDate: formattedDate,
             reason: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+          );
+        } else if (_selectedStatus == 'completed') {
+          // Prepare images map (non-null)
+          final images = <String, File>{};
+          _returnImages.forEach((k, v) { if (v != null) images[k] = v!; });
+          response = await EmployeeApiService().completeTestDriveWithImages(
+            driverId: employee.id,
+            testDriveId: widget.testDrive!.id,
+            closingKm: int.parse(_closingKmController.text.trim()),
+            returnImages: images,
           );
         } else {
           response = await EmployeeApiService().updateTestDriveStatus(
@@ -254,13 +282,10 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             cancelDescription: _selectedStatus == 'cancelled' ? _notesController.text.trim() : null,
           );
         }
-        
         setState(() => _isLoading = false);
-        
         if (mounted) {
           if (response.success) {
             _showSuccessSnackBar(response.message);
-            // Navigate back to the previous screen (AssignedTestDrivesScreen)
             widget.onCancel();
           } else {
             _showErrorSnackBar(response.message);
@@ -715,6 +740,33 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                 ),
               ),
             ],
+            if (_selectedStatus == 'completed' && canUpdate) ...[
+              const SizedBox(height: 16),
+              Text('Closing KM', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _closingKmController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  hintText: 'Enter closing KM',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (_selectedStatus == 'completed' && (value == null || value.trim().isEmpty)) {
+                    return 'Closing KM is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Text('Return Car Images (Required)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _returnImages.keys.map((key) => _buildImagePicker(key)).toList(),
+              ),
+            ],
             const SizedBox(height: 24),
             
             // Action Buttons
@@ -978,6 +1030,74 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(String key) {
+    final labelMap = {
+      'return_front_img': 'Front',
+      'return_back_img': 'Back',
+      'return_right_img': 'Right',
+      'return_left_img': 'Left',
+      'return_upper_img': 'Upper',
+    };
+    final file = _returnImages[key];
+    return GestureDetector(
+      onTap: () async {
+        final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+        if (picked != null) {
+          setState(() {
+            _returnImages[key] = File(picked.path);
+          });
+        }
+      },
+      child: Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[50],
+        ),
+        child: file != null
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(file, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _returnImages[key] = null;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.camera_alt, color: Color(0xFF3080A5), size: 28),
+                    const SizedBox(height: 4),
+                    Text(labelMap[key] ?? key, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
       ),
     );
   }

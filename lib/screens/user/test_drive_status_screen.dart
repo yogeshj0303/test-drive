@@ -583,7 +583,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Request ID: 24{request.id}',
+                          'Request ID: ${request.id}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],

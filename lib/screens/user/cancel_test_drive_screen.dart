@@ -336,6 +336,16 @@ class _CancelTestDriveScreenState extends State<CancelTestDriveScreen> {
                       ),
                     ],
                     
+                    // After the main details and before the action buttons in the test drive detail modal, add:
+                    if (testDrive.approverRejecter != null && testDrive.approvedOrRejectDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildModernDetailRow('Rejected By', testDrive.approverRejecter?.name ?? 'Unknown', Icons.person_off_outlined),
+                      _buildModernDetailRow('Email', testDrive.approverRejecter?.email ?? 'Unknown', Icons.email_outlined),
+                      _buildModernDetailRow('Date', _formatDateTime(testDrive.approvedOrRejectDate!), Icons.cancel_outlined),
+                      if (testDrive.rejectDescription != null && testDrive.rejectDescription!.isNotEmpty)
+                        _buildModernDetailRow('Reason', testDrive.rejectDescription!, Icons.block_outlined),
+                    ],
+                    
                     // Bottom padding for safe area
                     const SizedBox(height: 24),
                   ],

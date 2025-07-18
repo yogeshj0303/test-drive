@@ -10,6 +10,7 @@ import '../../services/api_config.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_test_drives_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class ApprovedTestDrivesScreen extends StatefulWidget {
   const ApprovedTestDrivesScreen({super.key});
@@ -453,6 +454,59 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                             _buildDetailRow('Assigned On', _formatDateTime(request.driverUpdateDate!)),
                         ],
                       ),
+                    // --- ENHANCED STATUS SECTIONS ---
+                    if (request.approverRejecter != null && request.approvedOrRejectDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Approved By',
+                        [
+                          _buildDetailRow('Name', request.approverRejecter?.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.approverRejecter?.email ?? 'Unknown'),
+                          _buildDetailRow('Date', _formatDateTime(request.approvedOrRejectDate!)),
+                        ],
+                      ),
+                    ],
+                    // Completed By section: try completedByUser/completedDate, else comment out
+                    /*
+                    if (request.completedByUser != null && request.completedDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Completed By',
+                        [
+                          _buildDetailRow('Name', request.completedByUser?.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.completedByUser?.email ?? 'Unknown'),
+                          _buildDetailRow('Date', _formatDateTime(request.completedDate!)),
+                        ],
+                      ),
+                    ],
+                    */
+                    if (request.approverRejecter != null && request.status == 'rejected') ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Rejected By',
+                        [
+                          _buildDetailRow('Name', request.approverRejecter?.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.approverRejecter?.email ?? 'Unknown'),
+                          if (request.approvedOrRejectDate != null)
+                            _buildDetailRow('Date', _formatDateTime(request.approvedOrRejectDate!)),
+                          if (request.rejectDescription != null && request.rejectDescription!.isNotEmpty)
+                            _buildDetailRow('Reason', request.rejectDescription!),
+                        ],
+                      ),
+                    ],
+                    if (request.rescheduler != null && request.rescheduledDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Rescheduled By',
+                        [
+                          _buildDetailRow('Name', request.rescheduler?.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.rescheduler?.email ?? 'Unknown'),
+                          _buildDetailRow('Rescheduled On', _formatDateTime(request.rescheduledDate!)),
+                          if (request.date != null)
+                            _buildDetailRow('Next Test Drive Date', _formatDateTime(request.date!)),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     // Action Buttons
                     _buildActionButtonsSection(request),
@@ -491,7 +545,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 12),
             child: ElevatedButton.icon(
-              onPressed: () => _showCompleteDialog(request),
+              onPressed: () => _showCompleteBottomSheet(request),
               icon: const Icon(Icons.check_circle_outline, size: 18),
               label: const Text('Complete Test Drive'),
               style: ElevatedButton.styleFrom(
@@ -757,445 +811,510 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  void _showCompleteDialog(TestDriveListResponse request) {
-    // Check permission before showing dialog
+  // Replace _showCompleteDialog with bottom sheet version
+  void _showCompleteBottomSheet(TestDriveListResponse request) {
     final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    
     if (!canChangeTestDriveStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              const Expanded(
-                child: Text('You don\'t have permission to complete test drives'),
-              ),
+              const Expanded(child: Text('You don\'t have permission to complete test drives')),
             ],
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
       return;
     }
-    
     final TextEditingController closingKmController = TextEditingController();
-    final Map<String, String> returnImages = {};
-    
-    showDialog(
+    final Map<String, File?> returnImages = {
+      'return_front_img': null,
+      'return_back_img': null,
+      'return_right_img': null,
+      'return_left_img': null,
+      'return_upper_img': null,
+    };
+    showModalBottomSheet(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: Colors.green.shade600,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Complete Test Drive',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Complete test drive for ${request.car?.name ?? 'Unknown'}:',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Closing KM Input
-                Row(
-                  children: [
-                    Text(
-                      'Closing Kilometer Reading',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => StatefulBuilder(
+          builder: (context, setState) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      width: 28,
+                      height: 3,
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red.shade200),
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      child: Text(
-                        'Required',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.red.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: closingKmController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Enter closing kilometer reading',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.green.shade400),
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Return Images Section
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Car Return Images',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red.shade200),
-                      ),
-                      child: Text(
-                        'Required - 5 images',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.red.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                
-                // Image Type Selection and Upload Grid
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.0,
-                  children: [
-                    _buildImageUploadSection('Image 1', 'return_front_img', returnImages, setState),
-                    _buildImageUploadSection('Image 2', 'return_back_img', returnImages, setState),
-                    _buildImageUploadSection('Image 3', 'return_right_img', returnImages, setState),
-                    _buildImageUploadSection('Image 4', 'return_left_img', returnImages, setState),
-                    _buildImageUploadSection('Image 5', 'return_upper_img', returnImages, setState),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                
-                // Progress Counter
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: returnImages.length == 5 ? Colors.green.shade50 : Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: returnImages.length == 5 ? Colors.green.shade200 : Colors.orange.shade200,
                     ),
                   ),
-                  child: Row(
+                  Row(
                     children: [
-                      Icon(
-                        returnImages.length == 5 ? Icons.check_circle : Icons.info_outline,
-                        color: returnImages.length == 5 ? Colors.green.shade600 : Colors.orange.shade600,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${returnImages.length}/5 images uploaded',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: returnImages.length == 5 ? Colors.green.shade700 : Colors.orange.shade700,
+                      Icon(Icons.check_circle_outline, color: Colors.green.shade600, size: 20),
+                      const SizedBox(width: 6),
+                      const Text('Complete Test Drive', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Fix malformed Text widget for car name
+                  Text('Complete test drive for ${request.car?.name ?? 'Unknown'}:', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                  const SizedBox(height: 10),
+                  // Closing KM Input
+                  Row(
+                    children: [
+                      Text('Closing Kilometer Reading', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red.shade200),
                         ),
+                        child: Text('Required', style: TextStyle(fontSize: 9, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Colors.green.shade600,
-                        size: 20,
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: closingKmController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Enter closing kilometer reading',
+                      hintStyle: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Please provide the closing kilometer reading and 5 car return images (front, back, right, left, upper views).',
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.green.shade400),
+                      ),
+                      contentPadding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Return Images Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Car Return Images', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Text('Required - 5 images', style: TextStyle(fontSize: 9, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Image Upload Grid
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3, // more compact
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _buildSimpleImageCard('Front', 'return_front_img', returnImages, setState),
+                      _buildSimpleImageCard('Back', 'return_back_img', returnImages, setState),
+                      _buildSimpleImageCard('Right', 'return_right_img', returnImages, setState),
+                      _buildSimpleImageCard('Left', 'return_left_img', returnImages, setState),
+                      _buildSimpleImageCard('Upper', 'return_upper_img', returnImages, setState),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Progress Counter
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade50 : Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade200 : Colors.orange.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          returnImages.values.where((f) => f != null).length == 5 ? Icons.check_circle : Icons.info_outline,
+                          color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade600 : Colors.orange.shade600,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${returnImages.values.where((f) => f != null).length}/5 images uploaded',
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.green.shade700,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade700 : Colors.orange.shade700,
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.green.shade600, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Please provide the closing kilometer reading and 5 car return images (front, back, right, left, upper views).',
+                            style: TextStyle(fontSize: 10, color: Colors.green.shade700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
+                          child: const Text('Cancel', style: TextStyle(fontSize: 13)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final closingKm = int.tryParse(closingKmController.text.trim());
+                            if (closingKm == null || closingKm <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Please enter a valid closing kilometer reading'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              );
+                              return;
+                            }
+                            if (returnImages.values.where((f) => f != null).length != 5) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please provide exactly 5 car return images (currently ${returnImages.values.where((f) => f != null).length})'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.pop(context);
+                            await _simpleCompleteTestDriveWithFiles(request, closingKm, returnImages);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          child: const Text('Complete Test Drive', style: TextStyle(fontSize: 13)),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Validate closing KM
-                final closingKm = int.tryParse(closingKmController.text.trim());
-                if (closingKm == null || closingKm <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Please enter a valid closing kilometer reading'),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                
-                // Validate that exactly 5 images are provided
-                if (returnImages.length != 5) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Please provide exactly 5 car return images (currently ${returnImages.length})'),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                
-                Navigator.pop(context);
-                _completeTestDrive(request, closingKm, returnImages);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Complete Test Drive'),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildImageUploadSection(String title, String fieldName, Map<String, String> returnImages, StateSetter setState) {
-    final hasImage = returnImages.containsKey(fieldName);
-    
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: hasImage ? Colors.green.shade300 : Colors.grey.shade300,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        color: hasImage ? Colors.green.shade50 : Colors.grey.shade50,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title and Required Badge
-          Row(
+  Widget _buildSimpleImageCard(String label, String fieldName, Map<String, File?> images, StateSetter setState) {
+    final file = images[fieldName];
+    Future<void> _pickImage(ImageSource source) async {
+      final ImagePicker picker = ImagePicker();
+      final XFile? picked = await picker.pickImage(source: source);
+      if (picked != null) {
+        setState(() {
+          images[fieldName] = File(picked.path);
+        });
+      }
+    }
+    void _showImageSourceDialog() {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Select Image Source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: hasImage ? Colors.green.shade700 : Colors.grey.shade700,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
               ),
-              if (!hasImage)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(3),
-                    border: Border.all(color: Colors.red.shade200),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      height: 60,
+      child: GestureDetector(
+        onTap: _showImageSourceDialog,
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: file != null ? Colors.green : Colors.grey.shade300,
+              width: file != null ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(4),
+            color: Colors.white,
+          ),
+          child: Stack(
+            children: [
+              if (file != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
                   ),
-                  child: Text(
-                    'Required',
-                    style: TextStyle(
-                      fontSize: 7,
-                      color: Colors.red.shade700,
-                      fontWeight: FontWeight.w600,
+                )
+              else
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo, size: 14, color: Colors.grey.shade400),
+                      const SizedBox(height: 1),
+                      Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                      const SizedBox(height: 1),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('REQUIRED', style: TextStyle(fontSize: 5, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+              if (file != null)
+                Positioned(
+                  top: 1,
+                  right: 1,
+                  child: GestureDetector(
+                    onTap: () => setState(() => images[fieldName] = null),
+                    child: Container(
+                      padding: const EdgeInsets.all(1),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 7),
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 6),
-          
-          if (hasImage) ...[
-            // Image Preview
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  color: Colors.grey.shade100,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: returnImages[fieldName]!.startsWith('data:image') || returnImages[fieldName]!.startsWith('/')
-                      ? Image.memory(
-                          base64Decode(returnImages[fieldName]!.split(',')[1]),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )
-                      : Image.file(
-                          File(returnImages[fieldName]!),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                ),
-              ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _simpleCompleteTestDriveWithFiles(TestDriveListResponse request, int closingKm, Map<String, File?> returnImages) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: Row(
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+              strokeWidth: 2,
             ),
-            const SizedBox(height: 6),
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showImageSourceDialog(setState, returnImages, fieldName),
-                    icon: const Icon(Icons.edit, size: 12),
-                    label: const Text('Change', style: TextStyle(fontSize: 10)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.green.shade700,
-                      side: BorderSide(color: Colors.green.shade300),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      returnImages.remove(fieldName);
-                    });
-                  },
-                  icon: const Icon(Icons.delete, size: 12),
-                  label: const Text('Remove', style: TextStyle(fontSize: 10)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red.shade700,
-                    side: BorderSide(color: Colors.red.shade300),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            // Upload Button
-            Expanded(
-              child: Center(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showImageSourceDialog(setState, returnImages, fieldName),
-                  icon: const Icon(Icons.add_a_photo, size: 16),
-                  label: Text('Upload', style: TextStyle(fontSize: 10)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade100,
-                    foregroundColor: Colors.grey.shade700,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                ),
+            const SizedBox(width: 16),
+            Text(
+              'Completing test drive...',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
+    try {
+      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      if (currentUser == null) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(child: Text('User data not found. Please login again.')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+        return;
+      }
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update');
+      final requestMultipart = http.MultipartRequest('POST', uri)
+        ..fields['employee_id'] = currentUser.id.toString()
+        ..fields['status'] = 'completed'
+        ..fields['testdrive_id'] = request.id.toString()
+        ..fields['closing_km'] = closingKm.toString();
+      // Attach images
+      for (final entry in returnImages.entries) {
+        if (entry.value != null) {
+          requestMultipart.files.add(await http.MultipartFile.fromPath(entry.key, entry.value!.path));
+        }
+      }
+      requestMultipart.headers.addAll(ApiConfig.defaultHeaders);
+      final streamedResponse = await requestMultipart.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      Navigator.pop(context);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        if (responseData['success'] == true) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      responseData['message'],
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+          Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      responseData['message'].isNotEmpty ? responseData['message'] : 'Failed to complete test drive',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text('Connection error. Please try again.'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              const Text('Connection error. Please try again.'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    }
   }
 
   void _showRejectDialog(TestDriveListResponse request) {
@@ -2105,94 +2224,5 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         );
       },
     );
-  }
-
-  void _showImageSourceDialog(StateSetter setState, Map<String, String> returnImages, String fieldName) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          'Select Image Source',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.blue),
-              title: const Text('Camera'),
-              subtitle: const Text('Take a photo'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera, setState, returnImages, fieldName);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.green),
-              title: const Text('Gallery'),
-              subtitle: const Text('Choose an image from gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery, setState, returnImages, fieldName);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _pickImage(ImageSource source, StateSetter setState, Map<String, String> returnImages, String fieldName) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      
-      // Pick a single image for the specific field
-      final XFile? image = await picker.pickImage(
-        source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
-      if (image != null) {
-        // Convert image to base64
-        final bytes = await image.readAsBytes();
-        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-        
-        setState(() {
-          returnImages[fieldName] = base64String;
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
   }
 } 

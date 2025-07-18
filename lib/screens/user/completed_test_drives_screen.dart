@@ -777,6 +777,17 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                       ),
                     ],
                     
+                    // After the main details and before the action buttons in the test drive detail modal, add:
+                    /*
+                    if (testDrive.completedByUser != null && testDrive.completedDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildModernDetailRow('Completed By', testDrive.completedByUser?.name ?? 'Unknown', Icons.person_outline),
+                      _buildModernDetailRow('Email', testDrive.completedByUser?.email ?? 'Unknown', Icons.email_outlined),
+                      _buildModernDetailRow('Date', _formatDateTime(testDrive.completedDate!), Icons.check_circle_outlined),
+                    ],
+                    // TODO: Add completedByUser/completedDate to the model and map from API response fields completed_by_user/completed_date
+                    */
+                    
                     // Bottom padding for safe area
                     const SizedBox(height: 16),
                   ],

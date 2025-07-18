@@ -564,6 +564,64 @@ class EmployeeApiService {
     }
   }
 
+  /// Complete a test drive with required return images and closing_km (for driver)
+  Future<EmployeeApiResponse<Map<String, dynamic>>> completeTestDriveWithImages({
+    required int driverId,
+    required int testDriveId,
+    required int closingKm,
+    required Map<String, File> returnImages, // keys: return_front_img, return_back_img, return_right_img, return_left_img, return_upper_img
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/textdrives/driver/status-update');
+      final request = http.MultipartRequest('POST', uri);
+      request.fields['driver_id'] = driverId.toString();
+      request.fields['testdrive_id'] = testDriveId.toString();
+      request.fields['status'] = 'completed';
+      request.fields['closing_km'] = closingKm.toString();
+
+      // Required image fields
+      final requiredFields = [
+        'return_front_img',
+        'return_back_img',
+        'return_right_img',
+        'return_left_img',
+        'return_upper_img',
+      ];
+      for (final field in requiredFields) {
+        final file = returnImages[field];
+        if (file == null) {
+          return EmployeeApiResponse.error('Missing required image: $field');
+        }
+        final stream = http.ByteStream(file.openRead());
+        final length = await file.length();
+        request.files.add(
+          http.MultipartFile(field, stream, length, filename: file.path.split('/').last),
+        );
+      }
+      request.headers.addAll({'Accept': 'application/json'});
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        if (responseData['success'] == true) {
+          return EmployeeApiResponse.success(responseData, message: responseData['message'] ?? 'Test drive completed successfully');
+        } else {
+          return EmployeeApiResponse.error(responseData['message'] ?? 'Failed to complete test drive');
+        }
+      } else {
+        return EmployeeApiResponse.error(_extractErrorMessage(response.body) ?? 'Failed to complete test drive');
+      }
+    } on SocketException {
+      return EmployeeApiResponse.error('Network error: Please check your internet connection');
+    } on FormatException {
+      return EmployeeApiResponse.error('Invalid response format from server');
+    } on TimeoutException {
+      return EmployeeApiResponse.error('Request timeout. Please try again.');
+    } catch (e) {
+      return EmployeeApiResponse.error('An unexpected error occurred: \\${e.toString()}');
+    }
+  }
+
   String? _extractErrorMessage(String responseBody) {
     try {
       if (responseBody.isEmpty) return 'Empty response from server';

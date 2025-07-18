@@ -24,7 +24,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
-  final NumberFormat _currencyFormat = NumberFormat.currency(locale: "en_IN", symbol: "₹");
+  final NumberFormat _currencyFormat = NumberFormat.currency(locale: "en_IN", symbol: "");
   final _receiptNumberController = TextEditingController();
   final _notesController = TextEditingController();
   

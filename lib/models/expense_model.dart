@@ -198,7 +198,7 @@ class ExpenseResponse {
 
   factory ExpenseResponse.fromJson(Map<String, dynamic> json) {
     return ExpenseResponse(
-      id: json['id'] as int,
+      id: int.tryParse(json['id'].toString()) ?? 0,
       description: json['description'] as String? ?? '',
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
       date: json['date'] as String? ?? '',
@@ -206,7 +206,7 @@ class ExpenseResponse {
       paymentMode: json['payment_mode'] as String? ?? '',
       status: json['status'] as String? ?? 'pending',
       proof: json['proof'] as String?,
-      userId: json['user_id'] as int? ?? 0,
+      userId: int.tryParse(json['user_id'].toString()) ?? 0,
       approvedRejectBy: json['approved_reject_by'] != null 
           ? int.tryParse(json['approved_reject_by'].toString()) 
           : null,

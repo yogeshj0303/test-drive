@@ -107,6 +107,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         body: Container(
           color: Colors.white,
           child: SafeArea(
@@ -120,278 +121,280 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildLandscapeLayout(BuildContext context, Color primaryBlue, Color secondaryBlue) {
-    return Row(
-      children: [
-        // Left side - Logo and Features
-        Expanded(
-          flex: 5,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: primaryBlue,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+    return SingleChildScrollView(
+      child: Row(
+        children: [
+          // Left side - Logo and Features
+          Expanded(
+            flex: 5,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: primaryBlue,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        children: [
+                          // Logo in a circle with shadow
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 30,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/varenium-removebg-preview.png',
+                              height: 120,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Welcome to Varenyam',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Your trusted platform',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo in a circle with shadow
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 30,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/images/varenium-removebg-preview.png',
-                            height: 120,
-                            fit: BoxFit.contain,
-                          ),
+                        _buildFeatureChip(
+                          context,
+                          icon: Icons.security_rounded,
+                          label: 'Secure',
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Welcome to Varenyam',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
+                        const SizedBox(width: 12),
+                        _buildFeatureChip(
+                          context,
+                          icon: Icons.speed_rounded,
+                          label: 'Fast',
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Your trusted platform',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
+                        const SizedBox(width: 12),
+                        _buildFeatureChip(
+                          context,
+                          icon: Icons.support_agent_rounded,
+                          label: 'Support',
+                          color: Colors.white,
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Right side - Auth Options
+          Expanded(
+            flex: 4,
+            child: Container(
+              margin: const EdgeInsets.only(left: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Choose Your Path',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                      shadows: [
+                        Shadow(
+                          color: primaryBlue.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildFeatureChip(
-                        context,
-                        icon: Icons.security_rounded,
-                        label: 'Secure',
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      _buildFeatureChip(
-                        context,
-                        icon: Icons.speed_rounded,
-                        label: 'Fast',
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      _buildFeatureChip(
-                        context,
-                        icon: Icons.support_agent_rounded,
-                        label: 'Support',
-                        color: Colors.white,
-                      ),
-                    ],
+                  _buildAuthOption(
+                    context,
+                    title: 'Continue as User',
+                    subtitle: 'Access your dashboard',
+                    icon: Icons.person_outline_rounded,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserLoginScreen()),
+                    ),
+                    color: primaryBlue,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAuthOption(
+                    context,
+                    title: 'Continue as Employee',
+                    subtitle: 'Access workspace',
+                    icon: Icons.business_outlined,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EmployeeLoginScreen()),
+                    ),
+                    color: secondaryBlue,
                   ),
                 ],
               ),
             ),
           ),
-        ),
-        // Right side - Auth Options
-        Expanded(
-          flex: 4,
-          child: Container(
-            margin: const EdgeInsets.only(left: 32),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Choose Your Path',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: primaryBlue,
-                    shadows: [
-                      Shadow(
-                        color: primaryBlue.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                _buildAuthOption(
-                  context,
-                  title: 'Continue as User',
-                  subtitle: 'Access your dashboard',
-                  icon: Icons.person_outline_rounded,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const UserLoginScreen()),
-                  ),
-                  color: primaryBlue,
-                ),
-                const SizedBox(height: 16),
-                _buildAuthOption(
-                  context,
-                  title: 'Continue as Employee',
-                  subtitle: 'Access workspace',
-                  icon: Icons.business_outlined,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const EmployeeLoginScreen()),
-                  ),
-                  color: secondaryBlue,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildPortraitLayout(BuildContext context, Color primaryBlue, Color secondaryBlue) {
-    return Column(
-      children: [
-        // Logo and Title Section
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: primaryBlue,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo in a circle with shadow
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/images/varenium-removebg-preview.png',
-                      height: 100,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Welcome to Varenyam',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Your trusted platform',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Logo and Title Section
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: primaryBlue,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
               ),
             ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo in a circle with shadow
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/varenium-removebg-preview.png',
+                        height: 100,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Welcome to Varenyam',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Your trusted platform',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        // Feature Chips
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildFeatureChip(
-                context,
-                icon: Icons.security_rounded,
-                label: 'Secure',
-                color: primaryBlue,
-              ),
-              const SizedBox(width: 8),
-              _buildFeatureChip(
-                context,
-                icon: Icons.speed_rounded,
-                label: 'Fast',
-                color: secondaryBlue,
-              ),
-              const SizedBox(width: 8),
-              _buildFeatureChip(
-                context,
-                icon: Icons.support_agent_rounded,
-                label: 'Support',
-                color: primaryBlue,
-              ),
-            ],
+          // Feature Chips
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildFeatureChip(
+                  context,
+                  icon: Icons.security_rounded,
+                  label: 'Secure',
+                  color: primaryBlue,
+                ),
+                const SizedBox(width: 8),
+                _buildFeatureChip(
+                  context,
+                  icon: Icons.speed_rounded,
+                  label: 'Fast',
+                  color: secondaryBlue,
+                ),
+                const SizedBox(width: 8),
+                _buildFeatureChip(
+                  context,
+                  icon: Icons.support_agent_rounded,
+                  label: 'Support',
+                  color: primaryBlue,
+                ),
+              ],
+            ),
           ),
-        ),
-        // Auth Options
-        Expanded(
-          child: Padding(
+          // Auth Options
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -439,8 +442,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

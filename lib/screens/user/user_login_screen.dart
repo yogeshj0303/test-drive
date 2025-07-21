@@ -154,57 +154,65 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
     const Color secondaryBlue = Color(0xFF5D98AF);
     const Color darkGray = Color(0xFF242223);
 
-    return AnnotatedRegion(
-      value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Container(
-              color: Colors.white,
-              child: SafeArea(
-                child: Center(
-                  child: isSmallScreen
-                      ? _buildMobileLayout(size, primaryBlue)
-                      : _buildDesktopLayout(size, primaryBlue),
-                ),
-              ),
-            ),
-            // Back button positioned at top left
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 30,
-              left: 18,
-              child: Container(
-                height: 32,
-                width: 32,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AuthScreen()),
+        );
+        return false;
+      },
+      child: AnnotatedRegion(
+        value: SystemUiOverlayStyle.dark,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Container(
+                color: Colors.white,
+                child: SafeArea(
+                  child: Center(
+                    child: isSmallScreen
+                        ? _buildMobileLayout(size, primaryBlue)
+                        : _buildDesktopLayout(size, primaryBlue),
                   ),
                 ),
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const AuthScreen(),
-                      ),
+              ),
+              // Back button positioned at top left
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 30,
+                left: 18,
+                child: Container(
+                  height: 32,
+                  width: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1,
                     ),
-                  icon: const Icon(
-                    Icons.arrow_back_ios_rounded,
-                    color: Colors.white,
-                    size: 16,
                   ),
-                  style: IconButton.styleFrom(
-                    // backgroundColor: Colors.lightBlueAccent,
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(32, 32),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const AuthScreen(),
+                        ),
+                      ),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    style: IconButton.styleFrom(
+                      // backgroundColor: Colors.lightBlueAccent,
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(32, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -156,57 +156,65 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
     const Color secondaryBlue = Color(0xFF0095D9); // Primary blue from logo
     const Color darkGray = Color(0xFF1D1B1C); // Dark gray from logo
 
-    return AnnotatedRegion(
-      value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Container(
-              color: Colors.white,
-              child: SafeArea(
-                child: Center(
-                  child: isSmallScreen
-                      ? _buildMobileLayout(size, primaryBlue)
-                      : _buildDesktopLayout(size, primaryBlue),
-                ),
-              ),
-            ),
-            // Back button positioned at top left
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 30,
-              left: 18,
-              child: Container(
-                height: 32,
-                width: 32,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AuthScreen()),
+        );
+        return false;
+      },
+      child: AnnotatedRegion(
+        value: SystemUiOverlayStyle.dark,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Container(
+                color: Colors.white,
+                child: SafeArea(
+                  child: Center(
+                    child: isSmallScreen
+                        ? _buildMobileLayout(size, primaryBlue)
+                        : _buildDesktopLayout(size, primaryBlue),
                   ),
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
+              ),
+              // Back button positioned at top left
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 30,
+                left: 18,
+                child: Container(
+                  height: 32,
+                  width: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const AuthScreen(),
-                      ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1,
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.arrow_back_ios_rounded,
-                        color: Colors.white,
-                        size: 16,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const AuthScreen(),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.arrow_back_ios_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

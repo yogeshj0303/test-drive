@@ -55,72 +55,131 @@ class _MainUserScreenState extends State<MainUserScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          const UserHomeScreen(),
-          // const ShowroomsScreen(), // Commented out - showroom is now shown in home screen
-          const UserExpenseScreen(showBackButton: false),
-          TestDriveStatusScreen(key: _statusKey, showBackButton: false),
-          const UserActivitiesScreen(showBackButton: false),
-          UserProfileScreen(key: _profileKey, showBackButton: false),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: Colors.grey[200]!,
-              width: 0.5,
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+          return false; // Prevent app exit
+        } else {
+          // Show professional confirmation dialog
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.white, // Ensures white background
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              titlePadding: const EdgeInsets.only(top: 24),
+              title: Column(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.red[50],
+                    radius: 28,
+                    child: Icon(Icons.exit_to_app, color: Colors.red[400], size: 32),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Exit Application',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              content: const Text(
+                'Are you sure you want to exit the app?',
+                style: TextStyle(fontSize: 15),
+                textAlign: TextAlign.center,
+              ),
+              actionsAlignment: MainAxisAlignment.spaceBetween,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Exit', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          );
+          return shouldExit ?? false;
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            const UserHomeScreen(),
+            // const ShowroomsScreen(), // Commented out - showroom is now shown in home screen
+            const UserExpenseScreen(showBackButton: false),
+            TestDriveStatusScreen(key: _statusKey, showBackButton: false),
+            const UserActivitiesScreen(showBackButton: false),
+            UserProfileScreen(key: _profileKey, showBackButton: false),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: Colors.grey[200]!,
+                width: 0.5,
+              ),
             ),
           ),
-        ),
-        child: SafeArea(
-          child: Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Row(
-              children: [
-                Expanded(child: _buildNavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
-                  label: 'Home',
-                  index: 0,
-                )),
-                // Expanded(child: _buildNavItem(
-                //   icon: Icons.store_outlined,
-                //   activeIcon: Icons.store_rounded,
-                //   label: 'Showrooms',
-                //   index: 1,
-                // )), // Commented out - showroom is now shown in home screen
-                Expanded(child: _buildNavItem(
-                  icon: Icons.receipt_outlined,
-                  activeIcon: Icons.receipt_rounded,
-                  label: 'Expenses',
-                  index: 1,
-                )),
-                Expanded(child: _buildNavItem(
-                  icon: Icons.update_outlined,
-                  activeIcon: Icons.update_rounded,
-                  label: 'Status',
-                  index: 2,
-                )),
-                Expanded(child: _buildNavItem(
-                  icon: Icons.history_outlined,
-                  activeIcon: Icons.history_rounded,
-                  label: 'Activities',
-                  index: 3,
-                )),
-                Expanded(child: _buildNavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: 'Profile',
-                  index: 4,
-                )),
-              ],
+          child: SafeArea(
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(child: _buildNavItem(
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: 'Home',
+                    index: 0,
+                  )),
+                  // Expanded(child: _buildNavItem(
+                  //   icon: Icons.store_outlined,
+                  //   activeIcon: Icons.store_rounded,
+                  //   label: 'Showrooms',
+                  //   index: 1,
+                  // )), // Commented out - showroom is now shown in home screen
+                  Expanded(child: _buildNavItem(
+                    icon: Icons.receipt_outlined,
+                    activeIcon: Icons.receipt_rounded,
+                    label: 'Expenses',
+                    index: 1,
+                  )),
+                  Expanded(child: _buildNavItem(
+                    icon: Icons.update_outlined,
+                    activeIcon: Icons.update_rounded,
+                    label: 'Status',
+                    index: 2,
+                  )),
+                  Expanded(child: _buildNavItem(
+                    icon: Icons.history_outlined,
+                    activeIcon: Icons.history_rounded,
+                    label: 'Activities',
+                    index: 3,
+                  )),
+                  Expanded(child: _buildNavItem(
+                    icon: Icons.person_outline_rounded,
+                    activeIcon: Icons.person_rounded,
+                    label: 'Profile',
+                    index: 4,
+                  )),
+                ],
+              ),
             ),
           ),
         ),

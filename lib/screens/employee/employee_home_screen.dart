@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:varenyam/screens/Driver/driver_expense_list_screen.dart';
 import 'package:varenyam/screens/Employee/employee_notification_screen.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/driver_api_service.dart';
@@ -656,20 +657,20 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const AddExpenseScreen(showBackButton: true),
+                    builder: (context) => const DriverExpenseListScreen(showBackButton: true),
                   ),
                 );
               },
-              child: _buildActionCard('Add Expense', Icons.receipt_long_outlined, 'Submit expense reports', Colors.green),
+              child: _buildActionCard('My Expenses', Icons.receipt_long_outlined, 'View your expenses', Colors.green),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
-                  ),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+                //   ),
+                // );
               },
               child: _buildActionCard('Location Tracking', Icons.location_on_outlined, 'Track your location', Colors.purple),
             ),

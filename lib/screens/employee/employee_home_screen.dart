@@ -665,17 +665,6 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
             ),
             GestureDetector(
               onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
-                //   ),
-                // );
-              },
-              child: _buildActionCard('Location Tracking', Icons.location_on_outlined, 'Track your location', Colors.purple),
-            ),
-            GestureDetector(
-              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(

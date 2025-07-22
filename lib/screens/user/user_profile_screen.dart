@@ -13,6 +13,7 @@ import 'completed_test_drives_screen.dart';
 import 'user_expense_screen.dart';
 import 'test_drive_status_screen.dart';
 import '../../providers/user_test_drives_provider.dart';
+import '../Employee/location_tracking_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -957,6 +958,18 @@ class UserProfileScreenState extends State<UserProfileScreen>
                     builder: (context) => const CompletedTestDrivesScreen(),
                   ),
                 ),
+          },
+          {
+            'icon': Icons.location_on,
+            'title': 'Live Location Tracking',
+            'onTap': () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+                ),
+              );
+            },
           },
         ],
       },

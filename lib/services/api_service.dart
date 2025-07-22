@@ -1432,6 +1432,53 @@ class ApiService {
     }
   }
 
+  Future<ApiResponse<List<Showroom>>> getAllShowrooms() async {
+    try {
+      debugPrint('Fetching all showrooms');
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/front-showrooms');
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.defaultHeaders,
+      );
+      debugPrint('All showrooms response status: ${response.statusCode}');
+      debugPrint('All showrooms response data: ${response.body}');
+      if (response.statusCode == 200) {
+        final dynamic responseData = jsonDecode(response.body);
+        List<dynamic> showroomsList;
+        if (responseData is List) {
+          showroomsList = responseData;
+        } else if (responseData is Map && responseData.containsKey('data')) {
+          showroomsList = responseData['data'] as List<dynamic>;
+        } else {
+          debugPrint('Unexpected response format: $responseData');
+          return ApiResponse.error('Unexpected response format from server');
+        }
+        final showrooms = showroomsList.map((json) {
+          try {
+            return Showroom.fromJson(json as Map<String, dynamic>);
+          } catch (e) {
+            debugPrint('Error parsing showroom JSON: $json, Error: $e');
+            rethrow;
+          }
+        }).toList();
+        debugPrint('Successfully fetched ${showrooms.length} showrooms');
+        return ApiResponse.success(showrooms, message: 'Showrooms fetched successfully');
+      } else {
+        final errorMessage = _extractErrorMessage(response.body);
+        return ApiResponse.error(errorMessage ?? 'Failed to fetch showrooms');
+      }
+    } on SocketException {
+      debugPrint('All showrooms network error: No internet connection');
+      return ApiResponse.error(ApiConfig.networkErrorMessage);
+    } on FormatException {
+      debugPrint('All showrooms format error: Invalid response format');
+      return ApiResponse.error('Invalid response format from server');
+    } catch (e) {
+      debugPrint('All showrooms unexpected error: ${e.toString()}');
+      return ApiResponse.error('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
   String? _extractErrorMessage(String responseBody) {
     try {
       final data = jsonDecode(responseBody) as Map<String, dynamic>;

@@ -70,24 +70,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     });
 
     try {
-      // Get current user to check their showroom_id
-      final currentUser = await _storageService.getUser();
-      if (currentUser == null) {
-        setState(() {
-          _showroomsErrorMessage = 'User not found. Please login again.';
-          _isLoadingShowrooms = false;
-        });
-        return;
-      }
-
-      // Fetch only the assigned showroom by ID
-      final response = await _apiService.getShowroomById(currentUser.showroomId);
+      // Fetch all showrooms
+      final response = await _apiService.getAllShowrooms();
       if (response.success) {
         setState(() {
-          _showrooms = [response.data!];
+          _showrooms = response.data ?? [];
           _isLoadingShowrooms = false;
         });
-        // Fetch car counts for the showroom
+        // Fetch car counts for all showrooms
         _fetchCarCounts();
       } else {
         setState(() {
@@ -371,6 +361,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               _buildSectionHeader(
                 'My Showroom',
                 'Your assigned showroom',
+                onViewAll: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ShowroomsScreen(),
+                    ),
+                  );
+                },
               ),
               Container(
                 height: 220, // Reduced from 260
@@ -780,7 +778,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'No showroom assigned',
+              'No showrooms available',
               style: TextStyle(
                 color: Color(0xFF666666),
                 fontSize: 14,
@@ -789,7 +787,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please contact your administrator to assign a showroom',
+              'Please contact your administrator',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,
@@ -801,9 +799,24 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       );
     }
 
+    // Show all showrooms in a horizontal list
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: _buildShowroomCard(_showrooms.first),
+      child: SizedBox(
+        height: 240,
+        child: ListView.separated(
+          clipBehavior: Clip.none,
+          scrollDirection: Axis.horizontal,
+          itemCount: _showrooms.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            return SizedBox(
+              width: 320,
+              child: _buildShowroomCard(_showrooms[index]),
+            );
+          },
+        ),
+      ),
     );
   }
 

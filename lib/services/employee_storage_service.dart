@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/employee_model.dart';
+import '../models/test_drive_model.dart';
 
 class EmployeeStorageService {
   static const String _employeeKey = 'employee_data';
@@ -83,5 +84,72 @@ class EmployeeStorageService {
   static Future<void> updateEmployeeData(Employee employee) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_employeeKey, jsonEncode(employee.toJson()));
+  }
+
+  // --- Test Drive Location Tracking ---
+
+  static String _locationKey(int testDriveId) => 'test_drive_location_testDriveId';
+
+  // Save or update a location point for a test drive
+  static Future<void> addLocationPoint(int testDriveId, LocationPoint point) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _locationKey(testDriveId);
+    final jsonString = prefs.getString(key);
+    TestDriveLocationHistory history;
+    if (jsonString != null) {
+      history = TestDriveLocationHistory.fromJson(jsonDecode(jsonString));
+      history = TestDriveLocationHistory(
+        testDriveId: testDriveId,
+        points: [...history.points, point],
+        isCompleted: history.isCompleted,
+      );
+    } else {
+      history = TestDriveLocationHistory(testDriveId: testDriveId, points: [point]);
+    }
+    await prefs.setString(key, jsonEncode(history.toJson()));
+  }
+
+  // Get location history for a test drive
+  static Future<TestDriveLocationHistory?> getLocationHistory(int testDriveId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _locationKey(testDriveId);
+    final jsonString = prefs.getString(key);
+    if (jsonString != null) {
+      return TestDriveLocationHistory.fromJson(jsonDecode(jsonString));
+    }
+    return null;
+  }
+
+  // Mark a test drive as completed (stops tracking)
+  static Future<void> completeTestDriveLocation(int testDriveId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _locationKey(testDriveId);
+    final jsonString = prefs.getString(key);
+    if (jsonString != null) {
+      final history = TestDriveLocationHistory.fromJson(jsonDecode(jsonString));
+      final updated = TestDriveLocationHistory(
+        testDriveId: testDriveId,
+        points: history.points,
+        isCompleted: true,
+      );
+      await prefs.setString(key, jsonEncode(updated.toJson()));
+    }
+  }
+
+  // Get all test drive location histories (optionally filter by completed/incomplete)
+  static Future<List<TestDriveLocationHistory>> getAllTestDriveLocationHistories({bool? completed}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith('test_drive_location_'));
+    final List<TestDriveLocationHistory> histories = [];
+    for (final key in keys) {
+      final jsonString = prefs.getString(key);
+      if (jsonString != null) {
+        final history = TestDriveLocationHistory.fromJson(jsonDecode(jsonString));
+        if (completed == null || history.isCompleted == completed) {
+          histories.add(history);
+        }
+      }
+    }
+    return histories;
   }
 } 

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/test_drive_model.dart';
 import '../../models/gate_pass_model.dart' as gate_pass;
 import '../../models/employee_model.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/api_config.dart';
+import 'dart:async';
 
 class EmployeeGatePassScreen extends StatefulWidget {
   final AssignedTestDrive testDrive;
@@ -22,10 +24,61 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
   gate_pass.GatePass? _gatePass;
   Employee? _currentEmployee;
 
+  // Location tracking
+  Stream<Position>? _positionStream;
+  StreamSubscription<Position>? _positionSubscription;
+  bool _trackingStarted = false;
+
   @override
   void initState() {
     super.initState();
     _loadGatePass();
+    _startLocationTracking();
+  }
+
+  @override
+  void dispose() {
+    _stopLocationTracking();
+    super.dispose();
+  }
+
+  Future<void> _startLocationTracking() async {
+    if (_trackingStarted) return;
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          _errorMessage = 'Location permission denied.';
+        });
+        return;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        _errorMessage = 'Location permission permanently denied.';
+      });
+      return;
+    }
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 10),
+    );
+    _positionSubscription = _positionStream!.listen((Position position) async {
+      final point = LocationPoint(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        timestamp: DateTime.now(),
+      );
+      await EmployeeStorageService.addLocationPoint(widget.testDrive.id, point);
+    });
+    _trackingStarted = true;
+  }
+
+  void _stopLocationTracking() {
+    _positionSubscription?.cancel();
+    _positionSubscription = null;
+    _positionStream = null;
+    _trackingStarted = false;
   }
 
   Future<void> _loadGatePass() async {

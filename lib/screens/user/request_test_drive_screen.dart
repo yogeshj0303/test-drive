@@ -288,7 +288,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         hasValidDates &&
         _selectedTime != null &&
         _drivingLicenseController.text.isNotEmpty &&
-        _aadharNoController.text.isNotEmpty &&
         _openingKmController.text.isNotEmpty &&
         _selectedImages['image1'] != null &&
         _selectedImages['image2'] != null &&
@@ -354,7 +353,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           pickupCity: _pickupCityController.text,
           pickupPincode: _pickupPincodeController.text,
           drivingLicense: _drivingLicenseController.text,
-          aadharNo: _aadharNoController.text,
+          aadharNo: user.aadharNo ?? _aadharNoController.text,
           note: _noteController.text,
           status: 'pending',
           showroomId: widget.showroomId ?? 2, // This should be passed from CarDetailsScreen
@@ -438,8 +437,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         errorMessage = 'Please select a test drive time';
       } else if (_drivingLicenseController.text.isEmpty) {
         errorMessage = 'Please enter your driving license number';
-      } else if (_aadharNoController.text.isEmpty) {
-        errorMessage = 'Please enter your Aadhar number';
       } else if (_pickupAddressController.text.isEmpty) {
         errorMessage = 'Please enter pickup address';
       } else if (_pickupCityController.text.isEmpty) {
@@ -497,38 +494,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     setState(() {
       _selectedImages[position] = null;
     });
-  }
-
-  void _showImageSourceDialog(String position) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Image Source'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera, position);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery, position);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   void _showServerErrorDialog(String message) {
@@ -1035,7 +1000,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 controller: _aadharNoController,
                                 style: const TextStyle(fontSize: 14),
                                 decoration: InputDecoration(
-                                  labelText: 'Aadhar Number',
+                                  labelText: 'Aadhar Number (Optional)',
                                   labelStyle: const TextStyle(fontSize: 14),
                                   hintText: _aadharNoController.text.isEmpty 
                                       ? 'Enter 12-digit Aadhar' 
@@ -1058,15 +1023,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 ),
                                 keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter Aadhar number';
-                                  }
-                                  if (value.length != 12) {
-                                    return 'Aadhar number must be 12 digits';
-                                  }
-                                  return null;
-                                },
+                                // No validator for optional field
                               ),
                               const SizedBox(height: 8),
                               
@@ -1198,9 +1155,17 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       itemBuilder: (context, index) {
                                         final position = _selectedImages.keys.elementAt(index);
                                         final image = _selectedImages[position];
-                                        
+                                        // Define the correct image labels in order
+                                        final imageLabels = [
+                                          'Front Side',
+                                          'Driver Side',
+                                          'Rear Side',
+                                          'Co-Driver Side',
+                                          'Meter Reading',
+                                        ];
+                                        final imageLabel = imageLabels[index];
                                         return GestureDetector(
-                                          onTap: image == null ? () => _showImageSourceDialog(position) : null,
+                                          onTap: image == null ? () => _pickImage(ImageSource.camera, position) : null,
                                           child: Container(
                                             decoration: BoxDecoration(
                                               border: Border.all(
@@ -1242,10 +1207,10 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                                         ),
                                                         const SizedBox(height: 4),
                                                         Text(
-                                                          'IMAGE',
+                                                          imageLabel,
                                                           style: TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight: FontWeight.w600,
+                                                            fontSize: 8,
+                                                            fontWeight: FontWeight.w500,
                                                             color: Colors.grey[600],
                                                           ),
                                                         ),

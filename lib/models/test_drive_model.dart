@@ -246,7 +246,7 @@ class TestDriveResponse {
   final String pickupPincode;
   final String drivingLicense;
   final String aadharNo;
-  final String note;
+  final String? note;
   final String status;
   final String userName;
   final String userMobile;
@@ -267,7 +267,7 @@ class TestDriveResponse {
     required this.pickupPincode,
     required this.drivingLicense,
     required this.aadharNo,
-    required this.note,
+    this.note,
     required this.status,
     required this.userName,
     required this.userMobile,
@@ -290,7 +290,7 @@ class TestDriveResponse {
       pickupPincode: json['pickup_pincode'] as String,
       drivingLicense: json['driving_license'] as String,
       aadharNo: json['aadhar_no'] as String,
-      note: json['note'] as String,
+      note: json['note'] != null ? json['note'] as String : null,
       status: json['status'] as String,
       userName: json['user_name'] as String,
       userMobile: json['user_mobile'] as String,
@@ -663,5 +663,57 @@ class TestDriveUser {
       print('JSON data: $json');
       rethrow;
     }
+  }
+} 
+
+class LocationPoint {
+  final double latitude;
+  final double longitude;
+  final DateTime timestamp;
+
+  LocationPoint({
+    required this.latitude,
+    required this.longitude,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+    'timestamp': timestamp.toIso8601String(),
+  };
+
+  factory LocationPoint.fromJson(Map<String, dynamic> json) {
+    return LocationPoint(
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+  }
+}
+
+class TestDriveLocationHistory {
+  final int testDriveId;
+  final List<LocationPoint> points;
+  final bool isCompleted;
+
+  TestDriveLocationHistory({
+    required this.testDriveId,
+    required this.points,
+    this.isCompleted = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'testDriveId': testDriveId,
+    'points': points.map((e) => e.toJson()).toList(),
+    'isCompleted': isCompleted,
+  };
+
+  factory TestDriveLocationHistory.fromJson(Map<String, dynamic> json) {
+    return TestDriveLocationHistory(
+      testDriveId: json['testDriveId'] as int,
+      points: (json['points'] as List<dynamic>).map((e) => LocationPoint.fromJson(e as Map<String, dynamic>)).toList(),
+      isCompleted: json['isCompleted'] as bool? ?? false,
+    );
   }
 } 

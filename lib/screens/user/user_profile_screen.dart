@@ -959,18 +959,18 @@ class UserProfileScreenState extends State<UserProfileScreen>
                   ),
                 ),
           },
-          {
-            'icon': Icons.location_on,
-            'title': 'Live Location Tracking',
-            'onTap': () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
-                ),
-              );
-            },
-          },
+          // {
+          //   'icon': Icons.location_on,
+          //   'title': 'Live Location Tracking',
+          //   'onTap': () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => LocationSetupPage(key: GlobalKey<LocationSetupPageState>()),
+          //       ),
+          //     );
+          //   },
+          // },
         ],
       },
       {

@@ -2,10 +2,69 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:async'; // Added for Timer
+import 'dart:convert'; // Added for jsonDecode
+import 'package:http/http.dart' as http; // Added for http
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:ui' as ui;
+
+Future<BitmapDescriptor> bitmapDescriptorFromIconData(
+  IconData iconData, {
+  Color color = Colors.red,
+  double size = 64,
+}) async {
+  final pictureRecorder = ui.PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+
+  // Draw shadow ellipse
+  final shadowPaint = Paint()..color = Colors.black.withOpacity(0.3);
+  canvas.drawOval(
+    Rect.fromCenter(
+      center: Offset(size / 2, size * 0.85),
+      width: size * 0.6,
+      height: size * 0.18,
+    ),
+    shadowPaint,
+  );
+
+  // Draw the car icon with drop shadow
+  final textPainter = TextPainter(
+    textDirection: TextDirection.ltr,
+  );
+  textPainter.text = TextSpan(
+    text: String.fromCharCode(iconData.codePoint),
+    style: TextStyle(
+      fontSize: size,
+      fontFamily: iconData.fontFamily,
+      color: color,
+      package: iconData.fontPackage,
+      shadows: [
+        Shadow(
+          blurRadius: 4,
+          color: Colors.black.withOpacity(0.4),
+          offset: Offset(2, 2),
+        ),
+      ],
+    ),
+  );
+  textPainter.layout();
+  textPainter.paint(canvas, Offset(0, 0));
+
+  final image = await pictureRecorder.endRecording().toImage(
+        size.toInt(),
+        size.toInt(),
+      );
+  final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+}
 
 class LocationSetupPage extends StatefulWidget {
   final GlobalKey<LocationSetupPageState> key;
-  LocationSetupPage({required this.key});
+  final double? carLongitude;
+  final double? carLatitude;
+  final int? carId; // <-- Added
+  final int? testDriveId; // <-- Added
+  LocationSetupPage({required this.key, this.carLongitude, this.carLatitude, this.carId, this.testDriveId});
 
   @override
   LocationSetupPageState createState() => LocationSetupPageState();
@@ -18,13 +77,176 @@ class LocationSetupPageState extends State<LocationSetupPage> {
   bool _isLoading = true;
   bool _isAddressLoading = false;
   String? _errorMessage;
-
   static const LatLng _defaultLatLng = LatLng(19.0760, 72.8777); // Mumbai
-
+  BitmapDescriptor? _carIcon;
+  bool _hasTrackingData = false;
+  List<LatLng> _pathPoints = [];
+  LatLng? _initialCarPosition;
+  String? _initialCarAddress;
+  
+  // Timer for polling
   @override
   void initState() {
     super.initState();
-    _determinePosition();
+    print('LocationSetupPage: carId = ${widget.carId}, testDriveId = ${widget.testDriveId}'); // Debug print
+    _loadCarMarker();
+    // Always set initial position to car coordinates if available
+    if (widget.carLatitude != null && widget.carLongitude != null) {
+      _initialCarPosition = LatLng(widget.carLatitude!, widget.carLongitude!);
+      _currentPosition = _initialCarPosition;
+      _pathPoints = [_currentPosition!];
+      _isLoading = false;
+      _errorMessage = null;
+      _setInitialCarAddress(_currentPosition!);
+    }
+    if (widget.carId == null || widget.carId == 0 || widget.testDriveId == null || widget.testDriveId == 0) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Invalid car or test drive ID. Cannot track location.';
+      });
+      return;
+    }
+    if (widget.carId != null && widget.testDriveId != null) {
+      _fetchAndTrackCarLocation();
+    } else if (widget.carLatitude != null && widget.carLongitude != null) {
+      // Already handled above
+    } else {
+      _determinePosition();
+    }
+  }
+
+  Future<void> _loadCarMarker() async {
+    final icon = await bitmapDescriptorFromIconData(
+      Icons.directions_car,
+      color: Colors.red,
+      size: 64,
+    );
+    setState(() {
+      _carIcon = icon;
+    });
+  }
+
+  // Polling logic
+  Timer? _pollingTimer;
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchAndTrackCarLocation() async {
+    await _fetchCarLocation();
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(Duration(seconds: 10), (_) => _fetchCarLocation());
+  }
+
+  Future<void> _setInitialCarAddress(LatLng position) async {
+    setState(() {
+      _isAddressLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      Placemark place = placemarks.isNotEmpty ? placemarks[0] : Placemark();
+      setState(() {
+        _initialCarAddress =
+            "${place.street ?? ''}, ${place.locality ?? ''}, ${place.postalCode ?? ''}, ${place.country ?? ''}";
+        _currentAddress = _initialCarAddress!;
+      });
+    } catch (e) {
+      setState(() {
+        _initialCarAddress = "Unable to fetch address.";
+        _currentAddress = _initialCarAddress!;
+        _errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        _isAddressLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCarLocation() async {
+    final isFirstLoad = !_hasTrackingData && _currentPosition == null;
+    if (isFirstLoad) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    } else {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+    try {
+      final carId = widget.carId;
+      final testDriveId = widget.testDriveId;
+      if (carId == null || testDriveId == null) return;
+      final url = Uri.parse('https://varenyam.acttconnect.com/api/get-location?testdrive_id=' + testDriveId.toString() + '&car_id=' + carId.toString());
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success' && data['data'] is List && data['data'].isNotEmpty) {
+          // Parse all points for the polyline
+          final points = (data['data'] as List)
+              .map<LatLng>((item) => LatLng(
+                    double.parse(item['latitude'].toString()),
+                    double.parse(item['longitude'].toString()),
+                  ))
+              .toList();
+          // Use the last point as the current position
+          final latest = points.last;
+          setState(() {
+            _currentPosition = latest;
+            _pathPoints = points;
+            _isLoading = false;
+            _hasTrackingData = true;
+          });
+          _updateAddress(_currentPosition!);
+          if (_mapController != null) {
+            _mapController!.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+          }
+          return;
+        }
+        // If no tracking data, but car coordinates are available, show those
+        if (widget.carLatitude != null && widget.carLongitude != null) {
+          setState(() {
+            _currentPosition = LatLng(widget.carLatitude!, widget.carLongitude!);
+            if (_pathPoints.isEmpty) _pathPoints = [_currentPosition!];
+            _isLoading = false;
+            _errorMessage = null;
+            _hasTrackingData = false;
+          });
+          // Only set the address to the initial car address
+          if (_initialCarAddress != null) {
+            setState(() {
+              _currentAddress = _initialCarAddress!;
+            });
+          } else {
+            _setInitialCarAddress(_currentPosition!);
+          }
+          if (_mapController != null) {
+            _mapController!.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+          }
+        } else {
+          setState(() {
+            _errorMessage = 'No tracking data or car coordinates available.';
+            _isLoading = false;
+            _hasTrackingData = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to fetch location.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _determinePosition() async {
@@ -179,7 +401,9 @@ class LocationSetupPageState extends State<LocationSetupPage> {
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: _isLoading || _currentPosition == null
-          ? Center(child: CircularProgressIndicator())
+          ? (_errorMessage != null
+              ? Center(child: Text(_errorMessage!, style: TextStyle(color: Colors.red)))
+              : Center(child: CircularProgressIndicator()))
           : Column(
               children: [
                 Expanded(
@@ -187,26 +411,45 @@ class LocationSetupPageState extends State<LocationSetupPage> {
                     onMapCreated: _onMapCreated,
                     initialCameraPosition: _initialCameraPosition,
                     onCameraMove: _onCameraMove,
-                    onCameraIdle: _onCameraIdle,
                     myLocationEnabled: true,
                     markers: {
-                      if (_currentPosition != null)
+                      if (!_hasTrackingData && widget.carLatitude != null && widget.carLongitude != null)
+                        Marker(
+                          markerId: MarkerId('initialLocation'),
+                          position: LatLng(widget.carLatitude!, widget.carLongitude!),
+                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                          infoWindow: InfoWindow(title: 'Initial Car Location'),
+                        ),
+                      if (_hasTrackingData && _currentPosition != null)
                         Marker(
                           markerId: MarkerId('currentLocation'),
                           position: _currentPosition!,
-                          infoWindow: InfoWindow(title: 'Your Location'),
+                          icon: _carIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                          infoWindow: InfoWindow(title: _errorMessage == null ? 'Your Location' : 'Last Known Car Location'),
+                        ),
+                      if (_hasTrackingData && widget.carLatitude != null && widget.carLongitude != null)
+                        Marker(
+                          markerId: MarkerId('initialLocation'),
+                          position: LatLng(widget.carLatitude!, widget.carLongitude!),
+                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                          infoWindow: InfoWindow(title: 'Initial Car Location'),
+                        ),
+                    },
+                    polylines: {
+                      if (_pathPoints.length > 1)
+                        Polyline(
+                          polylineId: PolylineId('car_path'),
+                          points: _pathPoints,
+                          color: Colors.blue,
+                          width: 5,
                         ),
                     },
                   ),
                 ),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.15)),
-                  ),
-                  margin: const EdgeInsets.all(16.0),
+                Container(
+                  width: double.infinity,
                   color: theme.colorScheme.surface,
-                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -232,7 +475,11 @@ class LocationSetupPageState extends State<LocationSetupPage> {
                                   Text('Fetching address...', style: theme.textTheme.bodyMedium),
                                 ],
                               )
-                            : Text(_currentAddress, style: theme.textTheme.bodyMedium),
+                            : SelectableText(
+                                _currentAddress,
+                                style: theme.textTheme.bodyMedium,
+                                maxLines: null,
+                              ),
                         if (_errorMessage != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),

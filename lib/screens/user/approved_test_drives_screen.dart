@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../providers/user_test_drives_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import '../../screens/Employee/location_tracking_screen.dart';
 
 class ApprovedTestDrivesScreen extends StatefulWidget {
   const ApprovedTestDrivesScreen({super.key});
@@ -538,6 +539,38 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ),
         ),
         const SizedBox(height: 12),
+
+        // Live Tracking Button - always visible
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LocationSetupPage(
+                    key: GlobalKey<LocationSetupPageState>(),
+                    carLongitude: request.car?.longitude,
+                    carLatitude: request.car?.latitude,
+                    carId: request.car?.id,
+                    testDriveId: request.id,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.location_on, size: 18, color: Colors.blue),
+            label: const Text('Live Tracking', style: TextStyle(color: Colors.blue)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.blue,
+              side: const BorderSide(color: Colors.blue),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
         
         // Complete Test Drive Button - Only show if user has permission to change status
         if (canChangeTestDriveStatus) ...[

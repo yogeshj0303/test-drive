@@ -34,6 +34,8 @@ class TestDriveCar {
   final List<CarImage>? images;
   final Showroom? showroom;
   final int? ratting;
+  final double? longitude;
+  final double? latitude;
 
   TestDriveCar({
     required this.id,
@@ -67,6 +69,8 @@ class TestDriveCar {
     this.images,
     this.showroom,
     this.ratting,
+    this.longitude,
+    this.latitude,
   });
 
   factory TestDriveCar.fromJson(Map<String, dynamic> json) {
@@ -107,6 +111,8 @@ class TestDriveCar {
                 .toList(),
         showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
         ratting: json['ratting'] as int?,
+        longitude: (json['car_longitude'] != null) ? double.tryParse(json['car_longitude'].toString()) : null,
+        latitude: (json['car_latitude'] != null) ? double.tryParse(json['car_latitude'].toString()) : null,
       );
     } catch (e) {
       print('Error parsing TestDriveCar: $e');

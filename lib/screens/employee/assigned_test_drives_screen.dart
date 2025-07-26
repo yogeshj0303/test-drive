@@ -7,6 +7,7 @@ import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/api_config.dart';
 import '../../models/test_drive_model.dart';
+import '../../background_location_service.dart';
 
 class AssignedTestDrivesScreen extends StatefulWidget {
   final bool showBackButton;
@@ -1829,20 +1830,142 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen> with
       MaterialPageRoute(
         builder: (context) => UpdateStatusScreen(selectedTestDrive: testDrive),
       ),
-    ).then((_) {
+    ).then((result) async {
+      // If the status was updated to complete, stop the background service
+      if (result == 'completed') {
+        try {
+          await stopService();
+          print('Background service stopped for completed test drive');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location tracking stopped - test drive completed'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        } catch (e) {
+          print('Failed to stop background service: $e');
+        }
+      }
       // Refresh data when returning from update status screen
       _loadAssignedTestDrives();
     });
   }
 
-  void _viewGatePass(AssignedTestDrive testDrive) {
-    // Navigate to gate pass screen with test drive data
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EmployeeGatePassScreen(testDrive: testDrive),
-      ),
-    );
+  void _viewGatePass(AssignedTestDrive testDrive) async {
+    try {
+      // Temporarily disable background service to prevent crashes
+      // The gate pass screen has its own location tracking that works fine
+      /*
+      // Start background service if the test drive is approved and not completed
+      if (testDrive.status?.toLowerCase() == 'approved' && 
+          testDrive.car?.id != null) {
+        try {
+          await initializeService(testDrive.id, testDrive.car!.id);
+          // Check if service is running
+          final isRunning = await isServiceRunning();
+          if (isRunning) {
+            // Show success notification
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Location tracking started'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          } else {
+            // Show warning if service didn't start
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Location tracking failed to start'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          // Log the error but don't prevent navigation
+          print('Background service initialization failed: $e');
+          // Show a warning but continue to gate pass
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Location tracking may not be available'),
+                backgroundColor: Colors.orange[700],
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      }
+      */
+      
+      // Show info about location tracking
+      if (mounted && testDrive.status?.toLowerCase() == 'approved') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location tracking will start in gate pass screen'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EmployeeGatePassScreen(testDrive: testDrive),
+        ),
+      ).then((_) async {
+        // Start background location tracking when returning from gate pass
+        if (testDrive.status?.toLowerCase() == 'approved') {
+          try {
+            await initializeService(testDrive.id, testDrive.car!.id);
+            final isRunning = await isServiceRunning();
+            if (isRunning) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Background location tracking started'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('⚠️ Background tracking unavailable, using local tracking'),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            print('Background service initialization failed: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('⚠️ Background tracking unavailable'),
+                  backgroundColor: Colors.orange[700],
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+        }
+      });
+    } catch (e) {
+      _showErrorSnackBar('Failed to open gate pass: $e');
+    }
   }
 
   Future<void> _startListening() async {

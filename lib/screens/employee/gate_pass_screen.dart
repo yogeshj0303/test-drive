@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import '../../models/test_drive_model.dart';
 import '../../models/gate_pass_model.dart' as gate_pass;
 import '../../models/employee_model.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/api_config.dart';
+import '../../background_location_service.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EmployeeGatePassScreen extends StatefulWidget {
   final AssignedTestDrive testDrive;
@@ -25,9 +28,9 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
   Employee? _currentEmployee;
 
   // Location tracking
-  Stream<Position>? _positionStream;
-  StreamSubscription<Position>? _positionSubscription;
+  Timer? _locationTimer;
   bool _trackingStarted = false;
+  bool _isCompleted = false; // Set to true when test drive is completed
 
   @override
   void initState() {
@@ -38,47 +41,183 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
 
   @override
   void dispose() {
-    _stopLocationTracking();
+    // Don't stop tracking when leaving screen - let background service continue
     super.dispose();
   }
 
   Future<void> _startLocationTracking() async {
     if (_trackingStarted) return;
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        setState(() {
-          _errorMessage = 'Location permission denied.';
-        });
-        return;
-      }
+    
+    geo.LocationPermission permission = await geo.Geolocator.checkPermission();
+    if (permission == geo.LocationPermission.denied) {
+      permission = await geo.Geolocator.requestPermission();
     }
-    if (permission == LocationPermission.deniedForever) {
+    if (permission == geo.LocationPermission.denied) {
+      setState(() {
+        _errorMessage = 'Location permission denied.';
+      });
+      return;
+    }
+    if (permission == geo.LocationPermission.deniedForever) {
       setState(() {
         _errorMessage = 'Location permission permanently denied.';
       });
       return;
     }
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 10),
-    );
-    _positionSubscription = _positionStream!.listen((Position position) async {
+    
+    // Show notification that location tracking is starting
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔄 Starting location tracking...'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    try {
+      // Try to start background service first
+      await initializeService(widget.testDrive.id, widget.testDrive.car?.id ?? 0);
+      
+      // Check if background service started successfully
+      final isRunning = await isServiceRunning();
+      
+      if (isRunning) {
+        // Background service is running, also start local timer for immediate feedback
+        _locationTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+          await _sendLocationUpdate();
+        });
+        
+        _trackingStarted = true;
+        
+        // Send initial location update
+        await _sendLocationUpdate();
+        
+        // Show success notification
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Background tracking active (continues when app is closed)'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // Background service failed, fallback to local tracking only
+        _locationTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+          await _sendLocationUpdate();
+        });
+        _trackingStarted = true;
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⚠️ Local tracking only (background service unavailable)'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Failed to start background service: $e');
+      // Fallback to local tracking only
+      _locationTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+        await _sendLocationUpdate();
+      });
+      _trackingStarted = true;
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Local tracking only (background service failed)'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendLocationUpdate() async {
+    try {
+      final position = await geo.Geolocator.getCurrentPosition();
+      final testDriveId = widget.testDrive.id.toString();
+      final carId = widget.testDrive.car?.id.toString() ?? '';
+      final trackingId = 'track_001';
+      
+      print('📍 Sending location update: testDriveId=$testDriveId, carId=$carId, lat=${position.latitude}, lng=${position.longitude}');
+      
+      final response = await http.post(
+        Uri.parse('https://varenyam.acttconnect.com/api/update-location'),
+        body: {
+          'testdrive_id': testDriveId,
+          'car_id': carId,
+          'car_latitude': position.latitude.toString(),
+          'car_longitude': position.longitude.toString(),
+          'tracking_id': trackingId,
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        print('✅ Location update sent successfully for test drive #$testDriveId');
+      } else {
+        print('❌ Failed to send location update: ${response.statusCode} - ${response.body}');
+      }
+      
+      // Store locally
       final point = LocationPoint(
         latitude: position.latitude,
         longitude: position.longitude,
         timestamp: DateTime.now(),
       );
       await EmployeeStorageService.addLocationPoint(widget.testDrive.id, point);
-    });
-    _trackingStarted = true;
+    } catch (e) {
+      print('❌ Error sending location update: $e');
+    }
   }
 
   void _stopLocationTracking() {
-    _positionSubscription?.cancel();
-    _positionSubscription = null;
-    _positionStream = null;
-    _trackingStarted = false;
+    if (_trackingStarted) {
+      _locationTimer?.cancel();
+      _locationTimer = null;
+      _trackingStarted = false;
+      
+      // Stop background service
+      stopService();
+      
+      // Show notification that location tracking has stopped
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⏹️ Location tracking stopped'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _checkTrackingStatus() async {
+    try {
+      final isRunning = await isServiceRunning();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isRunning 
+              ? '✅ Background tracking is active' 
+              : '❌ Background tracking is not running'),
+            backgroundColor: isRunning ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error checking tracking status: $e');
+    }
   }
 
   Future<void> _loadGatePass() async {
@@ -155,6 +294,52 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          // Location tracking status indicator
+          if (_trackingStarted)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Tracking',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Check tracking status button
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3080A5).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.location_on, size: 16, color: Color(0xFF3080A5)),
+            ),
+            onPressed: _checkTrackingStatus,
+            tooltip: 'Check tracking status',
+          ),
           if (!_isLoading && _errorMessage == null)
             IconButton(
               icon: Container(

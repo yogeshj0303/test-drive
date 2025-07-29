@@ -85,6 +85,13 @@ class LocationSetupPageState extends State<LocationSetupPage> {
   String? _initialCarAddress;
   
   // Timer for polling
+  Timer? _pollingTimer;
+  Timer? _autoRefreshTimer; // New timer for automatic location refresh
+  
+  // Auto-refresh state
+  bool _autoRefreshEnabled = true;
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -127,10 +134,10 @@ class LocationSetupPageState extends State<LocationSetupPage> {
   }
 
   // Polling logic
-  Timer? _pollingTimer;
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _autoRefreshTimer?.cancel(); // Cancel auto refresh timer
     super.dispose();
   }
 
@@ -138,6 +145,73 @@ class LocationSetupPageState extends State<LocationSetupPage> {
     await _fetchCarLocation();
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(Duration(seconds: 10), (_) => _fetchCarLocation());
+    
+    // Start automatic refresh timer for real-time updates
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => _refreshLocationData());
+  }
+
+  // New method for automatic location refresh
+  Future<void> _refreshLocationData() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    try {
+      final carId = widget.carId;
+      final testDriveId = widget.testDriveId;
+      if (carId == null || testDriveId == null) return;
+      
+      final url = Uri.parse('https://varenyam.acttconnect.com/api/get-location?testdrive_id=' + testDriveId.toString() + '&car_id=' + carId.toString());
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success' && data['data'] is List && data['data'].isNotEmpty) {
+          // Parse all points for the polyline
+          final points = (data['data'] as List)
+              .map<LatLng>((item) => LatLng(
+                    double.parse(item['latitude'].toString()),
+                    double.parse(item['longitude'].toString()),
+                  ))
+              .toList();
+          
+          // Use the last point as the current position
+          final latest = points.last;
+          
+          // Only update if position has changed
+          if (_currentPosition == null || 
+              _currentPosition!.latitude != latest.latitude || 
+              _currentPosition!.longitude != latest.longitude) {
+            
+            setState(() {
+              _currentPosition = latest;
+              _pathPoints = points;
+              _hasTrackingData = true;
+            });
+            
+            _updateAddress(_currentPosition!);
+            
+            // Smoothly animate camera to new position
+            if (_mapController != null) {
+              _mapController!.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+            }
+            
+            print('🔄 Location updated automatically: ${latest.latitude}, ${latest.longitude}');
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error in automatic location refresh: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   Future<void> _setInitialCarAddress(LatLng position) async {
@@ -392,6 +466,41 @@ class LocationSetupPageState extends State<LocationSetupPage> {
             color: Colors.black87,
           ),
         ),
+        actions: [
+          // Refresh indicator only
+          if (_isRefreshing)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Updating',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
         shape: const Border(
           bottom: BorderSide(
             color: Color(0xFFE0E0E0),

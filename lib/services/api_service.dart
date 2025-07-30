@@ -475,7 +475,17 @@ class ApiService {
           final responseData = jsonDecode(response.body) as Map<String, dynamic>;
           
           if (responseData['success'] == true) {
-            final testDriveData = responseData['data'] as Map<String, dynamic>;
+            // Handle both direct data and nested data structure
+            Map<String, dynamic> testDriveData;
+            if (responseData.containsKey('data')) {
+              testDriveData = responseData['data'] as Map<String, dynamic>;
+            } else {
+              // If no 'data' field, use the response directly
+              testDriveData = responseData;
+            }
+            
+            debugPrint('Parsing test drive data: $testDriveData');
+            
             final testDriveResponse = TestDriveResponse.fromJson(testDriveData);
             final message = responseData['message'] as String? ?? 'Test drive request submitted successfully';
             

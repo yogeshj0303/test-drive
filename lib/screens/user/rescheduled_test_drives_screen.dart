@@ -87,7 +87,7 @@ class _RescheduledTestDrivesScreenState extends State<RescheduledTestDrivesScree
               : RefreshIndicator(
                   onRefresh: provider.refresh,
                   child: provider.rescheduledTestDrives.isEmpty
-                      ? _buildEmptyStateWidget()
+                      ? _buildEmptyStateWidget(provider.lastApiMessage)
                       : _buildTestDrivesList(provider.rescheduledTestDrives),
                 ),
         );
@@ -136,7 +136,7 @@ class _RescheduledTestDrivesScreenState extends State<RescheduledTestDrivesScree
     );
   }
 
-  Widget _buildEmptyStateWidget() {
+  Widget _buildEmptyStateWidget(String? message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -168,7 +168,7 @@ class _RescheduledTestDrivesScreenState extends State<RescheduledTestDrivesScree
             ),
             const SizedBox(height: 8),
             Text(
-              'You don\'t have any rescheduled test drives at the moment.',
+              message ?? 'You don\'t have any rescheduled test drives at the moment.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -426,6 +426,16 @@ class _RescheduledTestDrivesScreenState extends State<RescheduledTestDrivesScree
                         _buildDetailRow('Name', request.showroom?.name ?? 'Unknown'),
                         _buildDetailRow('Location', '${request.showroom?.city ?? 'Unknown'}, ${request.showroom?.state ?? 'Unknown'}'),
                         _buildDetailRow('Rating', '${request.showroom?.ratting ?? 'N/A'} ⭐'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDetailSection(
+                      'User Information',
+                      [
+                        _buildDetailRow('Name', request.userName ?? 'Unknown'),
+                        _buildDetailRow('Mobile', request.userMobile ?? 'Unknown'),
+                        _buildDetailRow('Email', request.userEmail ?? 'Unknown'),
+                        _buildDetailRow('Aadhar', request.userAdhar ?? 'Unknown'),
                       ],
                     ),
                     const SizedBox(height: 16),

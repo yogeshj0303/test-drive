@@ -22,6 +22,7 @@ class UserTestDrivesProvider extends ChangeNotifier {
   bool _hasDataChanged = false; // Track if data has changed since last fetch
   Map<String, DateTime> _lastScreenAccess = {}; // Track when each screen was last accessed
   static const Duration _screenCacheDuration = Duration(minutes: 2); // Cache per screen
+  String? _lastApiMessage; // Store last API message
 
   // Automatically fetch test drives once on provider creation
   UserTestDrivesProvider() {
@@ -35,6 +36,7 @@ class UserTestDrivesProvider extends ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get initialized => _initialized;
   bool get hasDataChanged => _hasDataChanged;
+  String? get lastApiMessage => _lastApiMessage;
 
   List<TestDriveListResponse> get pendingTestDrives =>
       _allTestDrives.where((td) => (td.status ?? '').toLowerCase() == 'pending').toList();
@@ -110,12 +112,14 @@ class UserTestDrivesProvider extends ChangeNotifier {
     _isFetching = true;
     _isLoading = true;
     _errorMessage = null;
+    _lastApiMessage = null;
     notifyListeners();
 
     try {
       _currentUser = await _storageService.getUser();
       if (_currentUser == null) {
         _errorMessage = 'User not found. Please login again.';
+        _lastApiMessage = _errorMessage;
         _isLoading = false;
         _isFetching = false;
         notifyListeners();
@@ -139,6 +143,7 @@ class UserTestDrivesProvider extends ChangeNotifier {
         
         _isLoading = false;
         _isFetching = false;
+        _lastApiMessage = null;
         notifyListeners();
         
         // Only notify if data actually changed
@@ -149,12 +154,14 @@ class UserTestDrivesProvider extends ChangeNotifier {
         }
       } else {
         _errorMessage = response.message;
+        _lastApiMessage = response.message;
         _isLoading = false;
         _isFetching = false;
         notifyListeners();
       }
     } catch (e) {
       _errorMessage = 'Failed to load test drives.';
+      _lastApiMessage = _errorMessage;
       _isLoading = false;
       _isFetching = false;
       notifyListeners();
@@ -234,8 +241,6 @@ class UserTestDrivesProvider extends ChangeNotifier {
 
   // Get loading state for specific screen
   bool isLoadingForScreen(String screenName) {
-    if (_isLoading) return true;
-    if (!_isScreenCacheValid(screenName)) return true;
-    return false;
+    return _isLoading;
   }
 } 

@@ -9,6 +9,7 @@ import '../../services/employee_storage_service.dart';
 import '../../services/driver_api_service.dart';
 import '../../models/employee_model.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/logout_utils.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -865,83 +866,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen>
   }
 
   void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              await _logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+    LogoutUtils.showLogoutDialog(context, isEmployee: true);
   }
 
   Future<void> _logout() async {
-    try {
-      // Clear employee data from storage
-      await EmployeeStorageService.clearEmployeeData();
-      
-      if (mounted) {
-        // Navigate back to login screen
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const EmployeeLoginScreen(),
-          ),
-          (route) => false,
-        );
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logged out successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Logout failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
+    await LogoutUtils.performEmployeeLogout(context);
   }
 
   Widget _buildSettingsSection(BuildContext context) {

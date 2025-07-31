@@ -541,21 +541,11 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                   accentColor: primaryBlue,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email or mobile number';
+                      return 'Please enter your email';
                     }
-                    // Check if it's an email
-                    if (value.contains('@')) {
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                    } else {
-                      // Check if it's a valid mobile number
-                      if (value.length < 10) {
-                        return 'Mobile number must be at least 10 digits';
-                      }
-                      if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                        return 'Mobile number must contain only digits';
-                      }
+                    // Only check for email format
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email';
                     }
                     return null;
                   },

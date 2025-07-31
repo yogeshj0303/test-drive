@@ -87,7 +87,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               : RefreshIndicator(
                   onRefresh: provider.refresh,
                   child: provider.approvedTestDrives.isEmpty
-                      ? _buildEmptyStateWidget()
+                      ? _buildEmptyStateWidget(provider.lastApiMessage)
                       : _buildTestDrivesList(provider.approvedTestDrives),
                 ),
         );
@@ -136,7 +136,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Widget _buildEmptyStateWidget() {
+  Widget _buildEmptyStateWidget(String? message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -168,7 +168,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You don\'t have any approved test drives at the moment.',
+              message ?? 'You don\'t have any approved test drives at the moment.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -410,6 +410,19 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                           _buildDetailRow('Approved On', _formatDateTime(request.approvedOrRejectDate!)),
                       ],
                     ),
+                    // Requested By
+                    if (request.frontUser != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailSection(
+                        'Requested By',
+                        [
+                          _buildDetailRow('Name', request.frontUser?.name ?? 'Unknown'),
+                          _buildDetailRow('Email', request.frontUser?.email ?? 'Unknown'),
+                          if ((request.frontUser?.mobileNo ?? '').isNotEmpty)
+                            _buildDetailRow('Mobile', request.frontUser!.mobileNo!),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     _buildDetailSection(
                       'Pickup Details',
@@ -429,6 +442,16 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    _buildDetailSection(
+                      'User Information',
+                      [
+                        _buildDetailRow('Name', request.userName ?? 'Unknown'),
+                        _buildDetailRow('Mobile', request.userMobile ?? 'Unknown'),
+                        _buildDetailRow('Email', request.userEmail ?? 'Unknown'),
+                        _buildDetailRow('Aadhar', request.userAdhar ?? 'Unknown'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     if (request.note?.isNotEmpty == true)
                       _buildDetailSection(
                         'Additional Notes',
@@ -436,16 +459,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                           _buildDetailRow('Note', request.note ?? ''),
                         ],
                       ),
-                    if (request.approverRejecter != null)
-                      _buildDetailSection(
-                        'Approved By',
-                        [
-                          _buildDetailRow('Name', request.approverRejecter!.name ?? 'Unknown'),
-                          _buildDetailRow('Email', request.approverRejecter!.email ?? 'Unknown'),
-                          if (request.approverRejecter!.mobileNo != null)
-                            _buildDetailRow('Mobile', request.approverRejecter!.mobileNo!),
-                        ],
-                      ),
+
                     if (request.driverId != null && request.driverId!.isNotEmpty)
                       _buildDetailSection(
                         'Driver Assignment',

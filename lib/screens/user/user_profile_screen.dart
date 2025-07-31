@@ -14,6 +14,7 @@ import 'user_expense_screen.dart';
 import 'test_drive_status_screen.dart';
 import '../../providers/user_test_drives_provider.dart';
 import '../Employee/location_tracking_screen.dart';
+import '../../utils/logout_utils.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -1161,146 +1162,11 @@ class UserProfileScreenState extends State<UserProfileScreen>
   }
 
   void _showLogoutDialog(BuildContext context) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          'Logout',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: Colors.black87,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to logout?',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            letterSpacing: 0.2,
-            color: Colors.black87,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _performLogout(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingM,
-                vertical: AppTheme.spacingXS,
-              ),
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+    LogoutUtils.showLogoutDialog(context, isEmployee: false);
   }
 
   Future<void> _performLogout(BuildContext context) async {
-    try {
-      // Clear profile cache
-      UserProfileScreen.clearCache();
-      
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          content: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-
-      // Clear all stored data
-      await _storageService.clearAllData();
-
-      // Close loading dialog
-      if (mounted) {
-        Navigator.pop(context);
-      }
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                const Text('Logged out successfully'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-
-      // Navigate to auth screen
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const AuthScreen(),
-          ),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (mounted) {
-        Navigator.pop(context);
-      }
-
-      // Show error message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Logout failed: ${e.toString()}'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
+    await LogoutUtils.performUserLogout(context);
   }
 
   // Expose this method for parent to call

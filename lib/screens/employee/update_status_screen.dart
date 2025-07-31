@@ -416,7 +416,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildModernInfoRow('Customer', widget.testDrive!.frontUser?.name ?? 'Unknown', Icons.person),
+                    _buildModernInfoRow('Customer', widget.testDrive!.frontUser?.name ?? widget.testDrive!.userName ?? 'Unknown', Icons.person),
                     _buildModernInfoRow('Vehicle', widget.testDrive!.car?.name ?? 'Unknown', Icons.directions_car),
                     _buildModernInfoRow('Date & Time', '${widget.testDrive!.date} at ${widget.testDrive!.time}', Icons.calendar_today),
                     _buildModernInfoRow('Current Status', _getStatusDisplayName(widget.testDrive!.status ?? ''), _getStatusIcon(widget.testDrive!.status ?? ''), 
@@ -759,12 +759,154 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
                 },
               ),
               const SizedBox(height: 16),
-              Text('Return Car Images (Required)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _returnImages.keys.map((key) => _buildImagePicker(key)).toList(),
+              // Car Images Section (refactored to match request test drive screen)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.grey[50],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upload all 5 return car images (All required)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: _returnImages.length,
+                      itemBuilder: (context, index) {
+                        final key = _returnImages.keys.elementAt(index);
+                        final file = _returnImages[key];
+                        final imageLabels = [
+                          'Front',
+                          'Back',
+                          'Right',
+                          'Left',
+                          'Upper',
+                        ];
+                        final imageLabel = imageLabels[index];
+                        return GestureDetector(
+                          onTap: file == null
+                              ? () async {
+                                  final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+                                  if (picked != null) {
+                                    setState(() {
+                                      _returnImages[key] = File(picked.path);
+                                    });
+                                  }
+                                }
+                              : null,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: file != null ? const Color(0xFF3080A5) : Colors.grey[300]!,
+                                width: file != null ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white,
+                            ),
+                            child: Stack(
+                              children: [
+                                if (file != null)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.file(
+                                      file,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_a_photo,
+                                          size: 32,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          imageLabel,
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'REQUIRED',
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (file != null)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _returnImages[key] = null;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
             const SizedBox(height: 24),
@@ -1045,7 +1187,7 @@ class _UpdateStatusFormState extends State<UpdateStatusForm> {
     final file = _returnImages[key];
     return GestureDetector(
       onTap: () async {
-        final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+        final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
         if (picked != null) {
           setState(() {
             _returnImages[key] = File(picked.path);

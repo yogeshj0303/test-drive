@@ -100,7 +100,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     return RefreshIndicator(
       onRefresh: provider.refresh,
       child: provider.pendingTestDrives.isEmpty
-          ? _buildEmptyStateWidget(provider.refresh)
+          ? _buildEmptyStateWidget(provider.lastApiMessage, provider.refresh)
           : _buildTestDrivesList(provider.pendingTestDrives),
     );
   }
@@ -266,7 +266,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
     );
   }
 
-  Widget _buildEmptyStateWidget(VoidCallback onRefresh) {
+  Widget _buildEmptyStateWidget(String? message, VoidCallback onRefresh) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -298,7 +298,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You don\'t have any pending test drive requests at the moment.',
+              message ?? 'You don\'t have any pending test drive requests at the moment.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,

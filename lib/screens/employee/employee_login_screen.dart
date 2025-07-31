@@ -542,21 +542,11 @@ class _EmployeeLoginScreenState extends State<EmployeeLoginScreen> with SingleTi
                   accentColor: primaryBlue,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your employee ID or email';
+                      return 'Please enter your email';
                     }
-                    // Check if it's an email
-                    if (value.contains('@')) {
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                    } else {
-                      // Check if it's a valid employee ID (alphanumeric)
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)) {
-                        return 'Employee ID must contain only letters and numbers';
-                      }
-                      if (value.length < 3) {
-                        return 'Employee ID must be at least 3 characters';
-                      }
+                    // Only check for email format
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email';
                     }
                     return null;
                   },

@@ -44,6 +44,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
   final _aadharNoController = TextEditingController();
   final _noteController = TextEditingController();
   final _openingKmController = TextEditingController();
+  final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _userMobileController = TextEditingController();
+  final TextEditingController _userEmailController = TextEditingController();
   
   String? _selectedCar;
   DateTime? _selectedDate;
@@ -85,10 +88,22 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       _selectedTime = TimeOfDay.now();
     }
     
-    // Get current location and user data
+    // Get current location
     _getCurrentLocation();
-    _loadUserData();
+    // Do not auto-fill user info fields
+    // _loadUserData();
+    // _initializeUserFields();
   }
+
+  // Remove _initializeUserFields and its call
+  // void _initializeUserFields() async {
+  //   final user = await StorageService().getUser();
+  //   if (user != null) {
+  //     _userNameController.text = user.name ?? '';
+  //     _userMobileController.text = user.mobileNo ?? '';
+  //     _userEmailController.text = user.email ?? '';
+  //   }
+  // }
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -160,6 +175,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     });
   }
 
+  // Remove Aadhar auto-fill from _loadUserData
   Future<void> _loadUserData() async {
     try {
       final user = await StorageService().getUser();
@@ -168,20 +184,16 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         final profileResponse = await _apiService.getUserProfile(user.id);
         if (profileResponse.success && profileResponse.data != null) {
           final userProfile = profileResponse.data!;
-          
           setState(() {
             // Populate driving license if available
             if (userProfile.drivingLicenseNo != null && userProfile.drivingLicenseNo!.isNotEmpty) {
               _drivingLicenseController.text = userProfile.drivingLicenseNo!;
             }
-            
-            // Populate Aadhar number if available
-            if (userProfile.aadharNo != null && userProfile.aadharNo!.isNotEmpty) {
-              _aadharNoController.text = userProfile.aadharNo!;
-            }
+            // Do not auto-fill Aadhar
+            // if (userProfile.aadharNo != null && userProfile.aadharNo!.isNotEmpty) {
+            //   _aadharNoController.text = userProfile.aadharNo!;
+            // }
           });
-          
-
         }
       }
     } catch (e) {
@@ -219,6 +231,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     _aadharNoController.dispose();
     _noteController.dispose();
     _openingKmController.dispose();
+    _userNameController.dispose();
+    _userMobileController.dispose();
+    _userEmailController.dispose();
     super.dispose();
   }
 
@@ -357,9 +372,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           note: _noteController.text,
           status: 'pending',
           showroomId: widget.showroomId ?? 2, // This should be passed from CarDetailsScreen
-          userName: user.name,
-          userMobile: user.mobileNo,
-          userEmail: user.email,
+          userName: _userNameController.text,
+          userMobile: _userMobileController.text,
+          userEmail: _userEmailController.text,
           userAdhar: user.aadharNo ?? _aadharNoController.text,
           openingKm: openingKm,
           carImages: orderedImages,
@@ -792,23 +807,24 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                               ),
                               const SizedBox(height: 12),
                               // Personal Information Section
+                              // Location Information Section
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF0095D9).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
-                                      Icons.person,
+                                      Icons.location_on,
                                       color: Color(0xFF0095D9),
-                                      size: 18,
+                                      size: 16,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   const Text(
-                                    'Personal Information',
+                                    'Location Information',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
@@ -818,91 +834,126 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              
-                              // Pickup Address with location button
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  children: [
+                                    TextFormField(
                                       controller: _pickupAddressController,
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Pickup Address',
                                         labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: 'Enter pickup address',
+                                        hintText: _pickupAddressController.text.isEmpty ? 'Enter pickup address' : 'Pickup Address',
                                         hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9), size: 20),
+                                        prefixIcon: const Icon(Icons.home_outlined, color: Color(0xFF0095D9), size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: BorderSide(color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
                                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                       ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter pickup address';
-                                        }
-                                        return null;
-                                      },
+                                      validator: (value) => value == null || value.isEmpty ? 'Please enter pickup address' : null,
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: IconButton(
-                                      onPressed: _isLoadingLocation ? null : _getCurrentLocation,
-                                      icon: _isLoadingLocation
-                                          ? const SizedBox(
-                                              width: 18,
-                                              height: 18,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                              ),
-                                            )
-                                          : const Icon(Icons.my_location, color: Colors.white, size: 20),
-                                      tooltip: 'Use Current Location',
-                                      padding: const EdgeInsets.all(8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              
-                              // Two-column layout for city and pincode
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
+                                    const SizedBox(height: 8),
+                                    TextFormField(
                                       controller: _pickupCityController,
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Pickup City',
                                         labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: 'Enter pickup city',
+                                        hintText: _pickupCityController.text.isEmpty ? 'Enter pickup city' : 'Pickup City',
                                         hintStyle: const TextStyle(fontSize: 14),
                                         prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF0095D9), size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: BorderSide(color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      validator: (value) => value == null || value.isEmpty ? 'Please enter pickup city' : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // User Information Section Heading (matching other headings)
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0095D9).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Icon(
+                                      Icons.person_outline,
+                                      color: Color(0xFF0095D9),
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'User Information',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _userNameController,
+                                      style: const TextStyle(fontSize: 14),
+                                      decoration: InputDecoration(
+                                        labelText: 'Name',
+                                        labelStyle: const TextStyle(fontSize: 14),
+                                        hintText: _userNameController.text.isEmpty ? 'Enter your name' : 'Name',
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF0095D9), size: 20),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                         ),
                                         filled: true,
@@ -910,33 +961,114 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                       ),
                                       validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter pickup city';
+                                        if (value == null || value.trim().isEmpty) {
+                                          return 'Please enter your name';
+                                        }
+                                        if (!RegExp(r'^[a-zA-Z]{3,}$').hasMatch(value.trim())) {
+                                          return 'Name should contain only letters and be at least 3 characters';
                                         }
                                         return null;
                                       },
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _pickupPincodeController,
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _userMobileController,
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
-                                        labelText: 'Pickup Pincode',
+                                        labelText: 'Mobile',
                                         labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: 'Enter pickup pincode',
+                                        hintText: _userMobileController.text.isEmpty ? 'Enter your mobile number' : 'Mobile',
                                         hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.pin_drop_outlined, color: Color(0xFF0095D9), size: 20),
+                                        prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF0095D9), size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: BorderSide(color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      keyboardType: TextInputType.phone,
+                                      validator: (value) {
+                                        if (value == null || value.trim().isEmpty) {
+                                          return 'Please enter your mobile number';
+                                        }
+                                        if (!RegExp(r'^[0-9]{10}$').hasMatch(value.trim())) {
+                                          return 'Enter a valid 10-digit mobile number';
+                                        }
+                                        return null;
+                                      },
+                                      onChanged: (value) {
+                                        if (value.length == 10) {
+                                          FocusScope.of(context).unfocus();
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _userEmailController,
+                                      style: const TextStyle(fontSize: 14),
+                                      decoration: InputDecoration(
+                                        labelText: 'Email',
+                                        labelStyle: const TextStyle(fontSize: 14),
+                                        hintText: _userEmailController.text.isEmpty ? 'Enter your email' : 'Email',
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF0095D9), size: 20),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: (value) {
+                                        if (value == null || value.trim().isEmpty) {
+                                          return 'Please enter your email';
+                                        }
+                                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                          return 'Please enter a valid email address';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Aadhar Number field (moved here)
+                                    TextFormField(
+                                      controller: _aadharNoController,
+                                      style: const TextStyle(fontSize: 14),
+                                      decoration: InputDecoration(
+                                        labelText: 'Aadhar Number (Optional)',
+                                        labelStyle: const TextStyle(fontSize: 14),
+                                        hintText: _aadharNoController.text.isEmpty 
+                                            ? 'Enter 12-digit Aadhar' 
+                                            : 'Aadhar number',
+                                        hintStyle: const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9), size: 20),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
                                           borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
                                         ),
                                         filled: true,
@@ -945,19 +1077,19 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       ),
                                       keyboardType: TextInputType.number,
                                       validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter pickup pincode';
-                                        }
-                                        if (value.length != 6) {
-                                          return 'Pincode must be 6 digits';
+                                        if (value != null && value.trim().isNotEmpty) {
+                                          if (!RegExp(r'^[0-9]{12}$').hasMatch(value.trim())) {
+                                            return 'Aadhar must be a 12-digit number';
+                                          }
                                         }
                                         return null;
                                       },
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 8),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 16),
                               
                               // Driving License field
                               TextFormField(
@@ -992,38 +1124,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   }
                                   return null;
                                 },
-                              ),
-                              const SizedBox(height: 8),
-                              
-                              // Aadhar Number field
-                              TextFormField(
-                                controller: _aadharNoController,
-                                style: const TextStyle(fontSize: 14),
-                                decoration: InputDecoration(
-                                  labelText: 'Aadhar Number (Optional)',
-                                  labelStyle: const TextStyle(fontSize: 14),
-                                  hintText: _aadharNoController.text.isEmpty 
-                                      ? 'Enter 12-digit Aadhar' 
-                                      : 'Aadhar number',
-                                  hintStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9), size: 20),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                ),
-                                keyboardType: TextInputType.number,
-                                // No validator for optional field
                               ),
                               const SizedBox(height: 8),
                               
@@ -1315,7 +1415,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                       ),
                     ),
                   ),
-                                                    const SizedBox(height: 12), // Reduced from 16
+                  const SizedBox(height: 12), // Reduced from 16
                 ],
               ),
             ),

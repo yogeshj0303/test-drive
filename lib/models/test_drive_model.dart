@@ -76,7 +76,7 @@ class TestDriveCar {
   factory TestDriveCar.fromJson(Map<String, dynamic> json) {
     try {
       final showroomJson = json['showroom'] as Map<String, dynamic>?;
-      
+
       return TestDriveCar(
         id: json['id'] as int? ?? 0,
         name: json['name'] as String?,
@@ -107,12 +107,17 @@ class TestDriveCar {
         createdAt: json['created_at'] as String?,
         updatedAt: json['updated_at'] as String?,
         images: (json['images'] as List<dynamic>?)
-                ?.map((imageJson) => CarImage.fromJson(imageJson as Map<String, dynamic>))
-                .toList(),
+            ?.map((imageJson) =>
+                CarImage.fromJson(imageJson as Map<String, dynamic>))
+            .toList(),
         showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
         ratting: json['ratting'] as int?,
-        longitude: (json['car_longitude'] != null) ? double.tryParse(json['car_longitude'].toString()) : null,
-        latitude: (json['car_latitude'] != null) ? double.tryParse(json['car_latitude'].toString()) : null,
+        longitude: (json['car_longitude'] != null)
+            ? double.tryParse(json['car_longitude'].toString())
+            : null,
+        latitude: (json['car_latitude'] != null)
+            ? double.tryParse(json['car_latitude'].toString())
+            : null,
       );
     } catch (e) {
       print('Error parsing TestDriveCar: $e');
@@ -388,10 +393,12 @@ class TestDriveListResponse {
       final carJson = json['car'] as Map<String, dynamic>?;
       final frontUserJson = json['front_user'] as Map<String, dynamic>?;
       final showroomJson = carJson?['showroom'] as Map<String, dynamic>?;
-      final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
-      final approverRejecterJson = json['approver_rejecter'] as Map<String, dynamic>?;
+      final requestbyEmplyeeJson =
+          json['requestby_emplyee'] as Map<String, dynamic>?;
+      final approverRejecterJson =
+          json['approver_rejecter'] as Map<String, dynamic>?;
       final reschedulerJson = json['rescheduler'] as Map<String, dynamic>?;
-      
+
       return TestDriveListResponse(
         id: json['id'] as int? ?? 0,
         createdAt: json['created_at'] as String?,
@@ -424,10 +431,18 @@ class TestDriveListResponse {
         rescheduledDate: json['rescheduled_date'] as String?,
         car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
         showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
-        frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
-        requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
-        approverRejecter: approverRejecterJson != null ? TestDriveUser.fromJson(approverRejecterJson) : null,
-        rescheduler: reschedulerJson != null ? TestDriveUser.fromJson(reschedulerJson) : null,
+        frontUser: frontUserJson != null
+            ? TestDriveUser.fromJson(frontUserJson)
+            : null,
+        requestbyEmplyee: requestbyEmplyeeJson != null
+            ? TestDriveUser.fromJson(requestbyEmplyeeJson)
+            : null,
+        approverRejecter: approverRejecterJson != null
+            ? TestDriveUser.fromJson(approverRejecterJson)
+            : null,
+        rescheduler: reschedulerJson != null
+            ? TestDriveUser.fromJson(reschedulerJson)
+            : null,
       );
     } catch (e) {
       print('Error parsing TestDriveListResponse: $e');
@@ -454,7 +469,8 @@ class AssignedTestDriveResponse {
         success: json['success'] as bool? ?? false,
         message: json['message'] as String? ?? '',
         data: (json['data'] as List<dynamic>?)
-                ?.map((item) => AssignedTestDrive.fromJson(item as Map<String, dynamic>))
+                ?.map((item) =>
+                    AssignedTestDrive.fromJson(item as Map<String, dynamic>))
                 .toList() ??
             [],
       );
@@ -501,6 +517,8 @@ class AssignedTestDrive {
   final TestDriveUser? requestbyEmplyee;
   final TestDriveUser? approverRejecter;
   final TestDriveUser? rescheduler;
+  final TestDriveUser? approvedBy;
+  final TestDriveUser? rejectedBy;
 
   AssignedTestDrive({
     required this.id,
@@ -537,16 +555,21 @@ class AssignedTestDrive {
     this.requestbyEmplyee,
     this.approverRejecter,
     this.rescheduler,
+    this.approvedBy,
+    this.rejectedBy,
   });
 
   factory AssignedTestDrive.fromJson(Map<String, dynamic> json) {
     try {
       final carJson = json['car'] as Map<String, dynamic>?;
       final frontUserJson = json['front_user'] as Map<String, dynamic>?;
-      final requestbyEmplyeeJson = json['requestby_emplyee'] as Map<String, dynamic>?;
-      final approverRejecterJson = json['approver_rejecter'] as Map<String, dynamic>?;
+      final requestbyEmplyeeJson =
+          json['requestby_emplyee'] as Map<String, dynamic>?;
+      final approverRejecterJson =
+          json['approver_rejecter'] as Map<String, dynamic>?;
       final reschedulerJson = json['rescheduler'] as Map<String, dynamic>?;
-      
+      final approvedByJson = json['approved_by'] as Map<String, dynamic>?;
+      final rejectedByJson = json['rejectedby'] as Map<String, dynamic>?;
       return AssignedTestDrive(
         id: json['id'] as int? ?? 0,
         createdAt: json['created_at'] as String?,
@@ -564,9 +587,9 @@ class AssignedTestDrive {
         status: json['status'] as String?,
         showroomId: json['showroom_id']?.toString(),
         rejectDescription: json['reject_description'] as String?,
-        approvedEmployeeId: json['approved_employee_id'] is int 
-            ? json['approved_employee_id'] as int 
-            : json['approved_employee_id'] is String 
+        approvedEmployeeId: json['approved_employee_id'] is int
+            ? json['approved_employee_id'] as int
+            : json['approved_employee_id'] is String
                 ? int.tryParse(json['approved_employee_id'] as String)
                 : null,
         cancelDescription: json['cancel_description'] as String?,
@@ -582,10 +605,24 @@ class AssignedTestDrive {
         rescheduledBy: json['rescheduled_by']?.toString(),
         rescheduledDate: json['rescheduled_date'] as String?,
         car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
-        frontUser: frontUserJson != null ? TestDriveUser.fromJson(frontUserJson) : null,
-        requestbyEmplyee: requestbyEmplyeeJson != null ? TestDriveUser.fromJson(requestbyEmplyeeJson) : null,
-        approverRejecter: approverRejecterJson != null ? TestDriveUser.fromJson(approverRejecterJson) : null,
-        rescheduler: reschedulerJson != null ? TestDriveUser.fromJson(reschedulerJson) : null,
+        frontUser: frontUserJson != null
+            ? TestDriveUser.fromJson(frontUserJson)
+            : null,
+        requestbyEmplyee: requestbyEmplyeeJson != null
+            ? TestDriveUser.fromJson(requestbyEmplyeeJson)
+            : null,
+        approverRejecter: approverRejecterJson != null
+            ? TestDriveUser.fromJson(approverRejecterJson)
+            : null,
+        rescheduler: reschedulerJson != null
+            ? TestDriveUser.fromJson(reschedulerJson)
+            : null,
+        approvedBy: approvedByJson != null
+            ? TestDriveUser.fromJson(approvedByJson)
+            : null,
+        rejectedBy: rejectedByJson != null
+            ? TestDriveUser.fromJson(rejectedByJson)
+            : null,
       );
     } catch (e) {
       print('Error parsing AssignedTestDrive: $e');
@@ -670,7 +707,7 @@ class TestDriveUser {
       rethrow;
     }
   }
-} 
+}
 
 class LocationPoint {
   final double latitude;
@@ -684,10 +721,10 @@ class LocationPoint {
   });
 
   Map<String, dynamic> toJson() => {
-    'latitude': latitude,
-    'longitude': longitude,
-    'timestamp': timestamp.toIso8601String(),
-  };
+        'latitude': latitude,
+        'longitude': longitude,
+        'timestamp': timestamp.toIso8601String(),
+      };
 
   factory LocationPoint.fromJson(Map<String, dynamic> json) {
     return LocationPoint(
@@ -710,16 +747,18 @@ class TestDriveLocationHistory {
   });
 
   Map<String, dynamic> toJson() => {
-    'testDriveId': testDriveId,
-    'points': points.map((e) => e.toJson()).toList(),
-    'isCompleted': isCompleted,
-  };
+        'testDriveId': testDriveId,
+        'points': points.map((e) => e.toJson()).toList(),
+        'isCompleted': isCompleted,
+      };
 
   factory TestDriveLocationHistory.fromJson(Map<String, dynamic> json) {
     return TestDriveLocationHistory(
       testDriveId: json['testDriveId'] as int,
-      points: (json['points'] as List<dynamic>).map((e) => LocationPoint.fromJson(e as Map<String, dynamic>)).toList(),
+      points: (json['points'] as List<dynamic>)
+          .map((e) => LocationPoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
       isCompleted: json['isCompleted'] as bool? ?? false,
     );
   }
-} 
+}

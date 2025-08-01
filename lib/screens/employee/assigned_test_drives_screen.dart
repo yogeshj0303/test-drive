@@ -778,7 +778,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
 
     bool isCompleted = _getStatusDisplayName(testDrive.status) == 'Completed';
     bool isCancelled = _getStatusDisplayName(testDrive.status) == 'Cancelled';
-    bool isRejected = _getStatusDisplayName(testDrive.status) == 'Rejected';
+    bool isRejected = _getStatusDisplayName(testDrive.status) == 'rejected';
 
     // Check if the test drive date matches today's date
     bool isToday = false;
@@ -1081,10 +1081,6 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                             backgroundColor: isCompleted
                                 ? const Color(0xFF10B981).withOpacity(0.1)
                                 : const Color(0xFFEF4444).withOpacity(0.1),
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
                           ),
                           child: Text(
                             isCompleted ? 'Completed' : 'Cancelled',
@@ -1217,7 +1213,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Customer Section
+                    // Customer Details Section
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -1231,76 +1227,122 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                           // Header
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFF3080A5).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Color(0xFF3080A5),
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Customer Information',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: Color(0xFF1E293B),
+                              Icon(Icons.person,
+                                  color: Color(0xFF3080A5), size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Customer Details',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: Color(0xFF1E293B),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-
-                          // Customer Details Grid
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Left Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildCompactDetailRow(
-                                        'Name',
-                                        testDrive.userName ?? 'Unknown',
-                                        Icons.person_outline),
-                                    const SizedBox(height: 6),
-                                    _buildCompactDetailRow(
-                                        'Phone',
-                                        testDrive.userMobile ?? 'No phone',
-                                        Icons.phone),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Right Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildCompactDetailRow(
-                                        'Email',
-                                        testDrive.userEmail ?? 'No email',
-                                        Icons.email),
-                                    const SizedBox(height: 6),
-                                    _buildCompactDetailRow(
-                                        'Aadhar',
-                                        testDrive.userAdhar ?? 'No aadhar',
-                                        Icons.credit_card),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildDetailRow(
+                              'Name', testDrive.userName ?? 'Unknown'),
+                          _buildDetailRow(
+                              'Mobile', testDrive.userMobile ?? 'No phone'),
+                          _buildDetailRow(
+                              'Email', testDrive.userEmail ?? 'No email'),
+                          _buildDetailRow(
+                              'Aadhar', testDrive.userAdhar ?? 'No aadhar'),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    // Approved By Section
+                    if ((testDrive.status != null &&
+                            (testDrive.status!.toLowerCase() == 'approved' ||
+                                testDrive.status!.toLowerCase() ==
+                                    'completed')) &&
+                        testDrive.approvedBy != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.green[100]!),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundImage: NetworkImage(
+                                  testDrive.approvedBy!.avatarUrl ?? ''),
+                              backgroundColor: Colors.grey[200],
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Approved by',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF10B981),
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(
+                                  width: 120,
+                                  child: Text(
+                                    testDrive.approvedBy!.name ?? '',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Color(0xFF1E293B)),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Rejected By Section
+                    if ((testDrive.status != null &&
+                            testDrive.status!.toLowerCase() == 'rejected') &&
+                        testDrive.rejectedBy != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red[100]!),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundImage: NetworkImage(
+                                  testDrive.rejectedBy!.avatarUrl ?? ''),
+                              backgroundColor: Colors.grey[200],
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Rejected by',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFFDC2626),
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(
+                                  width: 120,
+                                  child: Text(
+                                    testDrive.rejectedBy!.name ?? '',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Color(0xFF1E293B)),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
 
                     const SizedBox(height: 16),
 

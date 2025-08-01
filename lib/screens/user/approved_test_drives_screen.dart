@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert';
 import '../../models/test_drive_model.dart';
-import '../../models/showroom_model.dart';
 import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
-import '../../models/user_model.dart';
 import '../../services/api_config.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_test_drives_provider.dart';
@@ -475,6 +472,10 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                             'Aadhar', request.userAdhar ?? 'Unknown'),
                       ],
                     ),
+                    if (request.driverDetails != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDriverDetailsSection(request.driverDetails),
+                    ],
                     const SizedBox(height: 16),
                     if (request.note?.isNotEmpty == true)
                       _buildDetailSection(
@@ -563,6 +564,179 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         ],
                       ),
                     ],
+                    const SizedBox(height: 24),
+                    // Opening Kilometer
+                    if (request.openingKm != null)
+                      _buildDetailSection(
+                        'Opening Kilometer',
+                        [
+                          _buildDetailRow(
+                              'Opening KM', request.openingKm.toString()),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    if ((request.car_front_img != null &&
+                            request.car_front_img!.isNotEmpty) ||
+                        (request.back_car_img != null &&
+                            request.back_car_img!.isNotEmpty) ||
+                        (request.upper_view != null &&
+                            request.upper_view!.isNotEmpty) ||
+                        (request.right_side_img != null &&
+                            request.right_side_img!.isNotEmpty) ||
+                        (request.left_side_img != null &&
+                            request.left_side_img!.isNotEmpty))
+                      _buildDetailSection(
+                        'Car Images (Submitted by User)',
+                        [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                if (request.car_front_img != null &&
+                                    request.car_front_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Front',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.car_front_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.back_car_img != null &&
+                                    request.back_car_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Back',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.back_car_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.right_side_img != null &&
+                                    request.right_side_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Right',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.right_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.left_side_img != null &&
+                                    request.left_side_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Left',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.left_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.upper_view != null &&
+                                    request.upper_view!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Upper',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.upper_view),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 24),
                     // Action Buttons
                     _buildActionButtonsSection(request),
@@ -753,11 +927,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         SnackBar(
           content: Row(
             children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 20,
-              ),
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -2461,6 +2631,31 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDriverDetailsSection(TestDriveUser? driver) {
+    if (driver == null) return const SizedBox.shrink();
+    return _buildDetailSection(
+      'Driver Details',
+      [
+        if (driver.avatarUrl != null && driver.avatarUrl!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: CircleAvatar(
+              radius: 28,
+              backgroundImage: NetworkImage(driver.avatarUrl!),
+              backgroundColor: Colors.grey.shade200,
+            ),
+          ),
+        _buildDetailRow('Name', driver.name ?? 'Unknown'),
+        _buildDetailRow(
+            'Mobile', driver.mobileNo ?? driver.mobile ?? 'Unknown'),
+        _buildDetailRow('Email', driver.email ?? 'Unknown'),
+        _buildDetailRow('Aadhar', driver.aadharNo ?? 'Unknown'),
+        _buildDetailRow(
+            'Driving License', driver.drivingLicenseNo ?? 'Unknown'),
+      ],
     );
   }
 }

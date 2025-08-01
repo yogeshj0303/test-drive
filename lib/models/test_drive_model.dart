@@ -343,12 +343,25 @@ class TestDriveListResponse {
   final String? userAdhar;
   final String? rescheduledBy;
   final String? rescheduledDate;
+  final int? openingKm;
+  final int? closingKm;
+  final String? car_front_img;
+  final String? back_car_img;
+  final String? upper_view;
+  final String? right_side_img;
+  final String? left_side_img;
+  final String? return_front_img;
+  final String? return_back_img;
+  final String? return_right_img;
+  final String? return_left_img;
+  final String? return_upper_img;
   final TestDriveCar? car;
   final Showroom? showroom;
   final TestDriveUser? frontUser;
   final TestDriveUser? requestbyEmplyee;
   final TestDriveUser? approverRejecter;
   final TestDriveUser? rescheduler;
+  final TestDriveUser? driverDetails;
 
   TestDriveListResponse({
     required this.id,
@@ -380,12 +393,25 @@ class TestDriveListResponse {
     this.userAdhar,
     this.rescheduledBy,
     this.rescheduledDate,
+    this.openingKm,
+    this.closingKm,
+    this.car_front_img,
+    this.back_car_img,
+    this.upper_view,
+    this.right_side_img,
+    this.left_side_img,
+    this.return_front_img,
+    this.return_back_img,
+    this.return_right_img,
+    this.return_left_img,
+    this.return_upper_img,
     this.car,
     this.showroom,
     this.frontUser,
     this.requestbyEmplyee,
     this.approverRejecter,
     this.rescheduler,
+    this.driverDetails,
   });
 
   factory TestDriveListResponse.fromJson(Map<String, dynamic> json) {
@@ -398,6 +424,7 @@ class TestDriveListResponse {
       final approverRejecterJson =
           json['approver_rejecter'] as Map<String, dynamic>?;
       final reschedulerJson = json['rescheduler'] as Map<String, dynamic>?;
+      final driverDetailsJson = json['driver_details'] as Map<String, dynamic>?;
 
       return TestDriveListResponse(
         id: json['id'] as int? ?? 0,
@@ -429,6 +456,22 @@ class TestDriveListResponse {
         userAdhar: json['user_adhar'] as String?,
         rescheduledBy: json['rescheduled_by']?.toString(),
         rescheduledDate: json['rescheduled_date'] as String?,
+        openingKm: json['opening_km'] is int
+            ? json['opening_km']
+            : int.tryParse(json['opening_km']?.toString() ?? ''),
+        closingKm: json['closing_km'] is int
+            ? json['closing_km']
+            : int.tryParse(json['closing_km']?.toString() ?? ''),
+        car_front_img: json['car_front_img'] as String?,
+        back_car_img: json['back_car_img'] as String?,
+        upper_view: json['upper_view'] as String?,
+        right_side_img: json['right_side_img'] as String?,
+        left_side_img: json['left_side_img'] as String?,
+        return_front_img: json['return_front_img'] as String?,
+        return_back_img: json['return_back_img'] as String?,
+        return_right_img: json['return_right_img'] as String?,
+        return_left_img: json['return_left_img'] as String?,
+        return_upper_img: json['return_upper_img'] as String?,
         car: carJson != null ? TestDriveCar.fromJson(carJson) : null,
         showroom: showroomJson != null ? Showroom.fromJson(showroomJson) : null,
         frontUser: frontUserJson != null
@@ -442,6 +485,9 @@ class TestDriveListResponse {
             : null,
         rescheduler: reschedulerJson != null
             ? TestDriveUser.fromJson(reschedulerJson)
+            : null,
+        driverDetails: driverDetailsJson != null
+            ? TestDriveUser.fromJson(driverDetailsJson)
             : null,
       );
     } catch (e) {

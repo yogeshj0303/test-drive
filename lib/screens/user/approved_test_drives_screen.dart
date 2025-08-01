@@ -17,7 +17,8 @@ class ApprovedTestDrivesScreen extends StatefulWidget {
   const ApprovedTestDrivesScreen({super.key});
 
   @override
-  State<ApprovedTestDrivesScreen> createState() => _ApprovedTestDrivesScreenState();
+  State<ApprovedTestDrivesScreen> createState() =>
+      _ApprovedTestDrivesScreenState();
 }
 
 class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
@@ -26,7 +27,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     super.initState();
     // Use smart refresh with screen-specific caching
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+      final provider =
+          Provider.of<UserTestDrivesProvider>(context, listen: false);
       provider.smartRefresh(screenName: 'approved');
     });
   }
@@ -65,7 +67,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                 ),
                 child: const Icon(Icons.arrow_back_rounded, size: 18),
               ),
-              onPressed: () => Navigator.pop(context, true), // Return true to indicate screen was visited
+              onPressed: () => Navigator.pop(
+                  context, true), // Return true to indicate screen was visited
             ),
             actions: [
               IconButton(
@@ -168,7 +171,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              message ?? 'You don\'t have any approved test drives at the moment.',
+              message ??
+                  'You don\'t have any approved test drives at the moment.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -178,13 +182,16 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => Provider.of<UserTestDrivesProvider>(context, listen: false).refresh(),
+              onPressed: () =>
+                  Provider.of<UserTestDrivesProvider>(context, listen: false)
+                      .refresh(),
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -241,11 +248,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.green.shade50,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.green.shade200),
+                                  border:
+                                      Border.all(color: Colors.green.shade200),
                                 ),
                                 child: Text(
                                   'Approved',
@@ -272,7 +281,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                               Icon(
                                 Icons.location_on,
                                 size: 12,
-                                color: Colors.grey.shade600,  
+                                color: Colors.grey.shade600,
                               ),
                               const SizedBox(width: 2),
                               Expanded(
@@ -366,7 +375,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                           const SizedBox(height: 4),
                         ],
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(8),
@@ -395,9 +405,10 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Car Images Gallery
-                    if (request.car?.images != null && request.car!.images!.isNotEmpty)
+                    if (request.car?.images != null &&
+                        request.car!.images!.isNotEmpty)
                       _buildCarImagesGallery(request.car!.images!),
-                    
+
                     const SizedBox(height: 16),
                     _buildDetailSection(
                       'Test Drive Information',
@@ -407,7 +418,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         _buildDetailRow('Time', request.time ?? 'Unknown'),
                         _buildDetailRow('Status', 'Approved'),
                         if (request.approvedOrRejectDate != null)
-                          _buildDetailRow('Approved On', _formatDateTime(request.approvedOrRejectDate!)),
+                          _buildDetailRow('Approved On',
+                              _formatDateTime(request.approvedOrRejectDate!)),
                       ],
                     ),
                     // Requested By
@@ -416,10 +428,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                       _buildDetailSection(
                         'Requested By',
                         [
-                          _buildDetailRow('Name', request.frontUser?.name ?? 'Unknown'),
-                          _buildDetailRow('Email', request.frontUser?.email ?? 'Unknown'),
+                          _buildDetailRow(
+                              'Name', request.frontUser?.name ?? 'Unknown'),
+                          _buildDetailRow(
+                              'Email', request.frontUser?.email ?? 'Unknown'),
                           if ((request.frontUser?.mobileNo ?? '').isNotEmpty)
-                            _buildDetailRow('Mobile', request.frontUser!.mobileNo!),
+                            _buildDetailRow(
+                                'Mobile', request.frontUser!.mobileNo!),
                         ],
                       ),
                     ],
@@ -427,18 +442,24 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     _buildDetailSection(
                       'Pickup Details',
                       [
-                        _buildDetailRow('Address', request.pickupAddress ?? 'Unknown'),
-                        _buildDetailRow('City', request.pickupCity ?? 'Unknown'),
-                        _buildDetailRow('Pincode', request.pickupPincode ?? 'Unknown'),
+                        _buildDetailRow(
+                            'Address', request.pickupAddress ?? 'Unknown'),
+                        _buildDetailRow(
+                            'City', request.pickupCity ?? 'Unknown'),
+                        _buildDetailRow(
+                            'Pincode', request.pickupPincode ?? 'Unknown'),
                       ],
                     ),
                     const SizedBox(height: 16),
                     _buildDetailSection(
                       'Showroom Information',
                       [
-                        _buildDetailRow('Name', request.showroom?.name ?? 'Unknown'),
-                        _buildDetailRow('Location', '${request.showroom?.city ?? 'Unknown'}, ${request.showroom?.state ?? 'Unknown'}'),
-                        _buildDetailRow('Rating', '${request.showroom?.ratting ?? 'N/A'} ⭐'),
+                        _buildDetailRow(
+                            'Name', request.showroom?.name ?? 'Unknown'),
+                        _buildDetailRow('Location',
+                            '${request.showroom?.city ?? 'Unknown'}, ${request.showroom?.state ?? 'Unknown'}'),
+                        _buildDetailRow('Rating',
+                            '${request.showroom?.ratting ?? 'N/A'} ⭐'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -446,9 +467,12 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                       'User Information',
                       [
                         _buildDetailRow('Name', request.userName ?? 'Unknown'),
-                        _buildDetailRow('Mobile', request.userMobile ?? 'Unknown'),
-                        _buildDetailRow('Email', request.userEmail ?? 'Unknown'),
-                        _buildDetailRow('Aadhar', request.userAdhar ?? 'Unknown'),
+                        _buildDetailRow(
+                            'Mobile', request.userMobile ?? 'Unknown'),
+                        _buildDetailRow(
+                            'Email', request.userEmail ?? 'Unknown'),
+                        _buildDetailRow(
+                            'Aadhar', request.userAdhar ?? 'Unknown'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -460,24 +484,30 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         ],
                       ),
 
-                    if (request.driverId != null && request.driverId!.isNotEmpty)
+                    if (request.driverId != null &&
+                        request.driverId!.isNotEmpty)
                       _buildDetailSection(
                         'Driver Assignment',
                         [
                           _buildDetailRow('Driver ID', request.driverId!),
                           if (request.driverUpdateDate != null)
-                            _buildDetailRow('Assigned On', _formatDateTime(request.driverUpdateDate!)),
+                            _buildDetailRow('Assigned On',
+                                _formatDateTime(request.driverUpdateDate!)),
                         ],
                       ),
                     // --- ENHANCED STATUS SECTIONS ---
-                    if (request.approverRejecter != null && request.approvedOrRejectDate != null) ...[
+                    if (request.approverRejecter != null &&
+                        request.approvedOrRejectDate != null) ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         'Approved By',
                         [
-                          _buildDetailRow('Name', request.approverRejecter?.name ?? 'Unknown'),
-                          _buildDetailRow('Email', request.approverRejecter?.email ?? 'Unknown'),
-                          _buildDetailRow('Date', _formatDateTime(request.approvedOrRejectDate!)),
+                          _buildDetailRow('Name',
+                              request.approverRejecter?.name ?? 'Unknown'),
+                          _buildDetailRow('Email',
+                              request.approverRejecter?.email ?? 'Unknown'),
+                          _buildDetailRow('Date',
+                              _formatDateTime(request.approvedOrRejectDate!)),
                         ],
                       ),
                     ],
@@ -495,30 +525,41 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                       ),
                     ],
                     */
-                    if (request.approverRejecter != null && request.status == 'rejected') ...[
+                    if (request.approverRejecter != null &&
+                        request.status == 'rejected') ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         'Rejected By',
                         [
-                          _buildDetailRow('Name', request.approverRejecter?.name ?? 'Unknown'),
-                          _buildDetailRow('Email', request.approverRejecter?.email ?? 'Unknown'),
+                          _buildDetailRow('Name',
+                              request.approverRejecter?.name ?? 'Unknown'),
+                          _buildDetailRow('Email',
+                              request.approverRejecter?.email ?? 'Unknown'),
                           if (request.approvedOrRejectDate != null)
-                            _buildDetailRow('Date', _formatDateTime(request.approvedOrRejectDate!)),
-                          if (request.rejectDescription != null && request.rejectDescription!.isNotEmpty)
-                            _buildDetailRow('Reason', request.rejectDescription!),
+                            _buildDetailRow('Date',
+                                _formatDateTime(request.approvedOrRejectDate!)),
+                          if (request.rejectDescription != null &&
+                              request.rejectDescription!.isNotEmpty)
+                            _buildDetailRow(
+                                'Reason', request.rejectDescription!),
                         ],
                       ),
                     ],
-                    if (request.rescheduler != null && request.rescheduledDate != null) ...[
+                    if (request.rescheduler != null &&
+                        request.rescheduledDate != null) ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         'Rescheduled By',
                         [
-                          _buildDetailRow('Name', request.rescheduler?.name ?? 'Unknown'),
-                          _buildDetailRow('Email', request.rescheduler?.email ?? 'Unknown'),
-                          _buildDetailRow('Rescheduled On', _formatDateTime(request.rescheduledDate!)),
+                          _buildDetailRow(
+                              'Name', request.rescheduler?.name ?? 'Unknown'),
+                          _buildDetailRow(
+                              'Email', request.rescheduler?.email ?? 'Unknown'),
+                          _buildDetailRow('Rescheduled On',
+                              _formatDateTime(request.rescheduledDate!)),
                           if (request.date != null)
-                            _buildDetailRow('Next Test Drive Date', _formatDateTime(request.date!)),
+                            _buildDetailRow('Next Test Drive Date',
+                                _formatDateTime(request.date!)),
                         ],
                       ),
                     ],
@@ -538,8 +579,20 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   Widget _buildActionButtonsSection(TestDriveListResponse request) {
     // Check permissions
-    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canDeleteTestDrive ?? false;
+    final canChangeTestDriveStatus =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canChangeTestDriveStatus ??
+            false;
+    final canDeleteTestDrive =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canDeleteTestDrive ??
+            false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +627,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               );
             },
             icon: const Icon(Icons.location_on, size: 18, color: Colors.blue),
-            label: const Text('Live Tracking', style: TextStyle(color: Colors.blue)),
+            label: const Text('Live Tracking',
+                style: TextStyle(color: Colors.blue)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.blue,
               side: const BorderSide(color: Colors.blue),
@@ -585,7 +639,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
           ),
         ),
-        
+
         // Complete Test Drive Button - Only show if user has permission to change status
         if (canChangeTestDriveStatus) ...[
           Container(
@@ -607,7 +661,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
           ),
         ],
-        
+
         // Reschedule Button - Only show if user has permission to change status
         if (canChangeTestDriveStatus) ...[
           Container(
@@ -628,7 +682,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
           ),
         ],
-        
+
         // Reject Test Drive Button - Only show if user has permission to change status or delete
         if (canChangeTestDriveStatus || canDeleteTestDrive) ...[
           Container(
@@ -684,14 +738,16 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-
-
-
-
   void _showRescheduleDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    
+    final canChangeTestDriveStatus =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canChangeTestDriveStatus ??
+            false;
+
     if (!canChangeTestDriveStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -704,7 +760,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               ),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('You don\'t have permission to reschedule test drives'),
+                child: Text(
+                    'You don\'t have permission to reschedule test drives'),
               ),
             ],
           ),
@@ -717,9 +774,9 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       );
       return;
     }
-    
+
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -860,7 +917,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   // Replace _showCompleteDialog with bottom sheet version
   void _showCompleteBottomSheet(TestDriveListResponse request) {
-    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
+    final canChangeTestDriveStatus =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canChangeTestDriveStatus ??
+            false;
     if (!canChangeTestDriveStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -868,7 +931,9 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             children: [
               Icon(Icons.error_outline, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              const Expanded(child: Text('You don\'t have permission to complete test drives')),
+              const Expanded(
+                  child: Text(
+                      'You don\'t have permission to complete test drives')),
             ],
           ),
           backgroundColor: Colors.red,
@@ -921,28 +986,43 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                   ),
                   Row(
                     children: [
-                      Icon(Icons.check_circle_outline, color: Colors.green.shade600, size: 20),
+                      Icon(Icons.check_circle_outline,
+                          color: Colors.green.shade600, size: 20),
                       const SizedBox(width: 6),
-                      const Text('Complete Test Drive', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      const Text('Complete Test Drive',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 8),
                   // Fix malformed Text widget for car name
-                  Text('Complete test drive for ${request.car?.name ?? 'Unknown'}:', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                  Text(
+                      'Complete test drive for ${request.car?.name ?? 'Unknown'}:',
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black87)),
                   const SizedBox(height: 10),
                   // Closing KM Input
                   Row(
                     children: [
-                      Text('Closing Kilometer Reading', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
+                      Text('Closing Kilometer Reading',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700)),
                       const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Text('Required', style: TextStyle(fontSize: 9, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+                        child: Text('Required',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -953,7 +1033,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     style: const TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Enter closing kilometer reading',
-                      hintStyle: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      hintStyle:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade500),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -970,16 +1051,25 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Car Return Images', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
+                      Text('Car Return Images',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700)),
                       const SizedBox(height: 3),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Text('Required - 5 images', style: TextStyle(fontSize: 9, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+                        child: Text('Required - 5 images',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -993,29 +1083,52 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     mainAxisSpacing: 4,
                     childAspectRatio: 1.0,
                     children: [
-                      _buildSimpleImageCard('Front', 'return_front_img', returnImages, setState),
-                      _buildSimpleImageCard('Back', 'return_back_img', returnImages, setState),
-                      _buildSimpleImageCard('Right', 'return_right_img', returnImages, setState),
-                      _buildSimpleImageCard('Left', 'return_left_img', returnImages, setState),
-                      _buildSimpleImageCard('Upper', 'return_upper_img', returnImages, setState),
+                      _buildSimpleImageCard(
+                          'Front', 'return_front_img', returnImages, setState),
+                      _buildSimpleImageCard(
+                          'Back', 'return_back_img', returnImages, setState),
+                      _buildSimpleImageCard(
+                          'Right', 'return_right_img', returnImages, setState),
+                      _buildSimpleImageCard(
+                          'Left', 'return_left_img', returnImages, setState),
+                      _buildSimpleImageCard(
+                          'Upper', 'return_upper_img', returnImages, setState),
                     ],
                   ),
                   const SizedBox(height: 10),
                   // Progress Counter
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade50 : Colors.orange.shade50,
+                      color:
+                          returnImages.values.where((f) => f != null).length ==
+                                  5
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade200 : Colors.orange.shade200,
+                        color: returnImages.values
+                                    .where((f) => f != null)
+                                    .length ==
+                                5
+                            ? Colors.green.shade200
+                            : Colors.orange.shade200,
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          returnImages.values.where((f) => f != null).length == 5 ? Icons.check_circle : Icons.info_outline,
-                          color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade600 : Colors.orange.shade600,
+                          returnImages.values.where((f) => f != null).length ==
+                                  5
+                              ? Icons.check_circle
+                              : Icons.info_outline,
+                          color: returnImages.values
+                                      .where((f) => f != null)
+                                      .length ==
+                                  5
+                              ? Colors.green.shade600
+                              : Colors.orange.shade600,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
@@ -1024,7 +1137,12 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: returnImages.values.where((f) => f != null).length == 5 ? Colors.green.shade700 : Colors.orange.shade700,
+                            color: returnImages.values
+                                        .where((f) => f != null)
+                                        .length ==
+                                    5
+                                ? Colors.green.shade700
+                                : Colors.orange.shade700,
                           ),
                         ),
                       ],
@@ -1040,12 +1158,14 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline, color: Colors.green.shade600, size: 16),
+                        Icon(Icons.info_outline,
+                            color: Colors.green.shade600, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             'Please provide the closing kilometer reading and 5 car return images (front, back, right, left, upper views).',
-                            style: TextStyle(fontSize: 10, color: Colors.green.shade700),
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.green.shade700),
                           ),
                         ),
                       ],
@@ -1057,47 +1177,61 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
-                          child: const Text('Cancel', style: TextStyle(fontSize: 13)),
+                          style: OutlinedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10)),
+                          child: const Text('Cancel',
+                              style: TextStyle(fontSize: 13)),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
-                            final closingKm = int.tryParse(closingKmController.text.trim());
+                            final closingKm =
+                                int.tryParse(closingKmController.text.trim());
                             if (closingKm == null || closingKm <= 0) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Please enter a valid closing kilometer reading'),
+                                  content: const Text(
+                                      'Please enter a valid closing kilometer reading'),
                                   backgroundColor: Colors.red,
                                   behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                               );
                               return;
                             }
-                            if (returnImages.values.where((f) => f != null).length != 5) {
+                            if (returnImages.values
+                                    .where((f) => f != null)
+                                    .length !=
+                                5) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Please provide exactly 5 car return images (currently ${returnImages.values.where((f) => f != null).length})'),
+                                  content: Text(
+                                      'Please provide exactly 5 car return images (currently ${returnImages.values.where((f) => f != null).length})'),
                                   backgroundColor: Colors.red,
                                   behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                               );
                               return;
                             }
                             Navigator.pop(context);
-                            await _simpleCompleteTestDriveWithFiles(request, closingKm, returnImages);
+                            await _simpleCompleteTestDriveWithFiles(
+                                request, closingKm, returnImages);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
-                          child: const Text('Complete Test Drive', style: TextStyle(fontSize: 13)),
+                          child: const Text('Complete Test Drive',
+                              style: TextStyle(fontSize: 13)),
                         ),
                       ),
                     ],
@@ -1112,7 +1246,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Widget _buildSimpleImageCard(String label, String fieldName, Map<String, File?> images, StateSetter setState) {
+  Widget _buildSimpleImageCard(String label, String fieldName,
+      Map<String, File?> images, StateSetter setState) {
     final file = images[fieldName];
     Future<void> _pickImage(ImageSource source) async {
       final ImagePicker picker = ImagePicker();
@@ -1123,6 +1258,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         });
       }
     }
+
     void _showImageSourceDialog() {
       showDialog(
         context: context,
@@ -1152,6 +1288,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         ),
       );
     }
+
     return SizedBox(
       height: 60,
       child: GestureDetector(
@@ -1183,17 +1320,27 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_a_photo, size: 14, color: Colors.grey.shade400),
+                      Icon(Icons.add_a_photo,
+                          size: 14, color: Colors.grey.shade400),
                       const SizedBox(height: 1),
-                      Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                      Text(label,
+                          style: TextStyle(
+                              fontSize: 7,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade600)),
                       const SizedBox(height: 1),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 2, vertical: 1),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text('REQUIRED', style: TextStyle(fontSize: 5, fontWeight: FontWeight.bold, color: Colors.white)),
+                        child: const Text('REQUIRED',
+                            style: TextStyle(
+                                fontSize: 5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
                       ),
                     ],
                   ),
@@ -1210,7 +1357,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 7),
+                      child:
+                          const Icon(Icons.close, color: Colors.white, size: 7),
                     ),
                   ),
                 ),
@@ -1221,7 +1369,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Future<void> _simpleCompleteTestDriveWithFiles(TestDriveListResponse request, int closingKm, Map<String, File?> returnImages) async {
+  Future<void> _simpleCompleteTestDriveWithFiles(TestDriveListResponse request,
+      int closingKm, Map<String, File?> returnImages) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1249,7 +1398,9 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       ),
     );
     try {
-      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      final currentUser =
+          Provider.of<UserTestDrivesProvider>(context, listen: false)
+              .currentUser;
       if (currentUser == null) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1258,17 +1409,20 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               children: [
                 Icon(Icons.error_outline, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('User data not found. Please login again.')),
+                const Expanded(
+                    child: Text('User data not found. Please login again.')),
               ],
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
         return;
       }
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/employee/textdrives/status-update');
+      final uri = Uri.parse(
+          '${ApiConfig.baseUrl}/api/employee/textdrives/status-update');
       final requestMultipart = http.MultipartRequest('POST', uri)
         ..fields['employee_id'] = currentUser.id.toString()
         ..fields['status'] = 'completed'
@@ -1277,7 +1431,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       // Attach images
       for (final entry in returnImages.entries) {
         if (entry.value != null) {
-          requestMultipart.files.add(await http.MultipartFile.fromPath(entry.key, entry.value!.path));
+          requestMultipart.files.add(
+              await http.MultipartFile.fromPath(entry.key, entry.value!.path));
         }
       }
       requestMultipart.headers.addAll(ApiConfig.defaultHeaders);
@@ -1292,7 +1447,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                  Icon(Icons.check_circle_outline,
+                      color: Colors.white, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1304,10 +1460,12 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           );
-          Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
+          Provider.of<UserTestDrivesProvider>(context, listen: false)
+              .removeTestDrive(request.id);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1317,7 +1475,9 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      responseData['message'].isNotEmpty ? responseData['message'] : 'Failed to complete test drive',
+                      responseData['message'].isNotEmpty
+                          ? responseData['message']
+                          : 'Failed to complete test drive',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -1325,7 +1485,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               ),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           );
         }
@@ -1341,7 +1502,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
       }
@@ -1366,9 +1528,21 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
   void _showRejectDialog(TestDriveListResponse request) {
     // Check permission before showing dialog
-    final canChangeTestDriveStatus = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canChangeTestDriveStatus ?? false;
-    final canDeleteTestDrive = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser?.role?.permissions.canDeleteTestDrive ?? false;
-    
+    final canChangeTestDriveStatus =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canChangeTestDriveStatus ??
+            false;
+    final canDeleteTestDrive =
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+                .currentUser
+                ?.role
+                ?.permissions
+                .canDeleteTestDrive ??
+            false;
+
     if (!canChangeTestDriveStatus && !canDeleteTestDrive) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1394,9 +1568,9 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       );
       return;
     }
-    
+
     final TextEditingController reasonController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1421,76 +1595,79 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to reject the test drive for ${request.car?.name ?? 'Unknown'}?',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
+        content: SingleChildScrollView(
+          // <-- Make dialog scrollable
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to reject the test drive for ${request.car?.name ?? 'Unknown'}?',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Reason for rejection (optional):',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: reasonController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Enter reason for rejection...',
-                hintStyle: TextStyle(
+              const SizedBox(height: 16),
+              Text(
+                'Reason for rejection (optional):',
+                style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.red.shade400),
-                ),
-                contentPadding: const EdgeInsets.all(12),
               ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_outlined,
-                    color: Colors.red.shade600,
-                    size: 20,
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter reason for rejection...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This action cannot be undone. The test drive will be permanently rejected.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.red.shade700,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.red.shade400),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_outlined,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This action cannot be undone. The test drive will be permanently rejected.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.red.shade700,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -1522,7 +1699,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Future<void> _completeTestDrive(TestDriveListResponse request, int closingKm, Map<String, String> returnImages) async {
+  Future<void> _completeTestDrive(TestDriveListResponse request, int closingKm,
+      Map<String, String> returnImages) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1553,11 +1731,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      final currentUser =
+          Provider.of<UserTestDrivesProvider>(context, listen: false)
+              .currentUser;
       if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1603,7 +1783,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       if (response.success) {
         // Close detail modal and return true to indicate data was updated
         Navigator.pop(context, true);
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1632,7 +1812,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         );
 
         // Optimistically remove the completed test drive from cache
-        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+            .removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1647,8 +1828,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    response.message.isNotEmpty 
-                        ? response.message 
+                    response.message.isNotEmpty
+                        ? response.message
                         : 'Failed to complete test drive',
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1666,7 +1847,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1691,7 +1872,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     }
   }
 
-  Future<void> _rejectTestDrive(TestDriveListResponse request, String reason) async {
+  Future<void> _rejectTestDrive(
+      TestDriveListResponse request, String reason) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1722,11 +1904,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      final currentUser =
+          Provider.of<UserTestDrivesProvider>(context, listen: false)
+              .currentUser;
       if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1752,12 +1936,11 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         return;
       }
 
-      final rejectDescription = reason.isNotEmpty 
-          ? reason 
-          : 'User rejected the approved test drive';
-      
+      final rejectDescription =
+          reason.isNotEmpty ? reason : 'User rejected the approved test drive';
+
       final response = await ApiService().cancelTestDrive(
-        request.id, 
+        request.id,
         rejectDescription,
         currentUser.id,
       );
@@ -1768,7 +1951,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       if (response.success) {
         // Close detail modal
         Navigator.pop(context);
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1812,8 +1995,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    response.message.isNotEmpty 
-                        ? response.message 
+                    response.message.isNotEmpty
+                        ? response.message
                         : 'Failed to reject test drive',
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1831,7 +2014,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1856,9 +2039,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     }
   }
 
-
-
-  Future<void> _rescheduleTestDrive(TestDriveListResponse request, DateTime newDate, String reason) async {
+  Future<void> _rescheduleTestDrive(
+      TestDriveListResponse request, DateTime newDate, String reason) async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -1889,11 +2071,13 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     try {
       // Get current user data to get employee ID
-      final currentUser = Provider.of<UserTestDrivesProvider>(context, listen: false).currentUser;
+      final currentUser =
+          Provider.of<UserTestDrivesProvider>(context, listen: false)
+              .currentUser;
       if (currentUser == null) {
         // Close loading dialog
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1920,7 +2104,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       }
 
       // Format the new date
-      final formattedDate = '${newDate.year}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}';
+      final formattedDate =
+          '${newDate.year}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}';
 
       // Call the reschedule API
       final response = await ApiService().rescheduleTestDrive(
@@ -1935,7 +2120,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       if (response.success) {
         // Close detail modal and return true to indicate data was updated
         Navigator.pop(context, true);
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1964,7 +2149,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
         );
 
         // Optimistically remove the rescheduled test drive from cache
-        Provider.of<UserTestDrivesProvider>(context, listen: false).removeTestDrive(request.id);
+        Provider.of<UserTestDrivesProvider>(context, listen: false)
+            .removeTestDrive(request.id);
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1996,7 +2182,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2126,9 +2312,11 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     // Try to get the main image first
     String? imageUrl = car.mainImage;
-    
+
     // If no main image, try to get the first image from the images array
-    if ((imageUrl == null || imageUrl.isEmpty) && car.images != null && car.images!.isNotEmpty) {
+    if ((imageUrl == null || imageUrl.isEmpty) &&
+        car.images != null &&
+        car.images!.isNotEmpty) {
       imageUrl = car.images!.first.imagePath;
     }
 
@@ -2171,7 +2359,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           child: Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
                   : null,
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
@@ -2205,7 +2394,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
               final image = images[index];
               return Container(
                 width: 120,
-                margin: EdgeInsets.only(right: index < images.length - 1 ? 8 : 0),
+                margin:
+                    EdgeInsets.only(right: index < images.length - 1 ? 8 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: Colors.grey.shade100,
@@ -2262,7 +2452,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           child: Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
                   : null,
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
@@ -2272,4 +2463,4 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
       },
     );
   }
-} 
+}

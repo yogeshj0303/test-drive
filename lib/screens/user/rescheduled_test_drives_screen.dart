@@ -1196,9 +1196,9 @@ class _RescheduledTestDrivesScreenState
   Widget _buildImageUploadSection(String title, String fieldName,
       Map<String, XFile?> returnImages, StateSetter setState) {
     final hasImage = returnImages[fieldName] != null;
-    Future<void> _pickImage(ImageSource source) async {
+    Future<void> _pickImageFromCamera() async {
       final ImagePicker picker = ImagePicker();
-      final XFile? picked = await picker.pickImage(source: source);
+      final XFile? picked = await picker.pickImage(source: ImageSource.camera);
       if (picked != null) {
         setState(() {
           returnImages[fieldName] = picked;
@@ -1206,40 +1206,10 @@ class _RescheduledTestDrivesScreenState
       }
     }
 
-    void _showImageSourceDialog() {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Select Image Source'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return SizedBox(
       height: 60,
       child: GestureDetector(
-        onTap: _showImageSourceDialog,
+        onTap: _pickImageFromCamera,
         child: Container(
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(

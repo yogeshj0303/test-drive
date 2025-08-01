@@ -5,9 +5,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../../models/test_drive_model.dart';
-import '../../models/user_model.dart';
 import '../../services/storage_service.dart';
-import 'personal_info_screen.dart';
 import '../../models/car_model.dart';
 
 class RequestTestDriveScreen extends StatefulWidget {
@@ -18,7 +16,7 @@ class RequestTestDriveScreen extends StatefulWidget {
   final String? pickupLocation;
   final int? carId;
   final int? showroomId;
-  
+
   const RequestTestDriveScreen({
     super.key,
     this.showroomName,
@@ -47,24 +45,25 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _userMobileController = TextEditingController();
   final TextEditingController _userEmailController = TextEditingController();
-  
+
   String? _selectedCar;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String _selectedDuration = '30 mins';
   bool _isSubmitting = false;
-  bool _isLoadingLocation = false;
   Map<String, File?> _selectedImages = {
-    'image1': null,   // car_front_img
-    'image2': null,   // right_side_img
-    'image3': null,   // back_car_img
-    'image4': null,   // left_side_img
-    'image5': null,   // upper_view
+    'image1': null, // car_front_img
+    'image2': null, // right_side_img
+    'image3': null, // back_car_img
+    'image4': null, // left_side_img
+    'image5': null, // upper_view
   };
   final ImagePicker _picker = ImagePicker();
 
   final List<String> _durationOptions = ['30 mins', '45 mins', '60 mins'];
   final ApiService _apiService = ApiService();
+
+  List<Car> _cars = [];
 
   @override
   void initState() {
@@ -73,21 +72,25 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       _showroomController.text = widget.showroomName!;
     }
     if (widget.availableCars != null && widget.availableCars!.isNotEmpty) {
-      _selectedCar = widget.availableCars!.first.name;
+      _cars = widget.availableCars!;
+      _selectedCar = _cars.first.name;
+      _setOpeningKmForSelectedCar(_selectedCar);
+    } else if (widget.showroomId != null) {
+      _fetchCarsByShowroom(widget.showroomId!);
     } else {
       _selectedCar = _carOptions.first;
     }
-    
+
     // Use passed dates if available
     if (widget.selectedStartDate != null) {
       _selectedDate = widget.selectedStartDate;
     }
-    
+
     // Set default time if not provided
     if (_selectedTime == null) {
       _selectedTime = TimeOfDay.now();
     }
-    
+
     // Get current location
     _getCurrentLocation();
     // Do not auto-fill user info fields
@@ -106,10 +109,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
   // }
 
   Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-    
     try {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -150,8 +149,11 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
-          _pickupAddressController.text = '${place.street ?? ''}, ${place.subLocality ?? ''}, ${place.locality ?? ''}'.trim();
-          _pickupCityController.text = place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
+          _pickupAddressController.text =
+              '${place.street ?? ''}, ${place.subLocality ?? ''}, ${place.locality ?? ''}'
+                  .trim();
+          _pickupCityController.text =
+              place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
           _pickupPincodeController.text = place.postalCode ?? '';
         });
       } else {
@@ -160,10 +162,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     } catch (e) {
       // If there's any error, set default location
       _setDefaultLocation();
-    } finally {
-      setState(() {
-        _isLoadingLocation = false;
-      });
     }
   }
 
@@ -186,7 +184,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           final userProfile = profileResponse.data!;
           setState(() {
             // Populate driving license if available
-            if (userProfile.drivingLicenseNo != null && userProfile.drivingLicenseNo!.isNotEmpty) {
+            if (userProfile.drivingLicenseNo != null &&
+                userProfile.drivingLicenseNo!.isNotEmpty) {
               _drivingLicenseController.text = userProfile.drivingLicenseNo!;
             }
             // Do not auto-fill Aadhar
@@ -201,8 +200,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       print('Error loading user data: $e');
     }
   }
-
-
 
   List<String> get _carOptions {
     if (widget.availableCars != null && widget.availableCars!.isNotEmpty) {
@@ -296,8 +293,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
 
   Future<void> _submitRequest() async {
     // Check if we have dates from CarDetailsScreen or user selection
-    bool hasValidDates = widget.selectedStartDate != null || _selectedDate != null;
-    
+    bool hasValidDates =
+        widget.selectedStartDate != null || _selectedDate != null;
+
     if (_formKey.currentState!.validate() &&
         _selectedCar != null &&
         hasValidDates &&
@@ -309,11 +307,10 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         _selectedImages['image3'] != null &&
         _selectedImages['image4'] != null &&
         _selectedImages['image5'] != null) {
-      
       setState(() {
         _isSubmitting = true;
       });
-      
+
       try {
         // Get user ID from storage
         final user = await StorageService().getUser();
@@ -326,39 +323,43 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           );
           return;
         }
-        
+
         // Validate user has required information
         if (user.name.isEmpty || user.mobileNo.isEmpty || user.email.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('User profile incomplete. Please update your profile first.'),
+              content: Text(
+                  'User profile incomplete. Please update your profile first.'),
               backgroundColor: Colors.red,
             ),
           );
           return;
         }
-        
+
         // Get car ID (you might need to pass this from CarDetailsScreen)
         // For now, using a default value - you should get the actual car ID
-        final carId = widget.carId ?? 3; // This should be passed from CarDetailsScreen
-        
+        final carId =
+            widget.carId ?? 3; // This should be passed from CarDetailsScreen
+
         // Format date and time
         final selectedDate = _selectedDate ?? widget.selectedStartDate!;
-        final dateString = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
-        final timeString = '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}:00';
-        
+        final dateString =
+            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+        final timeString =
+            '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}:00';
+
         // Get opening KM value
         final openingKm = int.tryParse(_openingKmController.text) ?? 0;
-        
+
         // Create test drive request with images in correct order
         final orderedImages = [
-          _selectedImages['image1'],   // car_front_img
-          _selectedImages['image2'],   // right_side_img
-          _selectedImages['image3'],   // back_car_img
-          _selectedImages['image4'],   // left_side_img
-          _selectedImages['image5'],   // upper_view
+          _selectedImages['image1'], // car_front_img
+          _selectedImages['image2'], // right_side_img
+          _selectedImages['image3'], // back_car_img
+          _selectedImages['image4'], // left_side_img
+          _selectedImages['image5'], // upper_view
         ].where((file) => file != null).cast<File>().toList();
-        
+
         final testDriveRequest = TestDriveRequest(
           carId: carId,
           frontUserId: user.id,
@@ -371,7 +372,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           aadharNo: user.aadharNo ?? _aadharNoController.text,
           note: _noteController.text,
           status: 'pending',
-          showroomId: widget.showroomId ?? 2, // This should be passed from CarDetailsScreen
+          showroomId: widget.showroomId ??
+              2, // This should be passed from CarDetailsScreen
           userName: _userNameController.text,
           userMobile: _userMobileController.text,
           userEmail: _userEmailController.text,
@@ -379,7 +381,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           openingKm: openingKm,
           carImages: orderedImages,
         );
-        
+
         // Debug log the request
         print('Test Drive Request Data:');
         print('Car ID: $carId');
@@ -393,34 +395,40 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         print('User Aadhar: ${user.aadharNo ?? _aadharNoController.text}');
         print('Opening KM: $openingKm');
         print('Number of Images: ${orderedImages.length}');
-        print('Image 1: ${_selectedImages['image1'] != null ? 'Uploaded' : 'Missing'}');
-        print('Image 2: ${_selectedImages['image2'] != null ? 'Uploaded' : 'Missing'}');
-        print('Image 3: ${_selectedImages['image3'] != null ? 'Uploaded' : 'Missing'}');
-        print('Image 4: ${_selectedImages['image4'] != null ? 'Uploaded' : 'Missing'}');
-        print('Image 5: ${_selectedImages['image5'] != null ? 'Uploaded' : 'Missing'}');
-        
+        print(
+            'Image 1: ${_selectedImages['image1'] != null ? 'Uploaded' : 'Missing'}');
+        print(
+            'Image 2: ${_selectedImages['image2'] != null ? 'Uploaded' : 'Missing'}');
+        print(
+            'Image 3: ${_selectedImages['image3'] != null ? 'Uploaded' : 'Missing'}');
+        print(
+            'Image 4: ${_selectedImages['image4'] != null ? 'Uploaded' : 'Missing'}');
+        print(
+            'Image 5: ${_selectedImages['image5'] != null ? 'Uploaded' : 'Missing'}');
+
         // Submit request
         final response = await _apiService.requestTestDrive(testDriveRequest);
-        
+
         if (response.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message ?? 'Test drive request submitted successfully'),
+              content: Text(response.message),
               backgroundColor: const Color(0xFF4CAF50),
             ),
           );
           Navigator.pop(context);
         } else {
           // Show error with retry option for server errors
-          final isServerError = response.message.contains('maintenance') == true || 
-                               response.message.contains('Server') == true;
-          
+          final isServerError =
+              response.message.contains('maintenance') == true ||
+                  response.message.contains('Server') == true;
+
           if (isServerError) {
-            _showServerErrorDialog(response.message ?? 'Server error occurred');
+            _showServerErrorDialog(response.message);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response.message ?? 'Failed to submit test drive request'),
+                content: Text(response.message),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 4),
                 action: SnackBarAction(
@@ -471,7 +479,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       } else if (_selectedImages['image5'] == null) {
         errorMessage = 'Please upload car image 5';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -489,7 +497,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         setState(() {
           _selectedImages[position] = File(image.path);
@@ -540,6 +548,32 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
     );
   }
 
+  Future<void> _fetchCarsByShowroom(int showroomId) async {
+    final response = await _apiService.getCarsByShowroom(showroomId);
+    if (response.success && response.data != null) {
+      setState(() {
+        _cars = response.data!;
+        if (_cars.isNotEmpty) {
+          _selectedCar = _cars.first.name;
+          _setOpeningKmForSelectedCar(_selectedCar);
+        }
+      });
+    }
+  }
+
+  void _setOpeningKmForSelectedCar(String? carName) {
+    if (carName == null || _cars.isEmpty) return;
+    final car = _cars.firstWhere(
+      (c) => c.name == carName,
+      orElse: () => _cars.first,
+    );
+    if (car.lastClosingKm != null && car.lastClosingKm!.isNotEmpty) {
+      _openingKmController.text = car.lastClosingKm!;
+    } else {
+      _openingKmController.text = '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -568,7 +602,9 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                 children: [
                   // Enhanced top bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced vertical padding
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4), // Reduced vertical padding
                     child: Row(
                       children: [
                         Container(
@@ -578,7 +614,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                           ),
                           child: IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                            icon: const Icon(Icons.arrow_back_ios_new,
+                                color: Colors.white, size: 16),
                             padding: const EdgeInsets.all(6),
                             constraints: const BoxConstraints(
                               minWidth: 36,
@@ -607,7 +644,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12), // Reduced from 16
+                        borderRadius:
+                            BorderRadius.circular(12), // Reduced from 16
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
@@ -629,7 +667,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9).withOpacity(0.1),
+                                      color: const Color(0xFF0095D9)
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
@@ -659,21 +698,27 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   labelStyle: const TextStyle(fontSize: 14),
                                   hintText: 'Enter showroom name',
                                   hintStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0095D9), size: 20),
+                                  prefixIcon: const Icon(
+                                      Icons.location_on_outlined,
+                                      color: Color(0xFF0095D9),
+                                      size: 20),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -692,22 +737,33 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: 'Date',
-                                          labelStyle: const TextStyle(fontSize: 14),
-                                          prefixIcon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF0095D9), size: 20),
+                                          labelStyle:
+                                              const TextStyle(fontSize: 14),
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_today_outlined,
+                                              color: Color(0xFF0095D9),
+                                              size: 20),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Colors.grey[300]!),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey[300]!),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                color: Color(0xFF0095D9),
+                                                width: 2),
                                           ),
                                           filled: true,
                                           fillColor: Colors.grey[50],
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 10),
                                         ),
                                         child: Text(
                                           _selectedDate != null
@@ -730,22 +786,33 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: 'Time',
-                                          labelStyle: const TextStyle(fontSize: 14),
-                                          prefixIcon: const Icon(Icons.access_time_rounded, color: Color(0xFF0095D9), size: 20),
+                                          labelStyle:
+                                              const TextStyle(fontSize: 14),
+                                          prefixIcon: const Icon(
+                                              Icons.access_time_rounded,
+                                              color: Color(0xFF0095D9),
+                                              size: 20),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Colors.grey[300]!),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey[300]!),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                color: Color(0xFF0095D9),
+                                                width: 2),
                                           ),
                                           filled: true,
                                           fillColor: Colors.grey[50],
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 10),
                                         ),
                                         child: Text(
                                           _selectedTime != null
@@ -770,21 +837,25 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 decoration: InputDecoration(
                                   labelText: 'Duration',
                                   labelStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.timer_outlined, color: Color(0xFF0095D9), size: 20),
+                                  prefixIcon: const Icon(Icons.timer_outlined,
+                                      color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 items: _durationOptions.map((String duration) {
                                   return DropdownMenuItem<String>(
@@ -813,7 +884,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9).withOpacity(0.1),
+                                      color: const Color(0xFF0095D9)
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
@@ -848,26 +920,44 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Pickup Address',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _pickupAddressController.text.isEmpty ? 'Enter pickup address' : 'Pickup Address',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.home_outlined, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText: _pickupAddressController
+                                                .text.isEmpty
+                                            ? 'Enter pickup address'
+                                            : 'Pickup Address',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.home_outlined,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
-                                      validator: (value) => value == null || value.isEmpty ? 'Please enter pickup address' : null,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                              ? 'Please enter pickup address'
+                                              : null,
                                     ),
                                     const SizedBox(height: 8),
                                     TextFormField(
@@ -875,26 +965,44 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Pickup City',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _pickupCityController.text.isEmpty ? 'Enter pickup city' : 'Pickup City',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText:
+                                            _pickupCityController.text.isEmpty
+                                                ? 'Enter pickup city'
+                                                : 'Pickup City',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.location_city_outlined,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
-                                      validator: (value) => value == null || value.isEmpty ? 'Please enter pickup city' : null,
+                                      validator: (value) =>
+                                          value == null || value.isEmpty
+                                              ? 'Please enter pickup city'
+                                              : null,
                                     ),
                                   ],
                                 ),
@@ -906,7 +1014,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9).withOpacity(0.1),
+                                      color: const Color(0xFF0095D9)
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
@@ -941,30 +1050,47 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Name',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _userNameController.text.isEmpty ? 'Enter your name' : 'Name',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText:
+                                            _userNameController.text.isEmpty
+                                                ? 'Enter your name'
+                                                : 'Name',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.person_outline,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
                                       validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
                                           return 'Please enter your name';
                                         }
-                                        if (!RegExp(r'^[a-zA-Z]{3,}$').hasMatch(value.trim())) {
+                                        if (!RegExp(r'^[a-zA-Z]{3,}$')
+                                            .hasMatch(value.trim())) {
                                           return 'Name should contain only letters and be at least 3 characters';
                                         }
                                         return null;
@@ -976,31 +1102,48 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Mobile',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _userMobileController.text.isEmpty ? 'Enter your mobile number' : 'Mobile',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText:
+                                            _userMobileController.text.isEmpty
+                                                ? 'Enter your mobile number'
+                                                : 'Mobile',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.phone_outlined,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
                                       keyboardType: TextInputType.phone,
                                       validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
                                           return 'Please enter your mobile number';
                                         }
-                                        if (!RegExp(r'^[0-9]{10}$').hasMatch(value.trim())) {
+                                        if (!RegExp(r'^[0-9]{10}$')
+                                            .hasMatch(value.trim())) {
                                           return 'Enter a valid 10-digit mobile number';
                                         }
                                         return null;
@@ -1017,31 +1160,49 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Email',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _userEmailController.text.isEmpty ? 'Enter your email' : 'Email',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText:
+                                            _userEmailController.text.isEmpty
+                                                ? 'Enter your email'
+                                                : 'Email',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.email_outlined,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
                                       keyboardType: TextInputType.emailAddress,
                                       validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
                                           return 'Please enter your email';
                                         }
-                                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                        if (!RegExp(
+                                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                            .hasMatch(value.trim())) {
                                           return 'Please enter a valid email address';
                                         }
                                         return null;
@@ -1054,35 +1215,56 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         labelText: 'Aadhar Number (Optional)',
-                                        labelStyle: const TextStyle(fontSize: 14),
-                                        hintText: _aadharNoController.text.isEmpty 
-                                            ? 'Enter 12-digit Aadhar' 
-                                            : 'Aadhar number',
-                                        hintStyle: const TextStyle(fontSize: 14),
-                                        prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF0095D9), size: 20),
+                                        labelStyle:
+                                            const TextStyle(fontSize: 14),
+                                        hintText:
+                                            _aadharNoController.text.isEmpty
+                                                ? 'Enter 12-digit Aadhar'
+                                                : 'Aadhar number',
+                                        hintStyle:
+                                            const TextStyle(fontSize: 14),
+                                        prefixIcon: const Icon(
+                                            Icons.credit_card_outlined,
+                                            color: Color(0xFF0095D9),
+                                            size: 20),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[300]!),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF0095D9),
+                                              width: 2),
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey[50],
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
                                       ),
                                       keyboardType: TextInputType.number,
+                                      maxLength: 12,
                                       validator: (value) {
-                                        if (value != null && value.trim().isNotEmpty) {
-                                          if (!RegExp(r'^[0-9]{12}$').hasMatch(value.trim())) {
+                                        if (value != null &&
+                                            value.trim().isNotEmpty) {
+                                          if (!RegExp(r'^[0-9]{12} ?$')
+                                              .hasMatch(value.trim())) {
                                             return 'Aadhar must be a 12-digit number';
                                           }
                                         }
                                         return null;
+                                      },
+                                      onChanged: (value) {
+                                        if (value.length == 12) {
+                                          FocusScope.of(context).unfocus();
+                                        }
                                       },
                                     ),
                                     const SizedBox(height: 8),
@@ -1090,7 +1272,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // Driving License field
                               TextFormField(
                                 controller: _drivingLicenseController,
@@ -1098,25 +1280,32 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 decoration: InputDecoration(
                                   labelText: 'Driving License',
                                   labelStyle: const TextStyle(fontSize: 14),
-                                  hintText: _drivingLicenseController.text.isEmpty 
-                                      ? 'Enter license number' 
-                                      : 'License number',
+                                  hintText:
+                                      _drivingLicenseController.text.isEmpty
+                                          ? 'Enter license number'
+                                          : 'License number',
                                   hintStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.card_membership_outlined, color: Color(0xFF0095D9), size: 20),
+                                  prefixIcon: const Icon(
+                                      Icons.card_membership_outlined,
+                                      color: Color(0xFF0095D9),
+                                      size: 20),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1126,7 +1315,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 },
                               ),
                               const SizedBox(height: 8),
-                              
+
                               // Note field
                               TextFormField(
                                 controller: _noteController,
@@ -1136,26 +1325,30 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   labelStyle: const TextStyle(fontSize: 14),
                                   hintText: 'Enter any additional notes',
                                   hintStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.note_outlined, color: Color(0xFF0095D9), size: 20),
+                                  prefixIcon: const Icon(Icons.note_outlined,
+                                      color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 maxLines: 2, // Reduced from 3
                               ),
                               const SizedBox(height: 8),
-                              
+
                               // Opening KM field
                               TextFormField(
                                 controller: _openingKmController,
@@ -1165,21 +1358,25 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                   labelStyle: const TextStyle(fontSize: 14),
                                   hintText: 'Enter current odometer reading',
                                   hintStyle: const TextStyle(fontSize: 14),
-                                  prefixIcon: const Icon(Icons.speed_outlined, color: Color(0xFF0095D9), size: 20),
+                                  prefixIcon: const Icon(Icons.speed_outlined,
+                                      color: Color(0xFF0095D9), size: 20),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF0095D9), width: 2),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
                                   fillColor: Colors.grey[50],
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
@@ -1194,14 +1391,15 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              
+
                               // Car Images Section
                               Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0095D9).withOpacity(0.1),
+                                      color: const Color(0xFF0095D9)
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(
@@ -1222,7 +1420,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              
+
                               // Image upload section
                               Container(
                                 padding: const EdgeInsets.all(16),
@@ -1244,8 +1442,10 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                     const SizedBox(height: 16),
                                     GridView.builder(
                                       shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 3,
                                         crossAxisSpacing: 12,
                                         mainAxisSpacing: 12,
@@ -1253,7 +1453,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                       ),
                                       itemCount: _selectedImages.length,
                                       itemBuilder: (context, index) {
-                                        final position = _selectedImages.keys.elementAt(index);
+                                        final position = _selectedImages.keys
+                                            .elementAt(index);
                                         final image = _selectedImages[position];
                                         // Define the correct image labels in order
                                         final imageLabels = [
@@ -1265,23 +1466,29 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                         ];
                                         final imageLabel = imageLabels[index];
                                         return GestureDetector(
-                                          onTap: image == null ? () => _pickImage(ImageSource.camera, position) : null,
+                                          onTap: image == null
+                                              ? () => _pickImage(
+                                                  ImageSource.camera, position)
+                                              : null,
                                           child: Container(
                                             decoration: BoxDecoration(
                                               border: Border.all(
-                                                color: image != null 
-                                                    ? const Color(0xFF0095D9) 
+                                                color: image != null
+                                                    ? const Color(0xFF0095D9)
                                                     : Colors.grey[300]!,
                                                 width: image != null ? 2 : 1,
                                               ),
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               color: Colors.white,
                                             ),
                                             child: Stack(
                                               children: [
                                                 if (image != null)
                                                   ClipRRect(
-                                                    borderRadius: BorderRadius.circular(6),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
                                                     child: Image.file(
                                                       image,
                                                       fit: BoxFit.cover,
@@ -1295,38 +1502,58 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                                     height: double.infinity,
                                                     decoration: BoxDecoration(
                                                       color: Colors.grey[100],
-                                                      borderRadius: BorderRadius.circular(6),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
                                                     ),
                                                     child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
                                                         Icon(
                                                           Icons.add_a_photo,
                                                           size: 32,
-                                                          color: Colors.grey[400],
+                                                          color:
+                                                              Colors.grey[400],
                                                         ),
-                                                        const SizedBox(height: 4),
+                                                        const SizedBox(
+                                                            height: 4),
                                                         Text(
                                                           imageLabel,
                                                           style: TextStyle(
                                                             fontSize: 8,
-                                                            fontWeight: FontWeight.w500,
-                                                            color: Colors.grey[600],
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: Colors
+                                                                .grey[600],
                                                           ),
                                                         ),
-                                                        const SizedBox(height: 2),
+                                                        const SizedBox(
+                                                            height: 2),
                                                         Container(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                          decoration: BoxDecoration(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 2),
+                                                          decoration:
+                                                              BoxDecoration(
                                                             color: Colors.red,
-                                                            borderRadius: BorderRadius.circular(8),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
                                                           ),
                                                           child: const Text(
                                                             'REQUIRED',
                                                             style: TextStyle(
                                                               fontSize: 8,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.white,
                                                             ),
                                                           ),
                                                         ),
@@ -1338,12 +1565,18 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                                     top: 4,
                                                     right: 4,
                                                     child: GestureDetector(
-                                                      onTap: () => _removeImage(position),
+                                                      onTap: () => _removeImage(
+                                                          position),
                                                       child: Container(
-                                                        padding: const EdgeInsets.all(4),
-                                                        decoration: BoxDecoration(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(4),
+                                                        decoration:
+                                                            BoxDecoration(
                                                           color: Colors.red,
-                                                          borderRadius: BorderRadius.circular(12),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
                                                         ),
                                                         child: const Icon(
                                                           Icons.close,
@@ -1363,34 +1596,41 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              
+
                               // Submit Button
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: _isSubmitting ? null : _submitRequest,
+                                  onPressed:
+                                      _isSubmitting ? null : _submitRequest,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0095D9),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 14
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12), // Reduced from 14
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8), // Reduced from 10
+                                      borderRadius: BorderRadius.circular(
+                                          8), // Reduced from 10
                                     ),
                                     elevation: 0,
                                   ),
                                   child: _isSubmitting
                                       ? const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             SizedBox(
                                               width: 18,
                                               height: 18,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(Colors.white),
                                               ),
                                             ),
-                                            SizedBox(width: 10), // Reduced from 12
+                                            SizedBox(
+                                                width: 10), // Reduced from 12
                                             Text(
                                               'Submitting...',
                                               style: TextStyle(
@@ -1424,4 +1664,4 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       ),
     );
   }
-} 
+}

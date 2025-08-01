@@ -15,6 +15,7 @@ class Car {
   final String? drivetrain;
   final int seatingCapacity;
   final String? bodyType;
+  final String? lastClosingKm;
 
   Car({
     required this.id,
@@ -33,6 +34,7 @@ class Car {
     this.drivetrain,
     required this.seatingCapacity,
     this.bodyType,
+    this.lastClosingKm,
   });
 
   factory Car.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class Car {
       drivetrain: json['drivetrain'],
       seatingCapacity: json['seating_capacity'] ?? 0,
       bodyType: json['body_type'],
+      lastClosingKm: json['last_closing_km']?.toString(),
     );
   }
 
@@ -74,6 +77,7 @@ class Car {
       'drivetrain': drivetrain,
       'seating_capacity': seatingCapacity,
       'body_type': bodyType,
+      'last_closing_km': lastClosingKm,
     };
   }
 
@@ -129,4 +133,4 @@ class ShowroomInfo {
       'pincode': pincode,
     };
   }
-} 
+}

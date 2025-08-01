@@ -778,7 +778,8 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
 
     bool isCompleted = _getStatusDisplayName(testDrive.status) == 'Completed';
     bool isCancelled = _getStatusDisplayName(testDrive.status) == 'Cancelled';
-    bool isRejected = _getStatusDisplayName(testDrive.status) == 'rejected';
+    bool isRejected = _getStatusDisplayName(testDrive.status) == 'Rejected' ||
+        _getStatusDisplayName(testDrive.status) == 'rejected';
 
     // Check if the test drive date matches today's date
     bool isToday = false;
@@ -1046,7 +1047,7 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                       ),
                     ),
                     const SizedBox(width: 6),
-                    if (!isCompleted && !isCancelled)
+                    if (!isCompleted && !isCancelled && !isRejected)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _updateStatus(testDrive),
@@ -1064,30 +1065,46 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                           ),
                         ),
                       ),
-                    if (isCompleted || isCancelled)
+                    if (isCompleted || isCancelled || isRejected)
                       Expanded(
                         child: OutlinedButton(
                           onPressed: null, // Disabled button
                           style: OutlinedButton.styleFrom(
                             foregroundColor: isCompleted
                                 ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444),
+                                : isCancelled
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFDC2626),
                             side: BorderSide(
                               color: isCompleted
                                   ? const Color(0xFF10B981)
-                                  : const Color(0xFFEF4444),
+                                  : isCancelled
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFFDC2626),
                               width: 1.5,
                             ),
                             backgroundColor: isCompleted
                                 ? const Color(0xFF10B981).withOpacity(0.1)
-                                : const Color(0xFFEF4444).withOpacity(0.1),
+                                : isCancelled
+                                    ? const Color(0xFFEF4444).withOpacity(0.1)
+                                    : const Color(0xFFDC2626).withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  isCompleted || isRejected ? 4 : 10),
+                            ),
                           ),
                           child: Text(
-                            isCompleted ? 'Completed' : 'Cancelled',
+                            isCompleted
+                                ? 'Completed'
+                                : isCancelled
+                                    ? 'Cancelled'
+                                    : 'Rejected',
                             style: TextStyle(
                               color: isCompleted
                                   ? const Color(0xFF10B981)
-                                  : const Color(0xFFEF4444),
+                                  : isCancelled
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFFDC2626),
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
                             ),
@@ -1096,7 +1113,8 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                       ),
                   ],
                 ),
-                if (!isCompleted && !isCancelled && isRejected && isToday) ...[
+                // Only show View Gate Pass if not completed, not cancelled, not rejected, and isToday
+                if (!isCompleted && !isCancelled && !isRejected && isToday) ...[
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
@@ -1243,14 +1261,29 @@ class AssignedTestDrivesScreenState extends State<AssignedTestDrivesScreen>
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildDetailRow(
-                              'Name', testDrive.userName ?? 'Unknown'),
-                          _buildDetailRow(
-                              'Mobile', testDrive.userMobile ?? 'No phone'),
-                          _buildDetailRow(
-                              'Email', testDrive.userEmail ?? 'No email'),
-                          _buildDetailRow(
-                              'Aadhar', testDrive.userAdhar ?? 'No aadhar'),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: _buildDetailRow(
+                                      'Name', testDrive.userName ?? 'Unknown')),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                  child: _buildDetailRow('Mobile',
+                                      testDrive.userMobile ?? 'No phone')),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: _buildDetailRow('Email',
+                                      testDrive.userEmail ?? 'No email')),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                  child: _buildDetailRow('Aadhar',
+                                      testDrive.userAdhar ?? 'No aadhar')),
+                            ],
+                          ),
                         ],
                       ),
                     ),

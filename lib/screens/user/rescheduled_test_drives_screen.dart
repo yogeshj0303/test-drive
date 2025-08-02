@@ -439,7 +439,12 @@ class _RescheduledTestDrivesScreenState
                         _buildDetailRow(
                             'Email', request.userEmail ?? 'Unknown'),
                         _buildDetailRow(
-                            'Aadhar', request.userAdhar ?? 'Unknown'),
+                            'Aadhar',
+                            (request.userAdhar != null &&
+                                    request.userAdhar!.isNotEmpty &&
+                                    request.userAdhar != '0')
+                                ? request.userAdhar!
+                                : 'Not Available'),
                       ],
                     ),
                     const SizedBox(height: 16),

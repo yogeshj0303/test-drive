@@ -468,8 +468,15 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                             'Mobile', request.userMobile ?? 'Unknown'),
                         _buildDetailRow(
                             'Email', request.userEmail ?? 'Unknown'),
+
+                        // Show Aadhar field
                         _buildDetailRow(
-                            'Aadhar', request.userAdhar ?? 'Unknown'),
+                            'Aadhar',
+                            (request.userAdhar != null &&
+                                    request.userAdhar!.isNotEmpty &&
+                                    request.userAdhar != '0')
+                                ? request.userAdhar!
+                                : 'Not Available'),
                       ],
                     ),
                     if (request.driverDetails != null) ...[

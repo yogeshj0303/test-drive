@@ -17,7 +17,6 @@ class UpdateStatusScreen extends StatefulWidget {
 }
 
 class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
-  bool _isLoading = false;
   AssignedTestDrive? _selectedTestDrive;
   final GlobalKey<_UpdateStatusFormState> _formKey = GlobalKey<_UpdateStatusFormState>();
 

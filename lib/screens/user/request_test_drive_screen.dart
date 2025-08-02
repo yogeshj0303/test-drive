@@ -369,7 +369,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           pickupCity: _pickupCityController.text,
           pickupPincode: _pickupPincodeController.text,
           drivingLicense: _drivingLicenseController.text,
-          aadharNo: user.aadharNo ?? _aadharNoController.text,
+          aadharNo: user.aadharNo ?? " ",
           note: _noteController.text,
           status: 'pending',
           showroomId: widget.showroomId ??
@@ -377,7 +377,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           userName: _userNameController.text,
           userMobile: _userMobileController.text,
           userEmail: _userEmailController.text,
-          userAdhar: user.aadharNo ?? _aadharNoController.text,
+          userAdhar: _aadharNoController.text,
           openingKm: openingKm,
           carImages: orderedImages,
         );

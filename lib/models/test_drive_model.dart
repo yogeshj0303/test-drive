@@ -175,7 +175,7 @@ class TestDriveRequest {
   final String userName;
   final String userMobile;
   final String userEmail;
-  final String userAdhar;
+  final String? userAdhar;
   final List<File> carImages;
   final int openingKm;
 
@@ -217,7 +217,7 @@ class TestDriveRequest {
       'user_name': userName,
       'user_mobile': userMobile,
       'user_email': userEmail,
-      'user_adhar': userAdhar,
+      'user_adhar': userAdhar ?? '',
       'opening_km': openingKm.toString(),
     };
   }
@@ -239,7 +239,7 @@ class TestDriveRequest {
       'user_name': userName,
       'user_mobile': userMobile,
       'user_email': userEmail,
-      'user_adhar': userAdhar,
+      'user_adhar': userAdhar ?? '',
       'opening_km': openingKm.toString(),
     };
   }
@@ -262,7 +262,7 @@ class TestDriveResponse {
   final String userName;
   final String userMobile;
   final String userEmail;
-  final String userAdhar;
+  final String? userAdhar;
   final String createdAt;
   final String updatedAt;
 
@@ -306,7 +306,7 @@ class TestDriveResponse {
       userName: json['user_name']?.toString() ?? '',
       userMobile: json['user_mobile']?.toString() ?? '',
       userEmail: json['user_email']?.toString() ?? '',
-      userAdhar: json['user_adhar']?.toString() ?? '',
+      userAdhar: json['user_adhar']?.toString() ?? 'Not Available',
       createdAt: json['created_at']?.toString() ?? '',
       updatedAt: json['updated_at']?.toString() ?? '',
     );

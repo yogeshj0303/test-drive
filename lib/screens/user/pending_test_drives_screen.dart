@@ -655,7 +655,12 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                         _buildDetailRow(
                             'Email', request.userEmail ?? 'Unknown'),
                         _buildDetailRow(
-                            'Aadhar', request.userAdhar ?? 'Unknown'),
+                            'Aadhar',
+                            (request.userAdhar != null &&
+                                    request.userAdhar!.isNotEmpty &&
+                                    request.userAdhar != '0')
+                                ? request.userAdhar!
+                                : 'Not Available'),
                       ],
                     ),
                     if (request.requestbyEmplyee != null) ...[

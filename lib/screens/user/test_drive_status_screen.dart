@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:varenyam/services/api_config.dart';
 import '../../providers/user_test_drives_provider.dart';
 import '../../models/test_drive_model.dart';
 
@@ -14,13 +15,15 @@ class TestDriveStatusScreen extends StatefulWidget {
 class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
   String? _selectedStatusFilter;
 
-  List<TestDriveListResponse> _applyFilters(List<TestDriveListResponse> allTestDrives) {
+  List<TestDriveListResponse> _applyFilters(
+      List<TestDriveListResponse> allTestDrives) {
     if (_selectedStatusFilter == null) {
       return List.from(allTestDrives);
     } else {
       return allTestDrives
           .where((testDrive) =>
-              testDrive.status?.toLowerCase() == _selectedStatusFilter?.toLowerCase())
+              testDrive.status?.toLowerCase() ==
+              _selectedStatusFilter?.toLowerCase())
           .toList();
     }
   }
@@ -29,12 +32,36 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
     final theme = Theme.of(context);
     final statusOptions = [
       {'label': 'All', 'value': null, 'color': const Color(0xFF2196F3)},
-      {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFFFA000)},
-      {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF4CAF50)},
-      {'label': 'Completed', 'value': 'completed', 'color': const Color(0xFF2196F3)},
-      {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFE53935)},
-      {'label': 'Cancelled', 'value': 'cancelled', 'color': const Color(0xFFE53935)},
-      {'label': 'Rescheduled', 'value': 'rescheduled', 'color': const Color(0xFF9C27B0)},
+      {
+        'label': 'Pending',
+        'value': 'pending',
+        'color': const Color(0xFFFFA000)
+      },
+      {
+        'label': 'Approved',
+        'value': 'approved',
+        'color': const Color(0xFF4CAF50)
+      },
+      {
+        'label': 'Completed',
+        'value': 'completed',
+        'color': const Color(0xFF2196F3)
+      },
+      {
+        'label': 'Rejected',
+        'value': 'rejected',
+        'color': const Color(0xFFE53935)
+      },
+      {
+        'label': 'Cancelled',
+        'value': 'cancelled',
+        'color': const Color(0xFFE53935)
+      },
+      {
+        'label': 'Rescheduled',
+        'value': 'rescheduled',
+        'color': const Color(0xFF9C27B0)
+      },
     ];
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -53,8 +80,8 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                   status['label'] as String,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: isSelected 
-                        ? theme.colorScheme.onPrimary 
+                    color: isSelected
+                        ? theme.colorScheme.onPrimary
                         : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -67,20 +94,23 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                 selectedColor: statusColor,
                 checkmarkColor: theme.colorScheme.onPrimary,
                 side: BorderSide(
-                  color: isSelected 
-                      ? statusColor 
+                  color: isSelected
+                      ? statusColor
                       : theme.colorScheme.outline.withOpacity(0.3),
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                avatar: isSelected ? Icon(
-                  Icons.check_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onPrimary,
-                ) : null,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                avatar: isSelected
+                    ? Icon(
+                        Icons.check_rounded,
+                        size: 16,
+                        color: theme.colorScheme.onPrimary,
+                      )
+                    : null,
               ),
             );
           }).toList(),
@@ -198,7 +228,9 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
             child: Column(
               children: [
                 // Filter Chips Section
-                if (!provider.isLoading && provider.errorMessage == null && provider.allTestDrives.isNotEmpty)
+                if (!provider.isLoading &&
+                    provider.errorMessage == null &&
+                    provider.allTestDrives.isNotEmpty)
                   _buildFilterChips(),
                 // Main Content
                 Expanded(
@@ -302,10 +334,12 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
-                                        side: BorderSide(color: Colors.grey[200]!),
+                                        side: BorderSide(
+                                            color: Colors.grey[200]!),
                                       ),
                                       child: InkWell(
-                                        onTap: () => _showTestDriveDetails(request),
+                                        onTap: () =>
+                                            _showTestDriveDetails(request),
                                         borderRadius: BorderRadius.circular(16),
                                         child: Padding(
                                           padding: const EdgeInsets.all(12),
@@ -313,15 +347,23 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                             children: [
                                               // Status icon
                                               Container(
-                                                padding: const EdgeInsets.all(8),
+                                                padding:
+                                                    const EdgeInsets.all(8),
                                                 decoration: BoxDecoration(
-                                                  color: _getStatusColor(request.status ?? 'Unknown')
+                                                  color: _getStatusColor(
+                                                          request.status ??
+                                                              'Unknown')
                                                       .withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
                                                 child: Icon(
-                                                  _getStatusIcon(request.status ?? 'Unknown'),
-                                                  color: _getStatusColor(request.status ?? 'Unknown'),
+                                                  _getStatusIcon(
+                                                      request.status ??
+                                                          'Unknown'),
+                                                  color: _getStatusColor(
+                                                      request.status ??
+                                                          'Unknown'),
                                                   size: 18,
                                                 ),
                                               ),
@@ -329,40 +371,64 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                               // Main content
                                               Expanded(
                                                 child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     // Car name and status in same row
                                                     Row(
                                                       children: [
                                                         Expanded(
                                                           child: Text(
-                                                            request.car?.name ?? 'Unknown',
-                                                            style: const TextStyle(
+                                                            request.car?.name ??
+                                                                'Unknown',
+                                                            style:
+                                                                const TextStyle(
                                                               fontSize: 15,
-                                                              fontWeight: FontWeight.w600,
-                                                              color: Color(0xFF1A1A1A),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color: Color(
+                                                                  0xFF1A1A1A),
                                                             ),
                                                             maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 8),
+                                                        const SizedBox(
+                                                            width: 8),
                                                         Container(
-                                                          padding: const EdgeInsets.symmetric(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
                                                             horizontal: 6,
                                                             vertical: 2,
                                                           ),
-                                                          decoration: BoxDecoration(
-                                                            color: _getStatusColor(request.status ?? 'Unknown')
-                                                                .withOpacity(0.1),
-                                                            borderRadius: BorderRadius.circular(6),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: _getStatusColor(
+                                                                    request.status ??
+                                                                        'Unknown')
+                                                                .withOpacity(
+                                                                    0.1),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6),
                                                           ),
                                                           child: Text(
-                                                            _getStatusText(request.status ?? 'Unknown'),
+                                                            _getStatusText(
+                                                                request.status ??
+                                                                    'Unknown'),
                                                             style: TextStyle(
                                                               fontSize: 10,
-                                                              fontWeight: FontWeight.w600,
-                                                              color: _getStatusColor(request.status ?? 'Unknown'),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color: _getStatusColor(
+                                                                  request.status ??
+                                                                      'Unknown'),
                                                             ),
                                                           ),
                                                         ),
@@ -371,45 +437,60 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                                     const SizedBox(height: 4),
                                                     // Showroom name
                                                     Text(
-                                                      request.showroom?.name ?? 'Unknown',
+                                                      request.showroom?.name ??
+                                                          'Unknown',
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         color: Colors.grey[600],
                                                       ),
                                                       maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
                                                     const SizedBox(height: 4),
                                                     // Date and time in same row
                                                     Row(
                                                       children: [
                                                         Icon(
-                                                          Icons.calendar_today_outlined,
+                                                          Icons
+                                                              .calendar_today_outlined,
                                                           size: 12,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Text(
-                                                          request.date ?? 'Unknown',
+                                                          request.date ??
+                                                              'Unknown',
                                                           style: TextStyle(
                                                             fontSize: 11,
-                                                            color: Colors.grey[600],
-                                                            fontWeight: FontWeight.w500,
+                                                            color: Colors
+                                                                .grey[600],
+                                                            fontWeight:
+                                                                FontWeight.w500,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 12),
+                                                        const SizedBox(
+                                                            width: 12),
                                                         Icon(
-                                                          Icons.access_time_rounded,
+                                                          Icons
+                                                              .access_time_rounded,
                                                           size: 12,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Text(
-                                                          request.time ?? 'Unknown',
+                                                          request.time ??
+                                                              'Unknown',
                                                           style: TextStyle(
                                                             fontSize: 11,
-                                                            color: Colors.grey[600],
-                                                            fontWeight: FontWeight.w500,
+                                                            color: Colors
+                                                                .grey[600],
+                                                            fontWeight:
+                                                                FontWeight.w500,
                                                           ),
                                                         ),
                                                       ],
@@ -419,36 +500,52 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                                     Row(
                                                       children: [
                                                         Icon(
-                                                          Icons.location_on_outlined,
+                                                          Icons
+                                                              .location_on_outlined,
                                                           size: 12,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Expanded(
                                                           child: Text(
-                                                            request.pickupCity ?? 'Unknown',
+                                                            request.pickupCity ??
+                                                                'Unknown',
                                                             style: TextStyle(
                                                               fontSize: 11,
-                                                              color: Colors.grey[600],
-                                                              fontWeight: FontWeight.w500,
+                                                              color: Colors
+                                                                  .grey[600],
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
                                                             ),
                                                             maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 12),
+                                                        const SizedBox(
+                                                            width: 12),
                                                         Icon(
-                                                          Icons.pin_drop_outlined,
+                                                          Icons
+                                                              .pin_drop_outlined,
                                                           size: 12,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Text(
-                                                          request.pickupPincode ?? 'Unknown',
+                                                          request.pickupPincode ??
+                                                              'Unknown',
                                                           style: TextStyle(
                                                             fontSize: 11,
-                                                            color: Colors.grey[600],
-                                                            fontWeight: FontWeight.w500,
+                                                            color: Colors
+                                                                .grey[600],
+                                                            fontWeight:
+                                                                FontWeight.w500,
                                                           ),
                                                         ),
                                                       ],
@@ -463,11 +560,11 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                                     );
                                   },
                                 ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        );
       },
     );
   }
@@ -557,9 +654,10 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),    
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(request.status ?? 'Unknown' ).withOpacity(0.1),
+                      color: _getStatusColor(request.status ?? 'Unknown')
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
@@ -623,7 +721,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     valueColor: _getStatusColor(request.status ?? 'Unknown'),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Pickup Details Section
                   _buildSectionHeader('Pickup Details'),
                   const SizedBox(height: 12),
@@ -645,7 +743,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     Icons.pin_drop_outlined,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Car Details Section
                   _buildSectionHeader('Car Details'),
                   const SizedBox(height: 12),
@@ -669,7 +767,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                   const SizedBox(height: 12),
                   _buildDetailItem(
                     'Color',
-                    request.car?.color ?? 'Unknown'     ,
+                    request.car?.color ?? 'Unknown',
                     Icons.palette_outlined,
                   ),
                   const SizedBox(height: 12),
@@ -715,7 +813,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     ),
                   ],
                   const SizedBox(height: 20),
-                  
+
                   // Car Images Section
                   if (request.car?.images?.isNotEmpty == true) ...[
                     _buildSectionHeader('Car Images'),
@@ -737,30 +835,35 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: image?.imagePath != null ? Image.network(
-                                'https://varenyam.acttconnect.com/${image?.imagePath}',
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {      
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: const Icon(
-                                      Icons.image_not_supported_outlined,
-                                      color: Colors.grey,
-                                    ),
-                                  );
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ) : const SizedBox.shrink() ,
+                              child: image?.imagePath != null
+                                  ? Image.network(
+                                      'https://varenyam.acttconnect.com/${image?.imagePath}',
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: const Icon(
+                                            Icons.image_not_supported_outlined,
+                                            color: Colors.grey,
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                           );
                         },
@@ -768,9 +871,9 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  
+
                   // Car Description Section
-                    if (request.car?.description?.isNotEmpty == true) ...[
+                  if (request.car?.description?.isNotEmpty == true) ...[
                     _buildSectionHeader('Car Description'),
                     const SizedBox(height: 12),
                     Container(
@@ -781,7 +884,8 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: Text(
-                        _cleanHtmlDescription(request.car?.description ?? 'Unknown'),
+                        _cleanHtmlDescription(
+                            request.car?.description ?? 'Unknown'),
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF1A1A1A),
@@ -791,7 +895,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  
+
                   // Showroom Details Section
                   _buildSectionHeader('Showroom Details'),
                   const SizedBox(height: 12),
@@ -819,7 +923,7 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                     Icons.pin_drop_outlined,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Additional Details Section
                   _buildSectionHeader('Additional Details'),
                   const SizedBox(height: 12),
@@ -902,7 +1006,8 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                       Icons.person_outline,
                     ),
                   ],
-                  if (request.driverId != null && request.driverId!.isNotEmpty) ...[
+                  if (request.driverId != null &&
+                      request.driverId!.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _buildDetailItem(
                       'Assigned Driver ID',
@@ -925,6 +1030,360 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
                       request.requestbyEmplyee?.name ?? 'Unknown',
                       Icons.person_add_outlined,
                     ),
+                    const SizedBox(height: 12),
+                    // Opening Kilometer
+                    if (request.openingKm != null)
+                      _buildDetailSection(
+                        'Opening Kilometer',
+                        [
+                          _buildDetailRow(
+                              'Opening KM', request.openingKm.toString()),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    // Closing Kilometer
+
+                    //only for completed test drives
+                    if (request.closingKm != null &&
+                        request.status?.toLowerCase() == 'completed')
+                      _buildDetailSection(
+                        'Closing Kilometer',
+                        [
+                          _buildDetailRow(
+                              'Closing KM', request.closingKm.toString()),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    // Additional section for user-submitted car images
+                    if ((request.car_front_img != null &&
+                            request.car_front_img!.isNotEmpty) ||
+                        (request.back_car_img != null &&
+                            request.back_car_img!.isNotEmpty) ||
+                        (request.upper_view != null &&
+                            request.upper_view!.isNotEmpty) ||
+                        (request.right_side_img != null &&
+                            request.right_side_img!.isNotEmpty) ||
+                        (request.left_side_img != null &&
+                            request.left_side_img!.isNotEmpty))
+                      _buildDetailSection(
+                        'Car Images (Submitted by User)',
+                        [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                if (request.car_front_img != null &&
+                                    request.car_front_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Front side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.car_front_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.back_car_img != null &&
+                                    request.back_car_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('co-driver side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.back_car_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.right_side_img != null &&
+                                    request.right_side_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Rear side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.right_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.left_side_img != null &&
+                                    request.left_side_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('driver side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.left_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.upper_view != null &&
+                                    request.upper_view!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Meter reading',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.upper_view),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    // Additional section for user-submitted car images
+
+                    // for completed test drives
+                    if (request.status?.toLowerCase() == 'completed' &&
+                            (request.return_front_img != null &&
+                                request.return_front_img!.isNotEmpty) ||
+                        (request.return_back_img != null &&
+                            request.return_back_img!.isNotEmpty) ||
+                        (request.return_right_img != null &&
+                            request.return_right_img!.isNotEmpty) ||
+                        (request.return_left_img != null &&
+                            request.return_left_img!.isNotEmpty) ||
+                        (request.return_upper_img != null &&
+                            request.return_upper_img!.isNotEmpty))
+                      _buildDetailSection(
+                        'Car Images (Finished Test Drive)',
+                        [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                if (request.return_front_img != null &&
+                                    request.return_front_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Return Front side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.car_front_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.return_back_img != null &&
+                                    request.return_back_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Return co-driver side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.back_car_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.return_right_img != null &&
+                                    request.return_right_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Return Rear side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.right_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.return_left_img != null &&
+                                    request.return_left_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Return driver side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.left_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.return_upper_img != null &&
+                                    request.return_upper_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Return Meter reading',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.upper_view),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                   const SizedBox(height: 20),
                 ],
@@ -933,6 +1392,119 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGalleryImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.image,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      );
+    }
+
+    // Construct the full URL if it's a relative path
+    String fullImageUrl = imagePath;
+    if (!imagePath.startsWith('http://') && !imagePath.startsWith('https://')) {
+      fullImageUrl = '${ApiConfig.baseUrl}/$imagePath';
+    }
+
+    return Image.network(
+      fullImageUrl,
+      fit: BoxFit.fill,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.image,
+            color: Colors.grey.shade400,
+            size: 32,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1014,7 +1586,8 @@ class TestDriveStatusScreenState extends State<TestDriveStatusScreen> {
   }
 
   void refreshData() {
-    final provider = Provider.of<UserTestDrivesProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserTestDrivesProvider>(context, listen: false);
     provider.refresh();
   }
-} 
+}

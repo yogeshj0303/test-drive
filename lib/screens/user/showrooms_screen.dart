@@ -119,7 +119,7 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
     setState(() {
       _filteredShowrooms = _showrooms.where((showroom) {
         return showroom.name.toLowerCase().contains(query) ||
-               showroom.locationDisplay.toLowerCase().contains(query);
+            showroom.locationDisplay.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -302,26 +302,30 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: _isListening 
+                              color: _isListening
                                   ? Colors.red.withOpacity(0.1)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               _isListening ? Icons.mic : Icons.mic_none,
-                              color: _isListening ? Colors.red : Colors.grey[600],
+                              color:
+                                  _isListening ? Colors.red : Colors.grey[600],
                               size: 20,
                             ),
                           ),
-                          onPressed: _isListening ? _stopListening : _startListening,
-                          tooltip: _isListening ? 'Stop listening' : 'Voice search',
+                          onPressed:
+                              _isListening ? _stopListening : _startListening,
+                          tooltip:
+                              _isListening ? 'Stop listening' : 'Voice search',
                         ),
                       if (_searchController.text.isNotEmpty)
                         GestureDetector(
                           onTap: () {
                             _searchController.clear();
                           },
-                          child: Icon(Icons.clear, color: Colors.grey[500], size: 20),
+                          child: Icon(Icons.clear,
+                              color: Colors.grey[500], size: 20),
                         ),
                       const SizedBox(width: 8),
                     ],
@@ -330,7 +334,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                 if (_isListening)
                   Container(
                     margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
@@ -362,7 +367,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                 if (!_speechEnabled && _showrooms.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
@@ -536,6 +542,7 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                 availableCars: [], // Will be populated when cars API is available
                 showroomLocation: showroom.locationDisplay,
                 showroomRating: showroom.ratting.toString(),
+                locationType: showroom.locationType ?? '',
                 showroomDistance: 'N/A',
                 showroomId: showroom.id,
               ),
@@ -592,8 +599,10 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        const Color(0xFF0095D9).withOpacity(0.15),
-                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                        const Color(0xFF0095D9)
+                                            .withOpacity(0.15),
+                                        const Color(0xFF0095D9)
+                                            .withOpacity(0.08),
                                       ],
                                     ),
                                   ),
@@ -602,7 +611,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                       width: 45,
                                       height: 45,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF0095D9).withOpacity(0.1),
+                                        color: const Color(0xFF0095D9)
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Icon(
@@ -614,7 +624,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                   ),
                                 );
                               },
-                              loadingBuilder: (context, child, loadingProgress) {
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Container(
                                   width: double.infinity,
@@ -624,18 +635,26 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        const Color(0xFF0095D9).withOpacity(0.15),
-                                        const Color(0xFF0095D9).withOpacity(0.08),
+                                        const Color(0xFF0095D9)
+                                            .withOpacity(0.15),
+                                        const Color(0xFF0095D9)
+                                            .withOpacity(0.08),
                                       ],
                                     ),
                                   ),
                                   child: Center(
                                     child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                              loadingProgress.expectedTotalBytes!
-                                          : null,
-                                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0095D9)),
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                              Color(0xFF0095D9)),
                                       strokeWidth: 2,
                                     ),
                                   ),
@@ -660,7 +679,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                   width: 45,
                                   height: 45,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0095D9).withOpacity(0.1),
+                                    color: const Color(0xFF0095D9)
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -677,7 +697,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                       top: 10,
                       right: 10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
@@ -791,7 +812,8 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
                             color: const Color(0xFF0095D9).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(5),
@@ -824,6 +846,7 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
                                 showroomRating: showroom.ratting.toString(),
                                 showroomDistance: 'N/A',
                                 showroomId: showroom.id,
+                                locationType: showroom.locationType ?? '',
                               ),
                             ),
                           );
@@ -856,4 +879,4 @@ class _ShowroomsScreenState extends State<ShowroomsScreen> {
       ),
     );
   }
-} 
+}

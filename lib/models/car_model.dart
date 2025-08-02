@@ -16,6 +16,7 @@ class Car {
   final int seatingCapacity;
   final String? bodyType;
   final String? lastClosingKm;
+  final String? locationType;
 
   Car({
     required this.id,
@@ -25,6 +26,7 @@ class Car {
     required this.mainImage,
     required this.images,
     required this.showroom,
+    this.locationType,
     required this.price,
     this.discountPrice,
     required this.fuelType,
@@ -56,6 +58,7 @@ class Car {
       seatingCapacity: json['seating_capacity'] ?? 0,
       bodyType: json['body_type'],
       lastClosingKm: json['last_closing_km']?.toString(),
+      locationType: json['car_location_type'],
     );
   }
 
@@ -78,6 +81,7 @@ class Car {
       'seating_capacity': seatingCapacity,
       'body_type': bodyType,
       'last_closing_km': lastClosingKm,
+      'car_location_type': locationType,
     };
   }
 

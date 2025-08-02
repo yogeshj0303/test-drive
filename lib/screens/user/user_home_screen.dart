@@ -31,12 +31,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   bool _isScrolled = false;
   final StorageService _storageService = StorageService();
   final api.ApiService _apiService = api.ApiService();
-  
+
   List<Showroom> _showrooms = [];
   Map<int, int> _carCounts = {}; // Store car counts for each showroom
   bool _isLoadingShowrooms = true;
   String? _showroomsErrorMessage;
-  
+
   // Recent activities variables
   List<ActivityLog> _recentActivities = [];
   bool _isLoadingActivities = true;
@@ -49,6 +49,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     _fetchShowrooms();
     _loadRecentActivities();
   }
+
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -117,7 +118,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       _isLoadingActivities = true;
       _activityError = null;
     });
-    
+
     try {
       final currentUser = await _storageService.getUser();
       if (currentUser == null) {
@@ -133,7 +134,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         userId: currentUser.id,
         userType: 'users',
       );
-      
+
       if (mounted) {
         setState(() {
           _isLoadingActivities = false;
@@ -160,7 +161,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Future<void> _performLogout(BuildContext context) async {
     await LogoutUtils.performUserLogout(context);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +219,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UserProfileScreen(showBackButton: true),
+                  builder: (context) =>
+                      const UserProfileScreen(showBackButton: true),
                 ),
               );
             },
@@ -234,7 +235,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               // Showrooms Section
               _buildSectionHeader(
                 'My Showroom',
@@ -264,7 +264,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 8, // Reduced from 12
                     crossAxisSpacing: 8, // Reduced from 12
-                    childAspectRatio: 1.2, // Increased from 1.1 to make cards shorter
+                    childAspectRatio:
+                        1.2, // Increased from 1.1 to make cards shorter
                   ),
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -280,14 +281,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PendingTestDrivesScreen(),
+                              builder: (context) =>
+                                  const PendingTestDrivesScreen(),
                             ),
                           );
-                          
+
                           // If we returned from the screen, use smart refresh
                           if (result == true) {
                             // Use smart refresh to get latest data only if needed
-                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                            Provider.of<UserTestDrivesProvider>(context,
+                                    listen: false)
+                                .smartRefresh();
                           }
                         },
                       },
@@ -300,14 +304,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const RescheduledTestDrivesScreen(),
+                              builder: (context) =>
+                                  const RescheduledTestDrivesScreen(),
                             ),
                           );
-                          
+
                           // If we returned from the screen, use smart refresh
                           if (result == true) {
                             // Use smart refresh to get latest data only if needed
-                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                            Provider.of<UserTestDrivesProvider>(context,
+                                    listen: false)
+                                .smartRefresh();
                           }
                         },
                       },
@@ -320,14 +327,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CancelTestDriveScreen(),
+                              builder: (context) =>
+                                  const CancelTestDriveScreen(),
                             ),
                           );
-                          
+
                           // If we returned from the screen, use smart refresh
                           if (result == true) {
                             // Use smart refresh to get latest data only if needed
-                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                            Provider.of<UserTestDrivesProvider>(context,
+                                    listen: false)
+                                .smartRefresh();
                           }
                         },
                       },
@@ -340,14 +350,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ApprovedTestDrivesScreen(),
+                              builder: (context) =>
+                                  const ApprovedTestDrivesScreen(),
                             ),
                           );
-                          
+
                           // If we returned from the screen, use smart refresh
                           if (result == true) {
                             // Use smart refresh to get latest data only if needed
-                            Provider.of<UserTestDrivesProvider>(context, listen: false).smartRefresh();
+                            Provider.of<UserTestDrivesProvider>(context,
+                                    listen: false)
+                                .smartRefresh();
                           }
                         },
                       },
@@ -366,7 +379,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
               ),
               const SizedBox(height: 16), // Reduced from 24
-              
+
               // Recent Activities Section
               _buildSectionHeader(
                 'Recent Activity',
@@ -375,7 +388,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const UserActivitiesScreen(showBackButton: true),
+                      builder: (context) =>
+                          const UserActivitiesScreen(showBackButton: true),
                     ),
                   );
                 },
@@ -392,7 +406,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Widget _buildSectionHeader(String title, String subtitle,
       {VoidCallback? onViewAll}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12), // Reduced top from 24, bottom from 16
+      padding: const EdgeInsets.fromLTRB(
+          16, 16, 16, 12), // Reduced top from 24, bottom from 16
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -496,7 +511,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Reduced from 12, 8
+          padding: const EdgeInsets.symmetric(
+              horizontal: 10, vertical: 6), // Reduced from 12, 8
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -765,11 +781,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                                 ),
                                 child: Center(
                                   child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
                                             loadingProgress.expectedTotalBytes!
                                         : null,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            Colors.white),
                                     strokeWidth: 2,
                                   ),
                                 ),
@@ -833,7 +853,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     top: 10, // Reduced from 12
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced from 10, 6
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4), // Reduced from 10, 6
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12),
@@ -924,12 +945,16 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                               // const SizedBox(width: 4),
                               Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), // Reduced from 8, 2
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1), // Reduced from 8, 2
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0095D9).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF0095D9).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFF0095D9).withOpacity(0.3),
+                                    color: const Color(0xFF0095D9)
+                                        .withOpacity(0.3),
                                     width: 1,
                                   ),
                                 ),
@@ -959,10 +984,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           showDialog(
                             context: context,
                             barrierDismissible: false,
-                            builder: (context) => const Center(child: CircularProgressIndicator()),
+                            builder: (context) => const Center(
+                                child: CircularProgressIndicator()),
                           );
-                          final carResponse = await _apiService.getCarsByShowroom(showroom.id);
-                          if (mounted) Navigator.pop(context); // Close loading dialog
+                          final carResponse =
+                              await _apiService.getCarsByShowroom(showroom.id);
+                          if (mounted)
+                            Navigator.pop(context); // Close loading dialog
                           if (carResponse.success) {
                             Navigator.push(
                               context,
@@ -973,6 +1001,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                                   showroomLocation: showroom.locationDisplay,
                                   showroomRating: showroom.ratting.toString(),
                                   showroomDistance: 'N/A',
+                                  locationType: showroom.locationType ?? '',
                                   showroomId: showroom.id,
                                 ),
                               ),
@@ -981,7 +1010,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(carResponse.message ?? 'Failed to load cars'),
+                                  content: Text(carResponse.message ??
+                                      'Failed to load cars'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -1163,7 +1193,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF0095D9)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            const Color(0xFF0095D9)),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1209,47 +1240,48 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
           if (!_isLoadingActivities && _activityError == null)
             _recentActivities.isEmpty
-              ? Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inbox_outlined,
-                          color: Colors.grey[400],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'No recent activities',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w500,
+                ? Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            color: Colors.grey[400],
+                            size: 20,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Text(
+                            'No recent activities',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  )
+                : Column(
+                    children: _recentActivities.take(3).map((activity) {
+                      return _buildProfessionalActivityItem(
+                        activity,
+                        activity != _recentActivities.take(3).last,
+                      );
+                    }).toList(),
                   ),
-                )
-              : Column(
-                  children: _recentActivities.take(3).map((activity) {
-                    return _buildProfessionalActivityItem(
-                      activity,
-                      activity != _recentActivities.take(3).last,
-                    );
-                  }).toList(),
-                ),
         ],
       ),
     );
   }
 
-  Widget _buildProfessionalActivityItem(ActivityLog activity, bool showDivider) {
+  Widget _buildProfessionalActivityItem(
+      ActivityLog activity, bool showDivider) {
     final color = _getActivityColor(activity);
     final icon = _getActivityIcon(activity);
-    
+
     return Column(
       children: [
         Container(
@@ -1274,9 +1306,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   size: 14,
                 ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Activity Content
               Expanded(
                 child: Column(
@@ -1308,9 +1340,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 3),
-                    
+
                     // Activity Description
                     Text(
                       activity.operationDescription,
@@ -1329,7 +1361,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ],
           ),
         ),
-        
+
         // Divider
         if (showDivider)
           Container(
@@ -1364,15 +1396,27 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   String _formatActivityTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
-    
+
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
-    
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
+
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+
     if (dateTime.year == now.year) {
       return '${months[dateTime.month - 1]} ${dateTime.day}';
     } else {
@@ -1382,29 +1426,42 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
 
   IconData _getActivityIcon(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Icons.receipt_outlined;
-    if (activity.operation.toLowerCase().contains('cancelled') || 
-        activity.operationDescription.toLowerCase().contains('cancelled')) return Icons.cancel_outlined;
-    if (activity.operation.toLowerCase().contains('completed') || 
-        activity.operationDescription.toLowerCase().contains('completed')) return Icons.check_circle_outline;
-    if (activity.operation.toLowerCase().contains('rescheduled') || 
-        activity.operationDescription.toLowerCase().contains('rescheduled')) return Icons.schedule_outlined;
-    if (activity.operation.toLowerCase().contains('request for testdrive') || 
-        activity.operationDescription.toLowerCase().contains('testdrive request')) return Icons.directions_car_outlined;
-    if (activity.operation.toLowerCase().contains('status update')) return Icons.update_outlined;
+    if (activity.operation.toLowerCase().contains('cancelled') ||
+        activity.operationDescription.toLowerCase().contains('cancelled'))
+      return Icons.cancel_outlined;
+    if (activity.operation.toLowerCase().contains('completed') ||
+        activity.operationDescription.toLowerCase().contains('completed'))
+      return Icons.check_circle_outline;
+    if (activity.operation.toLowerCase().contains('rescheduled') ||
+        activity.operationDescription.toLowerCase().contains('rescheduled'))
+      return Icons.schedule_outlined;
+    if (activity.operation.toLowerCase().contains('request for testdrive') ||
+        activity.operationDescription
+            .toLowerCase()
+            .contains('testdrive request'))
+      return Icons.directions_car_outlined;
+    if (activity.operation.toLowerCase().contains('status update'))
+      return Icons.update_outlined;
     return Icons.info_outline;
   }
 
   Color _getActivityColor(ActivityLog activity) {
     if (activity.tableName == 'expenses') return Colors.blue;
-    if (activity.operation.toLowerCase().contains('cancelled') || 
-        activity.operationDescription.toLowerCase().contains('cancelled')) return Colors.red;
-    if (activity.operation.toLowerCase().contains('completed') || 
-        activity.operationDescription.toLowerCase().contains('completed')) return Colors.green;
-    if (activity.operation.toLowerCase().contains('rescheduled') || 
-        activity.operationDescription.toLowerCase().contains('rescheduled')) return Colors.orange;
-    if (activity.operation.toLowerCase().contains('request for testdrive') || 
-        activity.operationDescription.toLowerCase().contains('testdrive request')) return Colors.purple;
-    if (activity.operation.toLowerCase().contains('status update')) return Colors.indigo;
+    if (activity.operation.toLowerCase().contains('cancelled') ||
+        activity.operationDescription.toLowerCase().contains('cancelled'))
+      return Colors.red;
+    if (activity.operation.toLowerCase().contains('completed') ||
+        activity.operationDescription.toLowerCase().contains('completed'))
+      return Colors.green;
+    if (activity.operation.toLowerCase().contains('rescheduled') ||
+        activity.operationDescription.toLowerCase().contains('rescheduled'))
+      return Colors.orange;
+    if (activity.operation.toLowerCase().contains('request for testdrive') ||
+        activity.operationDescription
+            .toLowerCase()
+            .contains('testdrive request')) return Colors.purple;
+    if (activity.operation.toLowerCase().contains('status update'))
+      return Colors.indigo;
     return Colors.grey;
   }
 }

@@ -806,7 +806,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Front',
+                                        const Text('Front side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -834,7 +834,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Back',
+                                        const Text('co-driver side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -862,7 +862,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Right',
+                                        const Text('Rear side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -890,7 +890,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Left',
+                                        const Text('driver side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -918,7 +918,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Upper',
+                                        const Text('Meter reading',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -970,7 +970,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Front',
+                                        const Text('Return Front side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -998,7 +998,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Back',
+                                        const Text('Return co-driver side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -1026,7 +1026,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Right',
+                                        const Text('Return Rear side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -1054,7 +1054,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Left',
+                                        const Text('Return driver side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -1082,7 +1082,7 @@ class CompletedTestDrivesScreen extends StatelessWidget {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Upper',
+                                        const Text('Return Meter reading',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),

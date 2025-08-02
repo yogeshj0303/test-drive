@@ -715,7 +715,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Front',
+                                        const Text('Front side',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -736,62 +736,6 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                       ],
                                     ),
                                   ),
-                                if (request.back_car_img != null &&
-                                    request.back_car_img!.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6.0),
-                                    child: Column(
-                                      children: [
-                                        const Text('Back',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500)),
-                                        Container(
-                                          width: 70,
-                                          height: 70,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.back_car_img),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                if (request.right_side_img != null &&
-                                    request.right_side_img!.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6.0),
-                                    child: Column(
-                                      children: [
-                                        const Text('Right',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500)),
-                                        Container(
-                                          width: 70,
-                                          height: 70,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.right_side_img),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                                 if (request.left_side_img != null &&
                                     request.left_side_img!.isNotEmpty)
                                   Padding(
@@ -799,7 +743,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Left',
+                                        const Text('driver side ',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),
@@ -820,6 +764,62 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                       ],
                                     ),
                                   ),
+                                if (request.right_side_img != null &&
+                                    request.right_side_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('Rear side',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.right_side_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (request.back_car_img != null &&
+                                    request.back_car_img!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0),
+                                    child: Column(
+                                      children: [
+                                        const Text('co-driver side ',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500)),
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: _buildGalleryImage(
+                                                request.back_car_img),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 if (request.upper_view != null &&
                                     request.upper_view!.isNotEmpty)
                                   Padding(
@@ -827,7 +827,7 @@ class _PendingTestDrivesScreenState extends State<PendingTestDrivesScreen> {
                                         horizontal: 6.0),
                                     child: Column(
                                       children: [
-                                        const Text('Upper',
+                                        const Text('Meter reading',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500)),

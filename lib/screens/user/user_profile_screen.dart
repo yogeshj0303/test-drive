@@ -257,12 +257,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
     }
   }
 
-  // Method to refresh data and update cache
-  Future<void> _refreshProfile() async {
-    // Clear cache to force fresh data
-    UserProfileScreen.clearCache();
-    await _loadUserProfile();
-  }
+
 
   // Method to manually refresh test drive counts
   Future<void> _refreshTestDriveCounts() async {
@@ -404,7 +399,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
                       _isLoading = true;
                       _errorMessage = null;
                     });
-                    _refreshProfile();
+                    _loadUserProfile();
                   },
                   child: const Text('Retry'),
                 ),
@@ -429,57 +424,55 @@ class UserProfileScreenState extends State<UserProfileScreen>
     }
 
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _refreshProfile,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    height: size.height * 0.28,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primaryContainer,
-                          theme.colorScheme.secondaryContainer,
-                        ],
-                      ),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Positioned(
-                          right: -size.width * 0.1,
-                          top: -size.width * 0.1,
-                          child: Container(
-                            width: size.width * 0.8,
-                            height: size.width * 0.8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.colorScheme.primary.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: size.height * 0.28,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primaryContainer,
+                        theme.colorScheme.secondaryContainer,
                       ],
                     ),
                   ),
-                  Positioned(
-                    left: AppTheme.spacingM,
-                    right: AppTheme.spacingM,
-                    top: size.height * 0.08,
-                    child: _buildProfileHeader(context),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned(
+                        right: -size.width * 0.1,
+                        top: -size.width * 0.1,
+                        child: Container(
+                          width: size.width * 0.8,
+                          height: size.width * 0.8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  left: AppTheme.spacingM,
+                  right: AppTheme.spacingM,
+                  top: size.height * 0.08,
+                  child: _buildProfileHeader(context),
+                ),
+              ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(
                   top: size.height * 0.12,
                   left: AppTheme.spacingM,
                   right: AppTheme.spacingM,
@@ -553,8 +546,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildProfileHeader(BuildContext context) {
@@ -617,7 +609,7 @@ class UserProfileScreenState extends State<UserProfileScreen>
                           ),
                         )
                       else
-                        const SizedBox(width: 40), // Placeholder to maintain spacing
+                        const SizedBox(width: 40),
                       Container(
                         width: 100,
                         height: 100,

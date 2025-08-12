@@ -401,12 +401,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Car Images Gallery
-                    if (request.car?.images != null &&
-                        request.car!.images!.isNotEmpty)
-                      _buildCarImagesGallery(request.car!.images!),
 
-                    const SizedBox(height: 16),
                     _buildDetailSection(
                       'Test Drive Information',
                       [
@@ -620,8 +615,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.car_front_img),
+                                            child: _buildSimpleImage(request.car_front_img),
                                           ),
                                         ),
                                       ],
@@ -648,8 +642,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.left_side_img),
+                                            child: _buildSimpleImage(request.left_side_img),
                                           ),
                                         ),
                                       ],
@@ -676,8 +669,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.right_side_img),
+                                            child: _buildSimpleImage(request.right_side_img),
                                           ),
                                         ),
                                       ],
@@ -704,8 +696,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.back_car_img),
+                                            child: _buildSimpleImage(request.back_car_img),
                                           ),
                                         ),
                                       ],
@@ -732,8 +723,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: _buildGalleryImage(
-                                                request.upper_view),
+                                            child: _buildSimpleImage(request.upper_view),
                                           ),
                                         ),
                                       ],
@@ -1353,10 +1343,14 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10)),
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: () => Navigator.pop(context),
                           child: const Text('Cancel',
                               style: TextStyle(fontSize: 13)),
                         ),
@@ -1437,33 +1431,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     }
 
     void _showImageSourceDialog() {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Select Image Source'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        ),
-      );
+      // Directly open camera without showing dialog
+      _pickImage(ImageSource.camera);
     }
 
     return SizedBox(
@@ -1498,17 +1467,17 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_a_photo,
-                          size: 14, color: Colors.grey.shade400),
+                          size: 20, color: Colors.grey.shade400),
                       const SizedBox(height: 1),
                       Text(label,
                           style: TextStyle(
-                              fontSize: 7,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey.shade600)),
                       const SizedBox(height: 1),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 2, vertical: 1),
+                            horizontal: 3, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(4),
@@ -2548,55 +2517,18 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
     );
   }
 
-  Widget _buildCarImagesGallery(List<CarImage> images) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Car Images',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            clipBehavior: Clip.none,
-            scrollDirection: Axis.horizontal,
-            itemCount: images.length,
-            itemBuilder: (context, index) {
-              final image = images[index];
-              return Container(
-                width: 120,
-                margin:
-                    EdgeInsets.only(right: index < images.length - 1 ? 8 : 0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey.shade100,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _buildGalleryImage(image.imagePath),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildGalleryImage(String? imagePath) {
+
+
+
+  Widget _buildSimpleImage(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return Container(
         color: Colors.grey.shade200,
         child: Icon(
           Icons.image,
           color: Colors.grey.shade400,
-          size: 32,
+          size: 24,
         ),
       );
     }
@@ -2609,7 +2541,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
 
     return Image.network(
       fullImageUrl,
-      fit: BoxFit.fill,
+      fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
       errorBuilder: (context, error, stackTrace) {
@@ -2618,7 +2550,7 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
           child: Icon(
             Icons.image,
             color: Colors.grey.shade400,
-            size: 32,
+            size: 24,
           ),
         );
       },

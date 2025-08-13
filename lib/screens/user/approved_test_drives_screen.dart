@@ -1473,7 +1473,8 @@ class _ApprovedTestDrivesScreenState extends State<ApprovedTestDrivesScreen> {
                           style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600)),
+                              color: Colors.grey.shade600)
+                              ),
                       const SizedBox(height: 1),
                       Container(
                         padding: const EdgeInsets.symmetric(

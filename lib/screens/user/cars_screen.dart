@@ -1934,7 +1934,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                             ],
                           ),
                           const SizedBox(height: 2), // Increased from 1
-                          // Seating capacity
+                          // Seating capacity and last closing km
                           Row(
                             children: [
                               Expanded(
@@ -1946,9 +1946,13 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
                               const SizedBox(width: 3), // Increased from 2
                               Expanded(
                                 child: _buildGridSpecItem(
-                                    'Year',
-                                    '${car.yearOfManufacture}',
-                                    Icons.calendar_today_rounded),
+                                    car.lastClosingKm != null ? 'KM' : 'Year',
+                                    car.lastClosingKm != null 
+                                        ? '${car.lastClosingKm}'
+                                        : '${car.yearOfManufacture}',
+                                    car.lastClosingKm != null 
+                                        ? Icons.speed_rounded
+                                        : Icons.calendar_today_rounded),
                               ),
                             ],
                           ),

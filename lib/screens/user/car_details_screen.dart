@@ -491,6 +491,9 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                                     '${data.seatingCapacity} Seater'),
                                 _buildFeatureItem(Icons.palette,
                                     data.color.split(',').first.trim()),
+                                if (data.lastClosingKm != null)
+                                  _buildFeatureItem(Icons.speed,
+                                      '${data.lastClosingKm} km'),
                               ],
                             ),
                           ],
@@ -559,6 +562,66 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                     ),
                   ),
 
+                  // Car Specifications Section
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFF0095D9).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(
+                                  Icons.directions_car,
+                                  color: Color(0xFF0095D9),
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Car Specifications',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          _buildSpecificationRow('Model', data.modelNumber),
+                          _buildSpecificationRow('Year', '${data.yearOfManufacture}'),
+                          if (data.lastClosingKm != null)
+                            _buildSpecificationRow('Last Closing KM', '${data.lastClosingKm} km'),
+                          if (data.bodyType != null)
+                            _buildSpecificationRow('Body Type', data.bodyType!),
+                          if (data.drivetrain != null)
+                            _buildSpecificationRow('Drivetrain', data.drivetrain!),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 12),
                   // Compact Book Now Button
                   Padding(
@@ -596,7 +659,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen>
                               MaterialPageRoute(
                                 builder: (context) => RequestTestDriveScreen(
                                   showroomName: widget.showroomName,
-                                  availableCars: [],
+                                  availableCars: _car != null ? [_car!] : [],
                                   selectedStartDate: DateTime.now(),
                                   selectedEndDate: DateTime.now()
                                       .add(const Duration(days: 1)),

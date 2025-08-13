@@ -68,17 +68,23 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
   @override
   void initState() {
     super.initState();
+    print('RequestTestDriveScreen initState - carId: ${widget.carId}, showroomId: ${widget.showroomId}');
+    print('Available cars: ${widget.availableCars?.length ?? 0}');
+    
     if (widget.showroomName != null) {
       _showroomController.text = widget.showroomName!;
     }
     if (widget.availableCars != null && widget.availableCars!.isNotEmpty) {
       _cars = widget.availableCars!;
       _selectedCar = _cars.first.name;
-      _setOpeningKmForSelectedCar(_selectedCar);
+      print('Using available cars, selected: $_selectedCar');
+      _setLastClosingKmForSelectedCar(_selectedCar);
     } else if (widget.showroomId != null) {
+      print('Fetching cars by showroom ID: ${widget.showroomId}');
       _fetchCarsByShowroom(widget.showroomId!);
     } else {
       _selectedCar = _carOptions.first;
+      print('Using default car options, selected: $_selectedCar');
     }
 
     // Use passed dates if available
@@ -301,7 +307,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         hasValidDates &&
         _selectedTime != null &&
         _drivingLicenseController.text.isNotEmpty &&
-        _openingKmController.text.isNotEmpty &&
         _selectedImages['image1'] != null &&
         _selectedImages['image2'] != null &&
         _selectedImages['image3'] != null &&
@@ -348,8 +353,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         final timeString =
             '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}:00';
 
-        // Get opening KM value
-        final openingKm = int.tryParse(_openingKmController.text) ?? 0;
+        // Get last closing KM value
+        final lastClosingKm = int.tryParse(_openingKmController.text) ?? 0;
 
         // Create test drive request with images in correct order
         final orderedImages = [
@@ -378,7 +383,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
           userMobile: _userMobileController.text,
           userEmail: _userEmailController.text,
           userAdhar: _aadharNoController.text,
-          openingKm: openingKm,
+          openingKm: lastClosingKm,
           carImages: orderedImages,
         );
 
@@ -393,7 +398,7 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         print('User Mobile: ${user.mobileNo}');
         print('User Email: ${user.email}');
         print('User Aadhar: ${user.aadharNo ?? _aadharNoController.text}');
-        print('Opening KM: $openingKm');
+        print('Last Closing KM: $lastClosingKm');
         print('Number of Images: ${orderedImages.length}');
         print(
             'Image 1: ${_selectedImages['image1'] != null ? 'Uploaded' : 'Missing'}');
@@ -466,8 +471,6 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
         errorMessage = 'Please enter pickup city';
       } else if (_pickupPincodeController.text.isEmpty) {
         errorMessage = 'Please enter pickup pincode';
-      } else if (_openingKmController.text.isEmpty) {
-        errorMessage = 'Please enter opening KM';
       } else if (_selectedImages['image1'] == null) {
         errorMessage = 'Please upload car image 1';
       } else if (_selectedImages['image2'] == null) {
@@ -554,25 +557,40 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
       setState(() {
         _cars = response.data!;
         if (_cars.isNotEmpty) {
-          _selectedCar = _cars.first.name;
-          _setOpeningKmForSelectedCar(_selectedCar);
+          // Try to find the specific car by ID if provided
+          if (widget.carId != null) {
+            final specificCar = _cars.firstWhere(
+              (c) => c.id == widget.carId,
+              orElse: () => _cars.first,
+            );
+            _selectedCar = specificCar.name;
+            print('Selected specific car: ${specificCar.name} with last closing KM: ${specificCar.lastClosingKm}');
+          } else {
+            _selectedCar = _cars.first.name;
+          }
+          _setLastClosingKmForSelectedCar(_selectedCar);
         }
       });
     }
   }
 
-  void _setOpeningKmForSelectedCar(String? carName) {
+  void _setLastClosingKmForSelectedCar(String? carName) {
     if (carName == null || _cars.isEmpty) return;
     final car = _cars.firstWhere(
       (c) => c.name == carName,
       orElse: () => _cars.first,
     );
+    print('Setting last closing KM for car: ${car.name}, ID: ${car.id}, lastClosingKm: ${car.lastClosingKm}');
     if (car.lastClosingKm != null && car.lastClosingKm!.isNotEmpty) {
       _openingKmController.text = car.lastClosingKm!;
+      print('Set opening KM controller to: ${car.lastClosingKm}');
     } else {
       _openingKmController.text = '';
+      print('No last closing KM available for this car');
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -689,6 +707,8 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 ],
                               ),
                               const SizedBox(height: 8),
+                              
+
                               // Showroom field
                               TextFormField(
                                 controller: _showroomController,
@@ -1348,15 +1368,14 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                 maxLines: 2, // Reduced from 3
                               ),
                               const SizedBox(height: 8),
-
-                              // Opening KM field
                               TextFormField(
                                 controller: _openingKmController,
                                 style: const TextStyle(fontSize: 14),
+                                readOnly: true,
                                 decoration: InputDecoration(
                                   labelText: 'Opening KM',
                                   labelStyle: const TextStyle(fontSize: 14),
-                                  hintText: 'Enter current odometer reading',
+                                  hintText: 'Opening KM for test drive',
                                   hintStyle: const TextStyle(fontSize: 14),
                                   prefixIcon: const Icon(Icons.speed_outlined,
                                       color: Color(0xFF0095D9), size: 20),
@@ -1374,18 +1393,13 @@ class _RequestTestDriveScreenState extends State<RequestTestDriveScreen> {
                                         color: Color(0xFF0095D9), width: 2),
                                   ),
                                   filled: true,
-                                  fillColor: Colors.grey[50],
+                                  fillColor: Colors.grey[100],
                                   contentPadding: EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 10),
                                 ),
-                                keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter opening KM';
-                                  }
-                                  final km = int.tryParse(value);
-                                  if (km == null || km < 0) {
-                                    return 'Please enter a valid KM reading';
+                                    return 'Last closing KM is required';
                                   }
                                   return null;
                                 },

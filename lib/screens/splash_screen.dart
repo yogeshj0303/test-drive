@@ -148,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Varenyam',
+                    'DriveEasy',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: primaryBlue,

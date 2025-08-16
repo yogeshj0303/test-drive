@@ -526,7 +526,7 @@ class _EmployeeGatePassScreenState extends State<EmployeeGatePassScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'VARENYAM MOTORCAR',
+                  'DriveEasy MOTORCAR',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,

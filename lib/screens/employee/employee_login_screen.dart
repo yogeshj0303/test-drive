@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:varenyam/main.dart';
+import 'package:DriveEasy/main.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../models/employee_model.dart';

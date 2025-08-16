@@ -1,16 +1,15 @@
+import 'package:DriveEasy/screens/Driver/driver_expense_list_screen.dart';
+import 'package:DriveEasy/screens/Employee/assigned_test_drives_screen.dart';
+import 'package:DriveEasy/screens/Employee/employee_activities_screen.dart';
+import 'package:DriveEasy/screens/Employee/employee_notification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:varenyam/screens/Driver/driver_expense_list_screen.dart';
-import 'package:varenyam/screens/Employee/employee_notification_screen.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/driver_api_service.dart';
 import '../../models/employee_model.dart';  
 import '../../models/activity_log_model.dart';
-import 'package:varenyam/screens/Employee/assigned_test_drives_screen.dart';
-import 'package:varenyam/screens/Employee/add_expense_screen.dart';
-import 'package:varenyam/screens/Employee/location_tracking_screen.dart';
-import 'package:varenyam/screens/Employee/employee_activities_screen.dart';
+
 
 class EmployeeHomeScreen extends StatefulWidget {
   const EmployeeHomeScreen({super.key});
@@ -235,7 +234,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen>
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
-              'Varenyam',
+              'DriveEasy',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,

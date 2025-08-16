@@ -1,8 +1,8 @@
+import 'package:DriveEasy/screens/Employee/gate_pass_screen.dart';
+import 'package:DriveEasy/screens/Employee/update_status_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:varenyam/screens/Employee/gate_pass_screen.dart';
-import 'package:varenyam/screens/Employee/update_status_screen.dart';
 import '../../services/driver_api_service.dart';
 import '../../services/employee_storage_service.dart';
 import '../../services/api_config.dart';

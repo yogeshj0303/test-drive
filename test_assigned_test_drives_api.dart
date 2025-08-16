@@ -82,7 +82,7 @@ void main() {
               "showroom": {
                 "id": 1,
                 "auth_id": 1,
-                "name": "varenyam ashoka",
+                "name": "DriveEasy ashoka",
                 "address": "bhopal",
                 "city": "Bhopal",
                 "state": "Madhya Pradesh",
@@ -152,7 +152,7 @@ void main() {
       expect(testDrive.userMobile, "9090909090");
       expect(testDrive.status, "rejected");
       expect(testDrive.car?.name, "Tata Harrier EV");
-      expect(testDrive.car?.showroom?.name, "varenyam ashoka");
+      expect(testDrive.car?.showroom?.name, "DriveEasy ashoka");
       expect(testDrive.requestbyEmplyee?.name, "Aish");
       expect(testDrive.approverRejecter?.name, "Aish");
       expect(testDrive.rescheduler, null);

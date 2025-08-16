@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:varenyam/main.dart';
+import 'package:DriveEasy/main.dart';  
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
 import 'main_user_screen.dart';
@@ -259,7 +259,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                       ),
                       SizedBox(height: size.height * 0.015), // Further reduced from 0.02
                       Text(
-                        'Welcome to Varenyam',
+                        'Welcome to DriveEasy',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -367,7 +367,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> with SingleTickerProv
                     ),
                     SizedBox(height: size.height * 0.012), // Further reduced from 0.015
                     Text(
-                      'Welcome to Varenyam',
+                      'Welcome to DriveEasy',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

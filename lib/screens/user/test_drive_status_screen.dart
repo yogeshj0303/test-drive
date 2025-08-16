@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:varenyam/services/api_config.dart';
+import 'package:DriveEasy/services/api_config.dart';
 import '../../providers/user_test_drives_provider.dart';
 import '../../models/test_drive_model.dart';
 

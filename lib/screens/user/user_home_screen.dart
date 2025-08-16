@@ -190,7 +190,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Varenyam',
+              'DriveEasy',
               style: TextStyle(
                 color: theme.primaryColor,
                 fontSize: 20,

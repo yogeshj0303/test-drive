@@ -29,7 +29,7 @@ class VareniumApp extends StatelessWidget {
     const Color secondaryBlue = Color(0xFF5D98AF);
     const Color darkGray = Color(0xFF242223);
     return MaterialApp(
-      title: 'Varenyam',
+      title: 'DriveEasy',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -167,7 +167,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Welcome to Varenyam',
+                            'Welcome to DriveEasy',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -330,7 +330,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Welcome to Varenyam',
+                      'Welcome to DriveEasy',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

@@ -22,7 +22,7 @@
     <!-- (WRITE/READ_EXTERNAL_STORAGE already included above) -->
     
     <application
-        android:label="Varenyam"
+        android:label="DriveEasy"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true"

@@ -1752,7 +1752,7 @@ class _CarsScreenState extends State<CarsScreen> with TickerProviderStateMixin {
               'Need more help?',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text('Contact support at support@Varenyam.com'),
+            Text('Contact support at support@DriveEasy.com'),
           ],
         ),
         actions: [
